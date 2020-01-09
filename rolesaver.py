@@ -1,9 +1,9 @@
+from collections import defaultdict
 import pickle
 import discord as dc
 
 class RoleSaver(object):
-    def __init__(self, bot, fname):
-        self.bot = bot
+    def __init__(self, fname):
         self.fname = fname
         self.load()
 
@@ -11,8 +11,11 @@ class RoleSaver(object):
         try:
             with open(self.fname, 'rb') as role_file:
                 self.user_roles = pickle.load(role_file)
+            if not isinstance(self.user_roles, defaultdict):
+                self.user_roles = defaultdict(dict, self.user_roles)
+                self.save()
         except (OSError, EOFError):
-            self.user_roles = {guild.id: {} for guild in self.bot.guilds}
+            self.user_roles = defaultdict(dict, {})
             self.save()
 
     def save(self):
@@ -33,9 +36,5 @@ class RoleSaver(object):
             )
 
     def save_roles(self, member):
-        try:
-            guild_roles = self.user_roles[member.guild.id]
-        except KeyError:
-            guild_roles = self.user_roles[member.guild.id] = {}
-        guild_roles[member.id] = [role.id for role in member.roles[1:]]
+        self.user_roles[member.guild.id][member.id] = [role.id for role in member.roles[1:]]
         self.save()

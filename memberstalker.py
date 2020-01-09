@@ -3,8 +3,7 @@ import pickle
 import discord as dc
 
 class MemberStalker(object):
-    def __init__(self, bot, fname):
-        self.bot = bot
+    def __init__(self, fname):
         self.fname = fname
         self.load()
 
@@ -13,9 +12,7 @@ class MemberStalker(object):
             with open(self.fname, 'rb') as role_file:
                 self.last_msgs = pickle.load(role_file)
         except (OSError, EOFError):
-            self.last_msgs = defaultdict(
-                dict, {guild.id: {} for guild in self.bot.guilds}
-                )
+            self.last_msgs = defaultdict(dict, {})
             self.save()
 
     def save(self):
