@@ -10,7 +10,15 @@ def callback():
 class StatsTracker(object):
     def __init__(self, fname):
         self.fname = fname
+        self.lock = False
         self.load()
+
+    def __enter__(self):
+        self.lock = True
+        return self
+
+    def __exit__(self, exc_type, exc_val, trace):
+        self.lock = False
 
     def load(self):
         try:
@@ -43,8 +51,12 @@ class StatsTracker(object):
         print(f'D--> Done. Total count: {wocstat["value"]}\n')
         return wocstat['value']
 
-
     async def take(self, ctx, stat):
+        if self.lock:
+            await ctx.send(
+                'D--> I am currently in the middle of something. Try again later.'
+                )
+            return
         if stat == 'woc':
             value = await self.woc_counter(ctx)
         else:
