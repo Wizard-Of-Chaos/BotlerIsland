@@ -303,7 +303,7 @@ async def woc_counter(ctx): # Beta statistic feature: Woc's Tard Counter!
             )
     tards = await stats_tracker.take(ctx, 'woc')
     await ctx.send(
-        f'D--> Wizard of Chaos has slurred {tards} times in this server.'
+        f'D--> Wizard of Chaos has slurred {tards} times in this server, {ctx.author.mention}.'
         )
 
 # END OF STATS
