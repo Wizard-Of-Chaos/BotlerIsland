@@ -274,6 +274,7 @@ async def msglog(ctx):
 
 @bot.group()
 @commands.bot_has_permissions(send_messages=True)
+@commands.has_permissions(manage_roles=True)
 async def stats(ctx):
     if ctx.invoked_subcommand is None:
         await ctx.send(
@@ -294,23 +295,28 @@ async def stats_error(ctx, error):
     raise error
         
 @stats.command()
-async def woc_counter(ctx):
-    woc_id = 125433170047795200
-    if ctx.author.id == woc_id:
-        guild = ctx.guild
+async def woc_counter(ctx): # Beta statistic feature
+    # woc_id = 125433170047795200
+    # if ctx.author.id == woc_id:
         tards = 0
+        print('D--> Searching for slurs...')
         for channel in ctx.guild.text_channels:
-            msgs = await channel.history().flatten()
-            for msg in msgs:
-                if msg.author.id == woc_id and 'retard' in msg.content:
+            print(f'D--> Searching #{channel}:')
+            try:
+                history = channel.history(limit=None)
+            except dc.Forbidden:
+                continue
+            async for msg in history:
+                if msg.author.id == 125433170047795200 and 'retard' in msg.content:
                     tards += 1
+        print(f'D--> Done. Total count: {tards}')
         await ctx.send(
             f'D--> Wizard of Chaos has slurred {tards} times in this server.'
             )
-    else:
-        await ctx.send(
-            'D--> It seems you are not the appropriate user for this command.'
-            )
+    # else:
+    #     await ctx.send(
+    #         'D--> It seems you are not the appropriate user for this command.'
+    #         )
 
 # END OF STATS
 # "TAG" COMMANDS
