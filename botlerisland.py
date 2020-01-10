@@ -17,7 +17,6 @@ member_stalker = MemberStalker('times.pkl')
 
 CONST_BAD_ID = 148346796186271744 # You-know-who
 
-
 #FUNCTIONS
 
 def get_token():
@@ -32,7 +31,7 @@ async def grab_avatar(user):
     with open('avatar.png', mode='wb') as avatarfile:
         try:
             await user.avatar_url.save(avatarfile)
-        except dc.errors.NotFound:
+        except dc.NotFound:
             return (
                 'https://cdn.discordapp.com/attachments/'
                 '663453347763716110/664578577479761920/unknown.png'
@@ -64,15 +63,15 @@ async def on_ready():
 @bot.event
 async def on_message(msg):
     member_stalker.update(msg)
-    if msg.author.id == 167131099456208898:
+    if msg.author.id == 167131099456208898 or msg.guild is None:
         return
     if msg.content == 'good work arquius':
         await msg.channel.send('D--> :sunglasses:')
-    else:
+    elif msg.guild:
         await bot.process_commands(msg)
 
 @bot.event
-async def on_message_edit(bfr, aft):
+async def on_message_edit(bfr, aft): # Log edited messages
     if bfr.author == bot.user or bfr.content == aft.content:
         return
     guild = bfr.guild
@@ -89,7 +88,7 @@ async def on_message_edit(bfr, aft):
         await guild_config.log(guild, 'msglog', embed=embed)
 
 @bot.event
-async def on_message_delete(msg):
+async def on_message_delete(msg): # Log deleted messages
     if msg.guild is None:
         return
     guild = msg.channel.guild
@@ -113,14 +112,14 @@ async def on_message_delete(msg):
         await guild_config.log(guild, 'msglog', embed=embed)
             
 @bot.event
-async def on_member_join(member):
+async def on_member_join(member): # Log joined members
     guild = member.guild 
     if guild_config.getlog(guild, 'usrlog'):
         await role_saver.load_roles(member)
         embed = dc.Embed(
             color=dc.Color.green(),
             timestamp=datetime.utcnow(),
-            description=f':green_circle: {member.mention} : ``{member}`` has joined **{guild}**!\n'
+            description=f':green_circle: <@!{member.id}>: ``{member}`` has joined **{guild}**!\n'
             f'The guild now has {guild.member_count} members!\n'
             f'This account was created on `{member.created_at.strftime("%d/%m/%Y %H:%M:%S")}`'
             )
@@ -130,7 +129,7 @@ async def on_member_join(member):
         await guild_config.log(guild, 'usrlog', embed=embed)
 
 @bot.event
-async def on_member_remove(member):
+async def on_member_remove(member): # Log left/kicked/banned members
     guild = member.guild
     if guild_config.getlog(guild, 'usrlog'):
         role_saver.save_roles(member)
@@ -228,7 +227,7 @@ async def on_user_update(bfr, aft): # Log avatar, name, discrim changes
                 await guild_config.log(guild, 'msglog', embed=embed)
                     
 @bot.event
-async def on_voice_state_update(member, bfr, aft): #Logged when a member joins and leaves VC
+async def on_voice_state_update(member, bfr, aft): # Logged when a member joins and leaves VC
     guild = member.guild
     if guild_config.getlog(guild, 'msglog'):
         changelog = None
@@ -241,170 +240,188 @@ async def on_voice_state_update(member, bfr, aft): #Logged when a member joins a
             embed = dc.Embed(color=dc.Color.blurple(), description=changelog)
             await guild_config.log(guild, 'msglog', embed=embed)
 
-#END OF EVENTS
-#CONFIG COMMANDS
+# END OF EVENTS
+# CONFIG COMMANDS
 
 @bot.group()
+@commands.bot_has_permissions(send_messages=True)
+@commands.has_permissions(manage_guild=True)
 async def config(ctx):
-    try:
-        if ctx.invoked_subcommand is None:
-            await ctx.send(
-                'D--> It seems that you have attempted to run a nonexistent command. '
-                'Would you like to try again? Redos are free, you know.'
-                )
-    except dc.Forbidden:
-        pass
+    if ctx.invoked_subcommand is None:
+        await ctx.send(
+            'D--> It seems that you have attempted to run a nonexistent command. '
+            'Would you like to try again? Redos are free, you know.'
+            )
+
+@config.error
+async def config_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send(
+            f'D--> It seems that you don\'t have the appropriate permissions for this command. '
+            f'I STRONGLY recommend you back off or get bucked off, {ctx.author.name}.'
+            )
 
 @config.command()
 async def usrlog(ctx):
-    if ctx.author.guild_permissions.manage_guild == True:
-        await ctx.send(guild_config.setlog(ctx, 'usrlog'))
-    else:
-        await ctx.send(
-            'D--> It seems that you don\'t have the appropriate permissions for this command. '
-            'I STRONGLY recommend you back off or get bucked off.'
-            )
+    await ctx.send(guild_config.setlog(ctx, 'usrlog'))
         
 @config.command()
 async def msglog(ctx):
-    try:
-        if ctx.author.guild_permissions.manage_guild == True:
-            await ctx.send(guild_config.setlog(ctx, 'msglog'))
-        else:
-            await ctx.send(
-                'D--> It seems that you don\'t have the appropriate permissions for this command. '
-                'I STRONGLY recommend you back off or get bucked off.'
-                )
-    except dc.Forbidden:
-        pass
+    await ctx.send(guild_config.setlog(ctx, 'msglog'))
 
-#END OF CONFIG
-#STATS COMMANDS
+# END OF CONFIG
+# STATS COMMANDS
 
 @bot.group()
+@commands.bot_has_permissions(send_messages=True)
 async def stats(ctx):
-    try:
-        if ctx.invoked_subcommand is None:
-            await ctx.send(
-                'D--> It seems that you have attempted to run a nonexistent command.'
-                'Woudl you like to try again? Redos are free, you know.'
-                )
-    except dc.Forbidden:
-        pass
+    if ctx.invoked_subcommand is None:
+        await ctx.send(
+            'D--> It seems that you have attempted to run a nonexistent command.'
+            'Would you like to try again? Redos are free, you know.'
+            )
+
+@stats.error
+async def stats_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send(
+            f'D--> It seems that you don\'t have the appropriate permissions for this command. '
+            f'I STRONGLY recommend you back off or get bucked off, {ctx.author.name}.'
+            )
+        return
+    elif isinstance(error, commands.BotMissingPermissions):
+        return
+    raise error
         
 @stats.command()
 async def woc_counter(ctx):
-    try:
-        woc_id = 125433170047795200
-        if ctx.author.id == woc_id:
-            guild = ctx.guild
-            tards = 0
-            for channel in ctx.guild.text_channels:
-                msgs = await channel.history().flatten()
-                for msg in msgs:
-                    if msg.author.id == woc_id and 'retard' in msg.content:
-                        tards += 1
-            await ctx.send(
-                f'D--> Wizard of Chaos has slurred {tards} times in this server.'
-                )
-        else:
-            await ctx.send(
-                'D--> It seems you are not the appropriate user for this command.'
-                )
-                
-    except dc.Forbidden:
-        pass
-
-#END OF STATS
-#UNGROUPED COMMANDS
-        
-@bot.command()
-async def help(ctx):
-    try:
-        embed = dc.Embed(
-            color=ctx.author.color,
-            timestamp=ctx.message.created_at,
-            description=f'D--> It seems you have asked about the Homestuck and Hiveswap Discord Utility Bot:tm:.'
-            f'This is a bot designed to cater to the server\'s moderation, utility, and statistic '
-            f'tracking needs. If the functions herein described are not performing to the degree '
-            f'that is claimed, please direct your attention to Wizard of Chaos#2459.\n\n'
-            f'**Command List:**',
+    woc_id = 125433170047795200
+    if ctx.author.id == woc_id:
+        guild = ctx.guild
+        tards = 0
+        for channel in ctx.guild.text_channels:
+            msgs = await channel.history().flatten()
+            for msg in msgs:
+                if msg.author.id == woc_id and 'retard' in msg.content:
+                    tards += 1
+        await ctx.send(
+            f'D--> Wizard of Chaos has slurred {tards} times in this server.'
             )
-        embed.set_author(name='Help message', icon_url=bot.user.avatar_url)
-        embed.add_field(name='`help`', value='Display this message.', inline=False)
-        embed.add_field(
-            name='`info [username]`',
-            value='Grabs user information. Leave username empty to get your own info.',
-            inline=False
+    else:
+        await ctx.send(
+            'D--> It seems you are not the appropriate user for this command.'
             )
-        embed.add_field(name='`ping`', value='Pong!', inline=False)
-        embed.add_field(
-            name='`config (msglog|usrlog)`',
-            value='(Manage Server only) Sets the appropriate log channel.',
-            inline=False
-            )
-        await ctx.send(embed=embed)
-    except dc.Forbidden:
-        pass
 
-@bot.command()
-async def info(ctx, *, name=None):
-    try:
-        if name is None:
-            member = ctx.author
-        else:
-            member = await find_member(ctx.guild, name)
-            if member is None:
-                await ctx.send('D--> It seems that user can\'t be found. Please check your spelling.')
-                return
-        lastseen = member_stalker.get(member)
-        if lastseen is not None:
-            lastseenmsg = f'This user was last seen on `{lastseen.strftime("%d/%m/%Y %H:%M:%S")}`'
-        else:
-            lastseenmsg = 'This user has not spoken to my knowledge!'
-        embed = dc.Embed(color=member.color, timestamp=datetime.utcnow())
-        embed.set_author(name=f'Information for {member}')
-        embed.set_thumbnail(url=member.avatar_url)
-        embed.add_field(name='User ID:', value=f'`{member.id}`')
-        embed.add_field(name='Last Seen:', value=lastseenmsg, inline=False)
-        embed.add_field(name='Account Created On:', value=member.created_at.strftime('%d/%m/%Y %H:%M:%S'))
-        embed.add_field(name='Guild Joined On:', value=member.joined_at.strftime('%d/%m/%Y %H:%M:%S'))
-        embed.add_field(name='Roles:', value=', '.join(f'`{role.name}`' for role in member.roles[1:]), inline=False)
-        if bot.user == member:
-            msg = 'D--> Do you wish to check out my STRONG muscles?'
-        elif ctx.author != member:
-            msg = 'D--> It seems you\'re a bit of a stalker, aren\'t you?'
-        else:
-            msg = 'D--> I understand the need to look at yourself in the mirror.'
-        await ctx.send(msg, embed=embed)
-    except dc.Forbidden:
-        pass
+# END OF STATS
+# "TAG" COMMANDS
 
-@bot.command()
-async def ping(ctx):
-    try:
-        await ctx.send(f'Pong, <@!{ctx.message.author.id}>!')
-    except dc.Forbidden:
-        pass
+@commands.bot_has_permissions(send_messages=True)
 async def tag(ctx):
-    try:
-        denial = dc.Embed(
-            color=dc.Color(0xFF0000),
-            description='D--> I would never stoop so low as to entertain the likes of this. '
-            'You are STRONGLY recommended to instead gaze upon my beautiful body.'
-            )
-        denial.set_author(name='D--> No.', icon_url=bot.user.avatar_url)
-        denial.set_image(
-            url='https://cdn.discordapp.com/attachments/'
-            '152981670507577344/664624516370268191/arquius.gif'
-            )
-        await ctx.send(embed=denial)
-    except dc.Forbidden:
-        pass
+    denial = dc.Embed(
+        color=dc.Color(0xFF0000),
+        description='D--> I would never stoop so low as to entertain the likes of this. '
+        'You are STRONGLY recommended to instead gaze upon my beautiful body.'
+        )
+    denial.set_author(name='D--> No.', icon_url=bot.user.avatar_url)
+    denial.set_image(
+        url='https://cdn.discordapp.com/attachments/'
+        '152981670507577344/664624516370268191/arquius.gif'
+        )
+    await ctx.send(embed=denial)
 
 bot.command(name='tag')(tag)
 bot.command(name='tc')(tag)
-bot.command(name='tt')(tag)
+tag = bot.command(name='tt')(tag)
+
+@tag.error
+async def tag_error(ctx, error):
+    if isinstance(error, commands.BotMissingPermissions):
+        return
+    raise error
+
+# END OF "TAG"S
+# UNGROUPED COMMANDS
+        
+@bot.command(name='help')
+@commands.bot_has_permissions(send_messages=True)
+async def _help(ctx):
+    embed = dc.Embed(
+        color=ctx.author.color,
+        timestamp=ctx.message.created_at,
+        description=f'D--> It seems you have asked about the Homestuck and Hiveswap Discord Utility Bot:tm:.'
+        f'This is a bot designed to cater to the server\'s moderation, utility, and statistic '
+        f'tracking needs. If the functions herein described are not performing to the degree '
+        f'that is claimed, please direct your attention to Wizard of Chaos#2459.\n\n'
+        f'**Command List:**',
+        )
+    embed.set_author(name='Help message', icon_url=bot.user.avatar_url)
+    embed.add_field(name='`help`', value='Display this message.', inline=False)
+    embed.add_field(
+        name='`info [username]`',
+        value='Grabs user information. Leave username empty to get your own info.',
+        inline=False
+        )
+    embed.add_field(name='`ping`', value='Pong!', inline=False)
+    embed.add_field(
+        name='`config (msglog|usrlog)`',
+        value='(Manage Server only) Sets the appropriate log channel.',
+        inline=False
+        )
+    await ctx.send(embed=embed)
+
+@_help.error
+async def help_error(ctx, error):
+    if isinstance(error, commands.BotMissingPermissions):
+        return
+    raise error
+
+@bot.command()
+@commands.bot_has_permissions(send_messages=True)
+async def info(ctx, *, name=None):
+    if name is None:
+        member = ctx.author
+    else:
+        member = await find_member(ctx.guild, name)
+        if member is None:
+            await ctx.send('D--> It seems that user can\'t be found. Please check your spelling.')
+            return
+    lastseen = member_stalker.get(member)
+    if lastseen is not None:
+        lastseenmsg = f'This user was last seen on `{lastseen.strftime("%d/%m/%Y %H:%M:%S")}`'
+    else:
+        lastseenmsg = 'This user has not spoken to my knowledge!'
+    embed = dc.Embed(color=member.color, timestamp=datetime.utcnow())
+    embed.set_author(name=f'Information for {member}')
+    embed.set_thumbnail(url=member.avatar_url)
+    embed.add_field(name='User ID:', value=f'`{member.id}`')
+    embed.add_field(name='Last Seen:', value=lastseenmsg, inline=False)
+    embed.add_field(name='Account Created On:', value=member.created_at.strftime('%d/%m/%Y %H:%M:%S'))
+    embed.add_field(name='Guild Joined On:', value=member.joined_at.strftime('%d/%m/%Y %H:%M:%S'))
+    embed.add_field(name='Roles:', value=', '.join(f'`{role.name}`' for role in member.roles[1:]), inline=False)
+    if bot.user == member:
+        msg = 'D--> Do you wish to check out my STRONG muscles?'
+    elif ctx.author != member:
+        msg = 'D--> It seems you\'re a bit of a stalker, aren\'t you?'
+    else:
+        msg = 'D--> I understand the need to look at yourself in the mirror.'
+    await ctx.send(msg, embed=embed)
+
+@info.error
+async def info_error(ctx, error):
+    if isinstance(error, commands.BotMissingPermissions):
+        return
+    raise error
+
+@bot.command()
+@commands.bot_has_permissions(send_messages=True)
+async def ping(ctx):
+    await ctx.send(f'D--> <@!{ctx.message.author.id}>')
+
+@ping.error
+async def ping_error(ctx, error):
+    if isinstance(error, commands.BotMissingPermissions):
+        return
+    raise error
 
 if __name__ == '__main__':
     try:
