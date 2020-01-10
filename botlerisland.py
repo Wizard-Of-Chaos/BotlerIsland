@@ -5,15 +5,15 @@ from operator import attrgetter
 import asyncio as aio
 import discord as dc
 from discord.ext import commands
-from guildconfig import GuildConfig
-from rolesaver import RoleSaver
-from memberstalker import MemberStalker
+from modtools import GuildConfig, RoleSaver, MemberStalker
+from statstracker import StatsTracker
 
 bot = commands.Bot(command_prefix='D--> ')
 bot.remove_command('help')
 guild_config = GuildConfig(bot, 'config.pkl')
 role_saver = RoleSaver('roles.pkl')
 member_stalker = MemberStalker('times.pkl')
+stats_tracker = StatsTracker('stats.pkl')
 
 CONST_BAD_ID = 148346796186271744 # You-know-who
 
@@ -58,7 +58,7 @@ async def find_member(guild, name):
 
 @bot.event
 async def on_ready():
-    print('D--> At your command.')
+    print('D--> At your command.\n')
     
 @bot.event
 async def on_message(msg):
@@ -295,28 +295,16 @@ async def stats_error(ctx, error):
     raise error
         
 @stats.command()
-async def woc_counter(ctx): # Beta statistic feature
-    # woc_id = 125433170047795200
-    # if ctx.author.id == woc_id:
-        tards = 0
-        print('D--> Searching for slurs...')
-        for channel in ctx.guild.text_channels:
-            print(f'D--> Searching #{channel}:')
-            try:
-                history = channel.history(limit=None)
-            except dc.Forbidden:
-                continue
-            async for msg in history:
-                if msg.author.id == 125433170047795200 and 'retard' in msg.content:
-                    tards += 1
-        print(f'D--> Done. Total count: {tards}')
+async def woc_counter(ctx): # Beta statistic feature: Woc's Tard Counter!
+    if ctx.author.id == CONST_BAD_ID:
         await ctx.send(
-            f'D--> Wizard of Chaos has slurred {tards} times in this server.'
+            'D--> Are you sure you want to know that, Master Linky? '
+            'Regardless of your answer, I shall tell you.'
             )
-    # else:
-    #     await ctx.send(
-    #         'D--> It seems you are not the appropriate user for this command.'
-    #         )
+    tards = await stats_tracker.take(ctx, 'woc')
+    await ctx.send(
+        f'D--> Wizard of Chaos has slurred {tards} times in this server.'
+        )
 
 # END OF STATS
 # "TAG" COMMANDS
@@ -369,6 +357,11 @@ async def _help(ctx):
         )
     embed.add_field(name='`ping`', value='Pong!', inline=False)
     embed.add_field(
+        name='`stats`',
+        value='(Manage Roles only) Show server statistics.',
+        inline=False
+        )
+    embed.add_field(
         name='`config (msglog|usrlog)`',
         value='(Manage Server only) Sets the appropriate log channel.',
         inline=False
@@ -403,7 +396,11 @@ async def info(ctx, *, name=None):
     embed.add_field(name='Last Seen:', value=lastseenmsg, inline=False)
     embed.add_field(name='Account Created On:', value=member.created_at.strftime('%d/%m/%Y %H:%M:%S'))
     embed.add_field(name='Guild Joined On:', value=member.joined_at.strftime('%d/%m/%Y %H:%M:%S'))
-    embed.add_field(name='Roles:', value=', '.join(f'`{role.name}`' for role in member.roles[1:]), inline=False)
+    embed.add_field(
+        name='Roles:',
+        value=', '.join(f'`{role.name}`' for role in member.roles[1:]),
+        inline=False
+        )
     if bot.user == member:
         msg = 'D--> Do you wish to check out my STRONG muscles?'
     elif ctx.author != member:
