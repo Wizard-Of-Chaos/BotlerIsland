@@ -15,9 +15,6 @@ class GuildConfig(object):
         try:
             with open(self.fname, 'rb') as config_file:
                 self.mod_channels = pickle.load(config_file)
-            if not isinstance(self.mod_channels, defaultdict):
-                self.mod_channels = defaultdict(callback, self.mod_channels)
-                self.save()
         except (OSError, EOFError):
             self.mod_channels = defaultdict(callback, {})
             self.save()

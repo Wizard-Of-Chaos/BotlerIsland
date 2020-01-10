@@ -11,9 +11,6 @@ class RoleSaver(object):
         try:
             with open(self.fname, 'rb') as role_file:
                 self.user_roles = pickle.load(role_file)
-            if not isinstance(self.user_roles, defaultdict):
-                self.user_roles = defaultdict(dict, self.user_roles)
-                self.save()
         except (OSError, EOFError):
             self.user_roles = defaultdict(dict, {})
             self.save()

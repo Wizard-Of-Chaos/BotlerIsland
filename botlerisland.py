@@ -67,9 +67,7 @@ async def on_message(msg):
 
 @bot.event
 async def on_message_edit(bfr, aft):
-    if bfr.author == bot.user:
-        return
-    if bfr.content == aft.content:
+    if bfr.author == bot.user or bfr.content == aft.content:
         return
     guild = bfr.guild
     if guild_config.getlog(guild, 'msglog'):
