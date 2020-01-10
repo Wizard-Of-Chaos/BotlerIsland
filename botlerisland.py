@@ -276,6 +276,11 @@ async def msglog(ctx):
 @commands.bot_has_permissions(send_messages=True)
 @commands.has_permissions(manage_roles=True)
 async def stats(ctx):
+    if stats_tracker.lock:
+        await ctx.send(
+            'D--> I am currently in the middle of something. Try again later.'
+            )
+        return
     if ctx.invoked_subcommand is None:
         await ctx.send(
             'D--> It seems that you have attempted to run a nonexistent command.'

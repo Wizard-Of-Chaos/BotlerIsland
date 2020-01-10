@@ -56,11 +56,6 @@ class StatsTracker(object):
         return wocstat['value']
 
     async def take(self, ctx, stat):
-        if self.lock:
-            await ctx.send(
-                'D--> I am currently in the middle of something. Try again later.'
-                )
-            return
         if stat == 'woc':
             value = await self.woc_counter(ctx)
         else:
