@@ -41,7 +41,11 @@ class StatsTracker(object):
         for channel in ctx.guild.text_channels:
             print(f'D--> Searching #{channel}:')
             try:
-                history = channel.history(limit=None, after=wocstat['lastcall'])
+                history = channel.history(
+                    limit=None,
+                    before=ctx.message.created_at,
+                    after=wocstat['lastcall'],
+                    )
             except dc.Forbidden:
                 continue
             async for msg in history:
