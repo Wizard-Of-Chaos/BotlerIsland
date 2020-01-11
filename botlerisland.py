@@ -439,4 +439,6 @@ if __name__ == '__main__':
     except BaseException:
         raise
     finally:
+        guild_config.save()
+        role_saver.save()
         member_stalker.save()
