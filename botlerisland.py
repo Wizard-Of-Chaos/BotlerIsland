@@ -316,18 +316,19 @@ async def woc_counter(ctx): # Beta statistic feature: Woc's Tard Counter!
 # END OF STATS
 # "TAG" COMMANDS
 
+denial = dc.Embed(
+    color=dc.Color(0xFF0000),
+    description='D--> I would never stoop so low as to entertain the likes of this. '
+    'You are STRONGLY recommended to instead gaze upon my beautiful body.'
+    ).set_author(
+    name='D--> No.', icon_url=bot.user.avatar_url
+    ).set_image(
+    url='https://cdn.discordapp.com/attachments/'
+    '152981670507577344/664624516370268191/arquius.gif'
+    )
+
 @commands.bot_has_permissions(send_messages=True)
 async def tag(ctx):
-    denial = dc.Embed(
-        color=dc.Color(0xFF0000),
-        description='D--> I would never stoop so low as to entertain the likes of this. '
-        'You are STRONGLY recommended to instead gaze upon my beautiful body.'
-        )
-    denial.set_author(name='D--> No.', icon_url=bot.user.avatar_url)
-    denial.set_image(
-        url='https://cdn.discordapp.com/attachments/'
-        '152981670507577344/664624516370268191/arquius.gif'
-        )
     await ctx.send(embed=denial)
 
 bot.command(name='tag')(tag)
