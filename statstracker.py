@@ -8,17 +8,13 @@ def callback():
     return defaultdict(dict, {})
 
 class StatsTracker(object):
+    stat_funcs = {'woc_counter'}
+
     def __init__(self, fname):
         self.fname = fname
-        self.lock = False
+        self.locked = False
+        self.locked_msg = 'Stat cruncher is currently busy.'
         self.load()
-
-    def __enter__(self):
-        self.lock = True
-        return self
-
-    def __exit__(self, exc_type, exc_val, trace):
-        self.lock = False
 
     def load(self):
         try:
@@ -32,7 +28,20 @@ class StatsTracker(object):
         with open(self.fname, 'wb') as role_file:
             pickle.dump(self.stats, role_file)
 
-    async def woc_counter(self, ctx):
+    async def take(self, stat, ctx, args):
+        if self.locked:
+            await ctx.send(self.locked_msg)
+            return None
+        self.locked = True
+        if stat in self.stat_funcs:
+            value = await getattr(self, stat)(ctx, args)
+        else:
+            raise AttributeError(f'Invalid statistic function: {stat}')
+        self.save()
+        self.locked = False
+        return value
+
+    async def woc_counter(self, ctx, args):
         wocstat = self.stats[ctx.guild.id]['woc']
         if not wocstat:
             wocstat['value'] = 0
@@ -55,10 +64,8 @@ class StatsTracker(object):
         print(f'D--> Done. Total count: {wocstat["value"]}\n')
         return wocstat['value']
 
-    async def take(self, ctx, stat):
-        if stat == 'woc':
-            value = await self.woc_counter(ctx)
-        else:
-            raise ValueError(f'Invalid stat type {stat}')
-        self.save()
-        return value
+    async def insecurity(self, ctx, args):
+        pass
+
+    async def member_count(self, ctx, args):
+        pass

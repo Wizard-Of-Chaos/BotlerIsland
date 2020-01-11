@@ -35,15 +35,10 @@ class GuildConfig(object):
 
     def setlog(self, ctx, log):
         try:
-            guild = ctx.guild
-        except AttributeError:
-            return 'Log cannot be set in this channel!'
-        try:
-            self.mod_channels[guild.id][log] = ctx.channel.id
+            self.mod_channels[ctx.guild.id][log] = ctx.channel.id
         except KeyError:
             raise ValueError(f'Invalid log channel type {log}')
         self.save()
-        return 'Log channel has been set and saved!'
 
 
 class RoleSaver(object):

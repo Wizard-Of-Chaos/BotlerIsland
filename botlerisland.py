@@ -14,6 +14,10 @@ guild_config = GuildConfig(bot, 'config.pkl')
 role_saver = RoleSaver('roles.pkl')
 member_stalker = MemberStalker('times.pkl')
 stats_tracker = StatsTracker('stats.pkl')
+stats_tracker.locked_msg = (
+    'D--> It seems that I am currently in the middle of something. '
+    'I STRONGLY suggest that you wait for me to finish.'
+    )
 
 CONST_BAD_ID = 148346796186271744 # You-know-who
 
@@ -263,11 +267,13 @@ async def config_error(ctx, error):
 
 @config.command()
 async def usrlog(ctx):
-    await ctx.send(guild_config.setlog(ctx, 'usrlog'))
+    guild_config.setlog(ctx, 'usrlog')
+    await ctx.send('D--> The moderation log channel has been set and saved.')
         
 @config.command()
 async def msglog(ctx):
-    await ctx.send(guild_config.setlog(ctx, 'msglog'))
+    guild_config.setlog(ctx, 'msglog')
+    await ctx.send('D--> The join log channel has been set and saved.')
 
 # END OF CONFIG
 # STATS COMMANDS
@@ -276,11 +282,6 @@ async def msglog(ctx):
 @commands.bot_has_permissions(send_messages=True)
 @commands.has_permissions(manage_roles=True)
 async def stats(ctx):
-    if stats_tracker.lock:
-        await ctx.send(
-            'D--> I am currently in the middle of something. Try again later.'
-            )
-        return
     if ctx.invoked_subcommand is None:
         await ctx.send(
             'D--> It seems that you have attempted to run a nonexistent command.'
@@ -304,13 +305,13 @@ async def woc_counter(ctx): # Beta statistic feature: Woc's Tard Counter!
     if ctx.author.id == CONST_BAD_ID:
         await ctx.send(
             'D--> Are you sure you want to know that, Master Linky? '
-            'Regardless of your answer, I shall tell you.'
+            'Regardless of your answer, I shall tell you, though I STRONGLY suggest you wait.'
             )
-    with stats_tracker:
-        tards = await stats_tracker.take(ctx, 'woc')
-    await ctx.send(
-        f'D--> Wizard of Chaos has slurred {tards} times in this server, {ctx.author.mention}.'
-        )
+    tards = await stats_tracker.take('woc_counter', ctx, None)
+    if tards is not None:
+        await ctx.send(
+            f'D--> Wizard of Chaos has slurred {tards} times in this server, {ctx.author.mention}.'
+            )
 
 # END OF STATS
 # "TAG" COMMANDS
