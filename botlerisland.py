@@ -218,33 +218,34 @@ async def on_member_update(bfr, aft): # Log role and nickname changes
 async def on_user_update(bfr, aft): # Log avatar, name, discrim changes
     for guild in bot.guilds:
         if guild_config.getlog(guild, 'msglog') and guild.get_member(bfr.id):
-            changetype = None
+            changetype = []
+            changelog = []
             if bfr.name != aft.name:
-                changetype = 'Username Update:'
-                changelog = (
+                changetype.append('Username Update:')
+                changelog.append(
                     f'**Old Username:** {bfr}\n'
                     f'**New Username:** {aft}'
                     )
             if bfr.discriminator != aft.discriminator:
-                changetype = 'Discriminator Update:'
-                changelog = (
+                changetype.append('Discriminator Update:')
+                changelog.append(
                     f'{bfr} had their discriminator changed from '
                     f'{bfr.discriminator} to {aft.discriminator}'
                     )
             if bfr.avatar != aft.avatar:
-                changetype = 'Avatar Update:'
-                changelog = f'{bfr} has changed their avatar to:'
-            if changetype is not None:
+                changetype.append('Avatar Update:')
+                changelog.append(f'{bfr} has changed their avatar to:')
+            for ctype, clog in zip(changetype, changelog):
                 embed = dc.Embed(
                     color=dc.Color.purple(),
                     timestamp=datetime.utcnow(),
-                    description=changelog,
+                    description=clog,
                     )
-                if changetype.startswith('Avatar'):
+                if ctype.startswith('Avatar'):
                     embed.set_thumbnail(url=f'{aft.avatar_url}')
-                    embed.set_author(name=changetype, icon_url=await grab_avatar(bfr))
+                    embed.set_author(name=ctype, icon_url=await grab_avatar(bfr))
                 else:
-                    embed.set_author(name=changetype, icon_url=aft.avatar_url)
+                    embed.set_author(name=ctype, icon_url=aft.avatar_url)
                 embed.add_field(name='**User ID:**', value=f'`{aft.id}`', inline=False)
                 await guild_config.log(guild, 'msglog', embed=embed)
                     
