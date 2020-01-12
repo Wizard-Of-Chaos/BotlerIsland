@@ -378,15 +378,18 @@ async def tag(ctx):
         )
     await ctx.send(embed=denial)
 
-bot.command(name='tag')(tag)
-bot.command(name='tc')(tag)
-tag = bot.command(name='tt')(tag)
-
-@tag.error
 async def tag_error(ctx, error):
     if isinstance(error, commands.BotMissingPermissions):
         return
     raise error
+
+tt = bot.command(name='tt')(tag)
+tc = bot.command(name='tc')(tag)
+tag = bot.command(name='tag')(tag)
+
+tt.error(tag_error)
+tc.error(tag_error)
+tag.error(tag_error)
 
 # END OF "TAG"S
 # UNGROUPED COMMANDS
