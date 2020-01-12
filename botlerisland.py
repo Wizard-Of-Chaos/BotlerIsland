@@ -283,6 +283,7 @@ async def config_error(ctx, error):
             f'D--> It seems that you don\'t have the appropriate permissions for this command. '
             f'I STRONGLY recommend you back off or get bucked off, {ctx.author.name}.'
             )
+        return
     elif isinstance(error, commands.BotMissingPermissions):
         return
     raise error
@@ -303,11 +304,13 @@ async def msglog(ctx):
 @bot.group()
 @commands.bot_has_permissions(send_messages=True)
 @commands.has_permissions(administrator=True)
-async def execute(ctx):
-    if ctx.invoked_subcommand is None:
+async def execute(ctx, *, args=None):
+    if args == 'order 66':
+        guild_config.set_containment(ctx)
+        await ctx.send('D--> I have done it, master.')
+    else:
         await ctx.send(
-            'D--> It seems that you have attempted to run a nonexistent command. '
-            'Would you like to try again? Redos are free, you know.'
+            'D--> It seems you were not quite clear. Vocalize your desire STRONGLY.'
             )
 
 @execute.error
@@ -316,20 +319,10 @@ async def execute_error(ctx, error):
         await ctx.send(
             f'D--> Only the senate may execute this order, {ctx.author.name}.'
             )
+        return
     elif isinstance(error, commands.BotMissingPermissions):
         return
     raise error
-
-# star_wars_id = 665584393754116107 # HSD
-star_wars_id = 665776690596675584 # Test Server
-@execute.command()
-async def order66(ctx):
-    role = ctx.guild.get_role(star_wars_id)
-    if role is None:
-        await ctx.send('D--> There must have been a mistake.')
-        return
-    guild_config.set_containment(ctx, role)
-    await ctx.send('D--> I have done it, master.')
 
 # END OF EXECUTE
 # STATS COMMANDS
@@ -434,7 +427,7 @@ async def _help(ctx):
         )
     embed.add_field(
         name='`execute order66`',
-        value='(Senate only) Declares all Jedi to be enemies of the Republic.',
+        value='(Senate only) Declares all Jedi to be enemies of the Republic for 5 minutes.',
         inline=False
         )
     await ctx.send(embed=embed)

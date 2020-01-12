@@ -1,34 +1,42 @@
-from collections import defaultdict
+from datetime import datetime, timedelta
+from collections import defaultdict, deque
 import pickle
 import discord as dc
-
-triggers = (
-    'star wars', 'starwars', 'star war', 'starwar',
-    'ewok', 'wookie', 'wookiee', 'chewbacca', 'pod racing', 'skywalker',
-    )
+from discord.ext import tasks, commands
 
 def callback(): # Lambdas can't be pickled, but named functions can.
     return {'usrlog': None, 'msglog': None, 'star_wars': None}
 
-class GuildConfig(object):
+class Singleton(object):
+    instance = None
+    def __new__(cls, *args, **kwargs):
+        if cls.instance is None:
+            cls.instance = super().__new__(cls)
+        return cls.instance
+
+
+class GuildConfig(Singleton):
     def __init__(self, bot, fname):
+        StarWarsPunisher.bot = bot
         self.bot = bot
         self.fname = fname
+        self.punishers = {}
         self.load()
 
     def load(self):
         try:
             with open(self.fname, 'rb') as config_file:
                 self.mod_channels = pickle.load(config_file)
-            for guild in self.mod_channels.values():
-                if 'star_wars' not in guild:
-                    guild['star_wars'] = None
+            for guild_id, channels in self.mod_channels.items():
+                channels['star wars'] = None
             self.save()
         except (OSError, EOFError):
             self.mod_channels = defaultdict(callback, {})
             self.save()
 
     def save(self):
+        for guild_id, punisher in self.punishers.items():
+            self.mod_channels[guild_id]['star wars'] = punisher.dump()
         with open(self.fname, 'wb') as config_file:
             pickle.dump(self.mod_channels, config_file)
 
@@ -47,36 +55,82 @@ class GuildConfig(object):
             raise ValueError(f'Invalid log channel type {log}')
         self.save()
 
-    def set_containment(self, ctx, role):
-        channel = ctx.channel
-        self.mod_channels[channel.guild.id]['star wars'] = {
-            'sentinel': channel.id,
-            'role': role.id,
-            'lastcall': None,
-            }
-        self.save()
+    def set_containment(self, ctx):
+        guild_id = ctx.guild.id
+        star_wars = self.mod_channels[guild_id]['star wars']
+        if star_wars is None:
+            self.punishers[guild_id] = StarWarsPunisher(guild_id)
+            self.save()
+        elif guild_id not in self.punishers:
+            self.punishers[guild_id] = StarWarsPunisher(
+                guild_id, star_wars['banlist'], star_wars['lastcall']
+                )
+        self.punishers[guild_id].monitor(ctx)
 
     def detect_star_wars(self, msg):
-        star_wars = self.mod_channels[msg.guild.id]['star wars']
-        if star_wars is None:
+        if msg.guild.id not in self.punishers:
             return False
-        return (msg.channel.id == star_wars['sentinel'] 
+        return self.punishers[msg.guild.id].detect(msg)
+
+    async def punish_star_wars(self, msg):
+        return await self.punishers[msg.guild.id].punish(msg)
+
+
+triggers = (
+    'star wars', 'starwars', 'star war', 'starwar', 'skywalker',
+    'ewok', 'wookie', 'wookiee', 'chewbacca', 'pod racing', 'kylo ren'
+    'jedi', 'force awakens', 'empire strikes back', 'darth', 'yoda',
+    'general grievous', 'sheev', 'palpatine', 'vader', 'mandalorian',
+    'at st', 'george lucas', 'obi wan', 'anakin', 'han solo', 'ben solo',
+    )
+
+class StarWarsPunisher(commands.Cog):
+    def __init__(self, guild_id, banlist=None, lastcall=None):
+        self.guild = self.bot.get_guild(guild_id)
+        self.banlist = banlist or deque([])
+        self.lastcall = lastcall
+        self.order66 = None
+        self.role = dc.utils.find(
+            lambda r: 'star wars' in r.name.lower(),
+            self.guild.roles
+            )
+        self.manage_bans.start()
+
+    def dump(self):
+        return {
+            'guild': self.guild.id,
+            'banlist': self.banlist,
+            'lastcall': self.lastcall,
+            }
+
+    def monitor(self, ctx):
+        self.order66 = (ctx.channel.id, ctx.message.created_at+timedelta(minutes=5))
+
+    def detect(self, msg):
+        return (self.order66
+            and msg.channel.id == self.order66[0]
             and any(map(msg.content.lower().__contains__, triggers))
             )
 
-    async def punish_star_wars(self, msg):
-        star_wars = self.mod_channels[msg.guild.id]['star wars']
-        await msg.author.add_roles(
-            msg.guild.get_role(star_wars['role']),
-            reason='Star Wars.',
-            )
-        if star_wars['lastcall'] is None:
+    async def punish(self, msg):
+        await msg.author.add_roles(self.role, reason='Star Wars.')
+        self.banlist.append((msg.author.id, msg.created_at+timedelta(minutes=30)))
+        if self.lastcall is None:
             dt = None
         else:
-            dt = msg.created_at - star_wars['lastcall']
-        star_wars['lastcall'] = msg.created_at
-        self.save()
+            dt = msg.created_at - self.lastcall
+        self.lastcall = msg.created_at
         return dt
+
+    @tasks.loop(seconds=5.0)
+    async def manage_bans(self):
+        if self.order66 is not None and self.order66[1] < datetime.utcnow():
+            await self.bot.get_channel(self.order66[0]).send('D--> The senate recedes.')
+            self.order66 = None
+        if self.banlist and self.banlist[0][1] < datetime.utcnow():
+            await self.guild.get_member(self.banlist.popleft()[0]).remove_roles(
+                self.role, reason='Star Wars timeout.'
+                )
 
 
 class RoleSaver(object):
