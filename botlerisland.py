@@ -67,31 +67,30 @@ async def on_ready():
 @bot.event
 async def on_message(msg):
     member_stalker.update(msg)
-    if msg.author.id == 167131099456208898 or msg.guild is None:
+    if msg.guild is None:
         return
-    elif msg.guild:
-        ctx = await bot.get_context(msg)
-        if ctx.valid:
-            await bot.process_commands(msg)
-        elif msg.content == 'good work arquius':
-            await msg.channel.send('D--> :sunglasses:')
-        elif msg.author != bot.user and guild_config.detect_star_wars(msg):
-            dt = await guild_config.punish_star_wars(msg)
-            embed = dc.Embed(
-                color=msg.author.color,
-                timestamp=msg.created_at,
-                description=f'D--> It seems that **{msg.author.name}** has mentioned that which '
-                'has been expressly forbidden by the powers that be, and has thus been '
-                'STRONGLY punished accordingly.'
-                )
-            embed.set_author(name='D--> Forbidden.', icon_url=bot.user.avatar_url)
-            embed.add_field(
-                name='**Time since last incident:**',
-                value='N/A' if dt is None else
-                f'It has been {dt.days} days, {dt.seconds//3600} hours, '
-                f'{dt.seconds//60%60} minutes and {dt.seconds%60} seconds.'
-                )
-            await msg.channel.send(embed=embed)
+    ctx = await bot.get_context(msg)
+    if ctx.valid or msg.author.id != 167131099456208898:
+        await bot.process_commands(msg)
+    elif msg.content == 'good work arquius':
+        await msg.channel.send('D--> :sunglasses:')
+    elif msg.author != bot.user and guild_config.detect_star_wars(msg):
+        dt = await guild_config.punish_star_wars(msg)
+        embed = dc.Embed(
+            color=msg.author.color,
+            timestamp=msg.created_at,
+            description=f'D--> It seems that **{msg.author.name}** has mentioned that which '
+            'has been expressly forbidden by the powers that be, and has thus been '
+            'STRONGLY punished accordingly.'
+            )
+        embed.set_author(name='D--> Forbidden.', icon_url=bot.user.avatar_url)
+        embed.add_field(
+            name='**Time since last incident:**',
+            value='N/A' if dt is None else
+            f'It has been {dt.days} days, {dt.seconds//3600} hours, '
+            f'{dt.seconds//60%60} minutes and {dt.seconds%60} seconds.'
+            )
+        await msg.channel.send(embed=embed)
 
 @bot.event
 async def on_message_edit(bfr, aft): # Log edited messages
