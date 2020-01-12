@@ -426,7 +426,7 @@ async def _help(ctx):
         inline=False
         )
     embed.add_field(
-        name='`execute order66`',
+        name='`execute order 66`',
         value='(Senate only) Declares all Jedi to be enemies of the Republic for 5 minutes.',
         inline=False
         )
