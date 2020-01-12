@@ -27,9 +27,6 @@ class GuildConfig(Singleton):
         try:
             with open(self.fname, 'rb') as config_file:
                 self.mod_channels = pickle.load(config_file)
-            for guild_id, channels in self.mod_channels.items():
-                channels['star wars'] = None
-            self.save()
         except (OSError, EOFError):
             self.mod_channels = defaultdict(callback, {})
             self.save()
