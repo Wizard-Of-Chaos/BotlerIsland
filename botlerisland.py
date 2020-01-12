@@ -428,13 +428,13 @@ async def _help(ctx):
         inline=False
         )
     embed.add_field(
-        name='`execute order66 <rolename>`',
-        value='(Manage Server only) Declares all with the role as enemies of the Republic.',
+        name='`config (msglog|usrlog)`',
+        value='(Manage Server only) Sets the appropriate log channel.',
         inline=False
         )
     embed.add_field(
-        name='`config (msglog|usrlog)`',
-        value='(Manage Server only) Sets the appropriate log channel.',
+        name='`execute order66`',
+        value='(Senate only) Declares all Jedi to be enemies of the Republic.',
         inline=False
         )
     await ctx.send(embed=embed)
