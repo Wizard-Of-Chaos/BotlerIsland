@@ -2,8 +2,13 @@ from collections import defaultdict
 import pickle
 import discord as dc
 
+triggers = (
+    'star wars', 'starwars', 'star war', 'starwar',
+    'ewok', 'wookie', 'wookiee', 'chewbacca', 'pod racing', 'skywalker',
+    )
+
 def callback(): # Lambdas can't be pickled, but named functions can.
-    return {'usrlog': None, 'msglog': None}
+    return {'usrlog': None, 'msglog': None, 'star_wars': None}
 
 class GuildConfig(object):
     def __init__(self, bot, fname):
@@ -15,7 +20,9 @@ class GuildConfig(object):
         try:
             with open(self.fname, 'rb') as config_file:
                 self.mod_channels = pickle.load(config_file)
-            self.mod_channels = defaultdict(callback, self.mod_channels)
+            for guild in self.mod_channels.values():
+                if 'star_wars' not in guild:
+                    guild['star_wars'] = None
             self.save()
         except (OSError, EOFError):
             self.mod_channels = defaultdict(callback, {})
@@ -39,6 +46,37 @@ class GuildConfig(object):
         except KeyError:
             raise ValueError(f'Invalid log channel type {log}')
         self.save()
+
+    def set_containment(self, ctx, role):
+        channel = ctx.channel
+        self.mod_channels[channel.guild.id]['star wars'] = {
+            'sentinel': channel.id,
+            'role': role.id,
+            'lastcall': None,
+            }
+        self.save()
+
+    def detect_star_wars(self, msg):
+        star_wars = self.mod_channels[msg.guild.id]['star wars']
+        if star_wars is None:
+            return False
+        return (msg.channel.id == star_wars['sentinel'] 
+            and any(map(msg.content.lower().__contains__, triggers))
+            )
+
+    async def punish_star_wars(self, msg):
+        star_wars = self.mod_channels[msg.guild.id]['star wars']
+        await msg.author.add_roles(
+            msg.guild.get_role(star_wars['role']),
+            reason='Star Wars.',
+            )
+        if star_wars['lastcall'] is None:
+            dt = None
+        else:
+            dt = msg.created_at - star_wars['lastcall']
+        star_wars['lastcall'] = msg.created_at
+        self.save()
+        return dt
 
 
 class RoleSaver(object):

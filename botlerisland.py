@@ -69,10 +69,29 @@ async def on_message(msg):
     member_stalker.update(msg)
     if msg.author.id == 167131099456208898 or msg.guild is None:
         return
-    if msg.content == 'good work arquius':
-        await msg.channel.send('D--> :sunglasses:')
     elif msg.guild:
-        await bot.process_commands(msg)
+        ctx = await bot.get_context(msg)
+        if ctx.valid:
+            await bot.process_commands(msg)
+        elif msg.content == 'good work arquius':
+            await msg.channel.send('D--> :sunglasses:')
+        elif msg.author != bot.user and guild_config.detect_star_wars(msg):
+            dt = await guild_config.punish_star_wars(msg)
+            embed = dc.Embed(
+                color=msg.author.color,
+                timestamp=msg.created_at,
+                description=f'D--> It seems that **{msg.author.name}** has mentioned that which '
+                'has been expressly forbidden by the powers that be, and has thus been '
+                'STRONGLY punished accordingly.'
+                )
+            embed.set_author(name='D--> Forbidden.', icon_url=bot.user.avatar_url)
+            embed.add_field(
+                name='**Time since last incident:**',
+                value='N/A' if dt is None else
+                f'It has been {dt.days} days, {dt.seconds//3600} hours, '
+                f'{dt.seconds//60%60} minutes and {dt.seconds%60} seconds.'
+                )
+            await msg.channel.send(embed=embed)
 
 @bot.event
 async def on_message_edit(bfr, aft): # Log edited messages
@@ -276,6 +295,36 @@ async def msglog(ctx):
     await ctx.send('D--> The join log channel has been set and saved.')
 
 # END OF CONFIG
+# EXECUTE ORDER 66
+
+@bot.group()
+@commands.bot_has_permissions(send_messages=True)
+@commands.has_permissions(manage_guild=True)
+async def execute(ctx):
+    if ctx.invoked_subcommand is None:
+        await ctx.send(
+            'D--> It seems that you have attempted to run a nonexistent command. '
+            'Would you like to try again? Redos are free, you know.'
+            )
+
+@execute.error
+async def execute_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send(
+            f'D--> It seems that you don\'t have the appropriate permissions for this command. '
+            f'I STRONGLY recommend you back off or get bucked off, {ctx.author.name}.'
+            )
+
+@execute.command()
+async def order66(ctx, *, rolename):
+    role = dc.utils.get(ctx.guild.roles, name=rolename)
+    if role is None:
+        await ctx.send('D--> I could not find that role.')
+        return
+    guild_config.set_containment(ctx, role)
+    await ctx.send('D--> I have done it, master.')
+
+# END OF EXECUTE
 # STATS COMMANDS
 
 @bot.group()
@@ -316,19 +365,18 @@ async def woc_counter(ctx): # Beta statistic feature: Woc's Tard Counter!
 # END OF STATS
 # "TAG" COMMANDS
 
-denial = dc.Embed(
-    color=dc.Color(0xFF0000),
-    description='D--> I would never stoop so low as to entertain the likes of this. '
-    'You are STRONGLY recommended to instead gaze upon my beautiful body.'
-    ).set_author(
-    name='D--> No.', icon_url=bot.user.avatar_url
-    ).set_image(
-    url='https://cdn.discordapp.com/attachments/'
-    '152981670507577344/664624516370268191/arquius.gif'
-    )
-
 @commands.bot_has_permissions(send_messages=True)
 async def tag(ctx):
+    denial = dc.Embed(
+        color=dc.Color(0xFF0000),
+        description='D--> I would never stoop so low as to entertain the likes of this. '
+        'You are STRONGLY recommended to instead gaze upon my beautiful body.'
+        )
+    denial.set_author(name='D--> No.', icon_url=bot.user.avatar_url)
+    denial.set_image(
+        url='https://cdn.discordapp.com/attachments/'
+        '152981670507577344/664624516370268191/arquius.gif'
+        )
     await ctx.send(embed=denial)
 
 bot.command(name='tag')(tag)
@@ -367,6 +415,11 @@ async def _help(ctx):
     embed.add_field(
         name='`stats`',
         value='(Manage Roles only) Show server statistics.',
+        inline=False
+        )
+    embed.add_field(
+        name='`execute order66 <rolename>`',
+        value='(Manage Server only) Declares all with the role as enemies of the Republic.',
         inline=False
         )
     embed.add_field(
