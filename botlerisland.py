@@ -70,7 +70,7 @@ async def on_message(msg):
     if msg.guild is None:
         return
     ctx = await bot.get_context(msg)
-    if ctx.valid or msg.author.id != 167131099456208898:
+    if ctx.valid and msg.author.id != 167131099456208898:
         await bot.process_commands(msg)
     elif msg.content == 'good work arquius':
         await msg.channel.send('D--> :sunglasses:')
@@ -315,11 +315,13 @@ async def execute_error(ctx, error):
             f'I STRONGLY recommend you back off or get bucked off, {ctx.author.name}.'
             )
 
+# star_wars_id = 665584393754116107 # HSD
+star_wars_id = 665776690596675584 # Test Server
 @execute.command()
-async def order66(ctx, *, rolename):
-    role = dc.utils.get(ctx.guild.roles, name=rolename)
+async def order66(ctx):
+    role = ctx.guild.get_role(star_wars_id)
     if role is None:
-        await ctx.send('D--> I could not find that role.')
+        await ctx.send('D--> There must have been a mistake.')
         return
     guild_config.set_containment(ctx, role)
     await ctx.send('D--> I have done it, master.')
