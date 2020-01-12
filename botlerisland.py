@@ -283,6 +283,9 @@ async def config_error(ctx, error):
             f'D--> It seems that you don\'t have the appropriate permissions for this command. '
             f'I STRONGLY recommend you back off or get bucked off, {ctx.author.name}.'
             )
+    elif isinstance(error, commands.BotMissingPermissions):
+        return
+    raise error
 
 @config.command()
 async def usrlog(ctx):
@@ -299,7 +302,7 @@ async def msglog(ctx):
 
 @bot.group()
 @commands.bot_has_permissions(send_messages=True)
-@commands.has_permissions(manage_guild=True)
+@commands.has_permissions(administrator=True)
 async def execute(ctx):
     if ctx.invoked_subcommand is None:
         await ctx.send(
@@ -311,9 +314,11 @@ async def execute(ctx):
 async def execute_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
         await ctx.send(
-            f'D--> It seems that you don\'t have the appropriate permissions for this command. '
-            f'I STRONGLY recommend you back off or get bucked off, {ctx.author.name}.'
+            f'D--> Only the senate may execute this order, {ctx.author.name}.'
             )
+    elif isinstance(error, commands.BotMissingPermissions):
+        return
+    raise error
 
 # star_wars_id = 665584393754116107 # HSD
 star_wars_id = 665776690596675584 # Test Server
