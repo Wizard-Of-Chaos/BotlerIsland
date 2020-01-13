@@ -91,7 +91,15 @@ async def on_message(msg):
             f'{dt.seconds//60%60} minutes and {dt.seconds%60} seconds.'
             )
         await msg.channel.send(embed=embed)
-
+    elif msg.content == "ZA WARUDO" and msg.author.id == 125433170047795200:
+        e = msg.guild.roles[0]
+        await msg.channel.set_permissions(e, overwrite=dc.PermissionOverwrite(send_messages=False))
+        print("D--> ZA WARUDO!")
+    elif msg.content == "time resumes" and msg.author.id == 125433170047795200:
+        e = msg.guild.roles[0]
+        await msg.channel.set_permissions(e, overwrite=dc.PermissionOverwrite(send_messages=None))
+        print("D--> Time has resumed.")
+        
 @bot.event
 async def on_message_edit(bfr, aft): # Log edited messages
     if bfr.author == bot.user or bfr.content == aft.content:
