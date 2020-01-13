@@ -58,7 +58,7 @@ class GuildConfig(Singleton):
 
     def set_containment(self, ctx):
         guild_id = ctx.guild.id
-        star_wars = self.mod_channels[guild_id]['star wars']
+        star_wars = self.mod_channels[guild_id]['star_wars']
         if star_wars is None:
             self.punishers[guild_id] = StarWarsPunisher(guild_id)
             self.save()
