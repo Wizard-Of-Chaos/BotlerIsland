@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from collections import defaultdict, deque
+import re
 import pickle
 import discord as dc
 from discord.ext import tasks, commands
@@ -29,11 +30,14 @@ class GuildConfig(Singleton):
                 self.mod_channels = pickle.load(config_file)
         except (OSError, EOFError):
             self.mod_channels = defaultdict(callback, {})
-            self.save()
+        self.save()
 
     def save(self):
-        for guild_id, punisher in self.punishers.items():
-            self.mod_channels[guild_id]['star wars'] = punisher.dump()
+        for guild_id, config in self.mod_channels.items():
+            try:
+                config['star_wars'] = self.punishers[guild_id].dump()
+            except KeyError:
+                config['star_wars'] = None
         with open(self.fname, 'wb') as config_file:
             pickle.dump(self.mod_channels, config_file)
 
@@ -73,13 +77,15 @@ class GuildConfig(Singleton):
         return await self.punishers[msg.guild.id].punish(msg)
 
 
-triggers = (
-    'star wars', 'starwars', 'star war', 'starwar', 'skywalker',
-    'ewok', 'wookie', 'wookiee', 'chewbacca', 'pod racing', 'kylo ren'
-    'jedi', 'force awakens', 'empire strikes back', 'darth', 'yoda',
-    'general grievous', 'sheev', 'palpatine', 'vader', 'mandalorian',
-    'at st', 'george lucas', 'obi wan', 'anakin', 'han solo', 'ben solo',
-    )
+triggers = [*map(re.compile, (
+    r'\bstar wars\b', r'\bstarwars\b', r'\bstar war\b', r'\bstarwar\b',
+    r'\bskywalker\b', r'\banakin\b', r'\bjedi\b', r'\bpod racing\b', r'\byoda\b',
+    r'\bewok\b', r'\bwookie\b', r'\bwookiee\b', r'\bchewbacca\b', r'\bkylo ren\b',
+    r'\bmandalorian\b', r'\bobi wan\b', r'\bhan solo\b', r'\bben solo\b',
+    r'\bforce awakens\b', r'\bempire strikes back\b', r'\bdarth\b',
+    r'\bgeneral grievous\b', r'\bsheev\b', r'\bpalpatine\b', r'\bvader\b',
+    r'\bat st\b', r'\bgeorge lucas\b',
+    ))]
 
 class StarWarsPunisher(commands.Cog):
     def __init__(self, guild_id, banlist=None, lastcall=None):
@@ -101,13 +107,15 @@ class StarWarsPunisher(commands.Cog):
 
     def monitor(self, ctx):
         if self.order66 is None:
+            print('!')
             self.manage_bans.start()
         self.order66 = (ctx.channel.id, ctx.message.created_at+timedelta(minutes=5))
 
     def detect(self, msg):
+        content = msg.content.lower()
         return (self.order66
             and msg.channel.id == self.order66[0]
-            and any(map(msg.content.lower().__contains__, triggers))
+            and any(pattern.patch(content) for pattern in triggers)
             )
 
     async def punish(self, msg):

@@ -63,6 +63,9 @@ async def find_member(guild, name):
 @bot.event
 async def on_ready():
     print('D--> At your command.\n')
+    return await bot.change_presence(
+        activity=dc.Game(name='D--> A beautiful stallion.')
+        )
     
 @bot.event
 async def on_message(msg):
@@ -91,15 +94,45 @@ async def on_message(msg):
             f'{dt.seconds//60%60} minutes and {dt.seconds%60} seconds.'
             )
         await msg.channel.send(embed=embed)
-    elif msg.content == "ZA WARUDO" and msg.author.id == 125433170047795200:
-        e = msg.guild.roles[0]
-        await msg.channel.set_permissions(e, overwrite=dc.PermissionOverwrite(send_messages=False))
-        print("D--> ZA WARUDO!")
-    elif msg.content == "time resumes" and msg.author.id == 125433170047795200:
-        e = msg.guild.roles[0]
-        await msg.channel.set_permissions(e, overwrite=dc.PermissionOverwrite(send_messages=None))
-        print("D--> Time has resumed.")
-        
+    elif msg.author.permissions_in(msg.channel).administrator:
+        if msg.content == 'ZA WARUDO':
+            embed = dc.Embed(
+                color=dc.Color(0xFFFF00),
+                timestamp=msg.created_at,
+                description=f'D--> The time is neigh; your foolish actions shall face STRONG '
+                f'consequences, **#{msg.channel}**! It is __***USELESS***__ to resist!'
+                )
+            embed.set_author(
+                name='D--> 「ザ・ワールド」!!',
+                icon_url='https://cdn.discordapp.com/attachments/'
+                '663452978237407265/666347705450102824/tumblr_pmsciwJBF71v7ql19_1280.png',
+                )
+            embed.set_image(
+                url='https://cdn.discordapp.com/attachments/'
+                '663452978237407265/666344503371759617/ZAWARUDO.gif'
+                )
+            await msg.channel.send(embed=embed) # Order of operations is important
+            await msg.channel.set_permissions(
+                msg.guild.roles[0],
+                overwrite=dc.PermissionOverwrite(send_messages=False)
+                )
+        elif msg.content == 'time resumes':
+            await msg.channel.set_permissions(
+                msg.guild.roles[0],
+                overwrite=dc.PermissionOverwrite(send_messages=None)
+                )
+            embed = dc.Embed(
+                color=dc.Color(0xFFFF00),
+                timestamp=msg.created_at,
+                description=f'D--> Time has resumed in **#{msg.channel}**.'
+                )
+            embed.set_author(
+                name='D--> 時は動きです。',
+                icon_url='https://cdn.discordapp.com/attachments/'
+                '663452978237407265/666347705450102824/tumblr_pmsciwJBF71v7ql19_1280.png',
+                )
+            await msg.channel.send(embed=embed)
+    
 @bot.event
 async def on_message_edit(bfr, aft): # Log edited messages
     if bfr.author == bot.user or bfr.content == aft.content:
@@ -272,6 +305,32 @@ async def on_voice_state_update(member, bfr, aft): # Logged when a member joins 
             await guild_config.log(guild, 'msglog', embed=embed)
 
 # END OF EVENTS
+# EXECUTE ORDER 66
+
+@bot.command()
+@commands.bot_has_permissions(send_messages=True)
+@commands.has_permissions(administrator=True)
+async def execute(ctx, *, args=None):
+    if args == 'order 66':
+        guild_config.set_containment(ctx)
+        await ctx.send('D--> I have done it, master.')
+    else:
+        await ctx.send(
+            'D--> It seems you were not quite clear. Vocalize your desire STRONGLY.'
+            )
+
+@execute.error
+async def execute_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send(
+            f'D--> Only the senate may execute this order, {ctx.author.name}.'
+            )
+        return
+    elif isinstance(error, commands.BotMissingPermissions):
+        return
+    raise error
+
+# END OF EXECUTE
 # CONFIG COMMANDS
 
 @bot.group()
@@ -307,32 +366,6 @@ async def msglog(ctx):
     await ctx.send('D--> The join log channel has been set and saved.')
 
 # END OF CONFIG
-# EXECUTE ORDER 66
-
-@bot.group()
-@commands.bot_has_permissions(send_messages=True)
-@commands.has_permissions(administrator=True)
-async def execute(ctx, *, args=None):
-    if args == 'order 66':
-        guild_config.set_containment(ctx)
-        await ctx.send('D--> I have done it, master.')
-    else:
-        await ctx.send(
-            'D--> It seems you were not quite clear. Vocalize your desire STRONGLY.'
-            )
-
-@execute.error
-async def execute_error(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send(
-            f'D--> Only the senate may execute this order, {ctx.author.name}.'
-            )
-        return
-    elif isinstance(error, commands.BotMissingPermissions):
-        return
-    raise error
-
-# END OF EXECUTE
 # STATS COMMANDS
 
 @bot.group()
@@ -373,6 +406,7 @@ async def woc_counter(ctx): # Beta statistic feature: Woc's Tard Counter!
 # END OF STATS
 # "TAG" COMMANDS
 
+@bot.command(aliases=['tc', 'tt'])
 @commands.bot_has_permissions(send_messages=True)
 async def tag(ctx):
     denial = dc.Embed(
@@ -387,18 +421,11 @@ async def tag(ctx):
         )
     await ctx.send(embed=denial)
 
+@tag.error
 async def tag_error(ctx, error):
     if isinstance(error, commands.BotMissingPermissions):
         return
     raise error
-
-tt = bot.command(name='tt')(tag)
-tc = bot.command(name='tc')(tag)
-tag = bot.command(name='tag')(tag)
-
-tt.error(tag_error)
-tc.error(tag_error)
-tag.error(tag_error)
 
 # END OF "TAG"S
 # UNGROUPED COMMANDS
