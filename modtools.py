@@ -91,7 +91,6 @@ class StarWarsPunisher(commands.Cog):
             lambda r: 'star wars' in r.name.lower(),
             self.guild.roles
             )
-        self.manage_bans.start()
 
     def dump(self):
         return {
@@ -101,6 +100,8 @@ class StarWarsPunisher(commands.Cog):
             }
 
     def monitor(self, ctx):
+        if self.order66 is None:
+            self.manage_bans.start()
         self.order66 = (ctx.channel.id, ctx.message.created_at+timedelta(minutes=5))
 
     def detect(self, msg):
@@ -121,13 +122,18 @@ class StarWarsPunisher(commands.Cog):
 
     @tasks.loop(seconds=5.0)
     async def manage_bans(self):
-        if self.order66 is not None and self.order66[1] < datetime.utcnow():
-            await self.bot.get_channel(self.order66[0]).send('D--> The senate recedes.')
-            self.order66 = None
         if self.banlist and self.banlist[0][1] < datetime.utcnow():
             await self.guild.get_member(self.banlist.popleft()[0]).remove_roles(
                 self.role, reason='Star Wars timeout.'
                 )
+        if self.order66 is not None:
+            if self.order66[1] < datetime.utcnow():
+                await self.bot.get_channel(self.order66[0]).send(
+                    'D--> The senate recedes.'
+                    )
+                self.order66 = None
+        elif not self.banlist:
+            self.manage_bans.cancel()
 
 
 class RoleSaver(object):
