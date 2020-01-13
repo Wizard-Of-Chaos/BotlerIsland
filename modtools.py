@@ -78,13 +78,12 @@ class GuildConfig(Singleton):
 
 
 triggers = [*map(re.compile, (
-    r'\bstar wars\b', r'\bstarwars\b', r'\bstar war\b', r'\bstarwar\b',
-    r'\bskywalker\b', r'\banakin\b', r'\bjedi\b', r'\bpod racing\b', r'\byoda\b',
-    r'\bewok\b', r'\bwookie\b', r'\bwookiee\b', r'\bchewbacca\b', r'\bkylo ren\b',
-    r'\bmandalorian\b', r'\bobi wan\b', r'\bhan solo\b', r'\bben solo\b',
-    r'\bforce awakens\b', r'\bempire strikes back\b', r'\bdarth\b',
-    r'\bgeneral grievous\b', r'\bsheev\b', r'\bpalpatine\b', r'\bvader\b',
-    r'\bat st\b', r'\bgeorge lucas\b',
+    r'\bstar\s*wars?\b', r'\bskywalker\b', r'\banakin\b', r'\bjedi\b',
+    r'\bpod racing\b', r'\byoda\b', r'\bdarth\b', r'\bvader\b',
+    r'\bewoks?\b', r'\bwookiee?s?\b', r'\bchewbacca\b',
+    r'\bmandalorian\b', r'\bobi wan( kenobi)?\b', r'\b(ha|be)n solo\b', r'\bkylo ren\b',
+    r'\bforce awakens?\b', r'\bempire strikes? back\b', r'\bat[- ]st\b', r'\bgeorge lucas\b',
+    r'\bgeneral grievous\b', r'\bsheev\b', r'\b(emperor )?palpatine\b',
     ))]
 
 class StarWarsPunisher(commands.Cog):
@@ -107,7 +106,6 @@ class StarWarsPunisher(commands.Cog):
 
     def monitor(self, ctx):
         if self.order66 is None:
-            print('!')
             self.manage_bans.start()
         self.order66 = (ctx.channel.id, ctx.message.created_at+timedelta(minutes=5))
 
@@ -115,7 +113,7 @@ class StarWarsPunisher(commands.Cog):
         content = msg.content.lower()
         return (self.order66
             and msg.channel.id == self.order66[0]
-            and any(pattern.patch(content) for pattern in triggers)
+            and any(pattern.search(content) for pattern in triggers)
             )
 
     async def punish(self, msg):
