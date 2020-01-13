@@ -411,7 +411,6 @@ async def time(ctx):
 async def resumes(ctx):
     msg = ctx.message
     if dict(iter(ctx.channel.overwrites_for(ctx.guild.roles[0])))['send_messages'] == None:
-        print('wocs a genius') 
         return
     await msg.channel.set_permissions(
         msg.guild.roles[0],
