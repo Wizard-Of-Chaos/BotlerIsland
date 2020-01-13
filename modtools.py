@@ -83,7 +83,7 @@ triggers = [*map(re.compile, (
     r'\bewoks?\b', r'\bwookiee?s?\b', r'\bchewbacca\b',
     r'\bmandalorian\b', r'\bobi wan( kenobi)?\b', r'\b(ha|be)n solo\b', r'\bkylo ren\b',
     r'\bforce awakens?\b', r'\bempire strikes? back\b', r'\bat[- ]st\b', r'\bgeorge lucas\b',
-    r'\bgeneral grievous\b', r'\bsheev\b', r'\b(emperor )?palpatine\b',
+    r'\bgeneral grievous\b', r'\bsheev( palpatine)?\b', r'\b(emperor )?palpatine\b',
     ))]
 
 class StarWarsPunisher(commands.Cog):
