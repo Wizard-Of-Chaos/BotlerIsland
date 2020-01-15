@@ -136,7 +136,34 @@ async def on_message_delete(msg): # Log deleted messages
             inline=False,
             )
         await guild_config.log(guild, 'msglog', embed=embed)
-            
+
+@bot.event 
+async def on_bulk_message_delete(msgs):
+    if msgs[0].guild is None:
+        return
+    guild = msgs[0].guild
+    if guild_config.getlog(guild, 'msglog'):
+        print(f'MESSAGES DELETED: {len(msgs)}')
+        user_msgs = {}
+        for msg in msgs:
+            if msg.author not in user_msgs:
+                user_msgs[msg.author] = 0
+            user_msgs[msg.author] += 1
+        for thing in user_msgs:
+            print(thing.mention)
+            print(user_msgs[thing])
+        embed = dc.Embed(
+            color=dc.Color.magenta(),
+            timestamp=datetime.utcnow(),
+            description='\n'.join(f'**@{user}**: {count}' for user, count in user_msgs.items()),
+            )
+        embed.set_author(
+            name=f'A whole bunch of messages were deleted in {msgs[0].channel}',
+            icon_url=bot.user.avatar_url,
+            )
+        await guild_config.log(guild, 'msglog', embed=embed)
+
+
 @bot.event
 async def on_member_join(member): # Log joined members
     guild = member.guild 
@@ -401,7 +428,7 @@ async def WARUDO(ctx):
 
 @ZA.command()
 async def HANDO(ctx):
-    await ctx.channel.purge(limit=11)
+    await ctx.channel.purge(limit=11, bulk=True)
     embed = dc.Embed(
         color=dc.Color(0x303EBB),
         timestamp=ctx.message.created_at,
