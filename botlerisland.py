@@ -102,13 +102,18 @@ async def on_message_edit(bfr, aft): # Log edited messages
         return
     guild = bfr.guild
     if guild_config.getlog(guild, 'msglog'):
-        embed = dc.Embed(color=dc.Color.gold(), timestamp=aft.created_at)
+        if len(bfr.content) <= 1024:
+            bfrmsg = bfr.content
+        else:
+            bfrmsg = '`D--> The edited message is too long to contain.`'
+        aftmsg = aft.content if len(aft.content) <= 1024 else aft.jump_url
+        embed = dc.Embed(color=dc.Color.gold(), timestamp=aft.edited_at)
         embed.set_author(
             name=f'@{bfr.author} edited a message in #{bfr.channel}:',
             icon_url=bfr.author.avatar_url,
             )
-        embed.add_field(name='**Before:**', value=bfr.content, inline=False)
-        embed.add_field(name='**After:**', value=aft.content, inline=False)
+        embed.add_field(name='**Before:**', value=bfrmsg, inline=False)
+        embed.add_field(name='**After:**', value=aftmsg, inline=False)
         embed.add_field(name='**Message ID:**', value=f'`{aft.id}`')
         embed.add_field(name='**User ID:**', value=f'`{bfr.author.id}`')
         await guild_config.log(guild, 'msglog', embed=embed)
@@ -119,10 +124,14 @@ async def on_message_delete(msg): # Log deleted messages
         return
     guild = msg.channel.guild
     if guild_config.getlog(guild, 'msglog'):
+        if len(msg.content) <= 1024:
+            content = msg.content
+        else:
+            content = '`D--> The deleted message is too long to contain.`'
         embed = dc.Embed(
             color=dc.Color.darker_grey(),
             timestamp=msg.created_at,
-            description=msg.content,
+            description=content,
             )
         embed.set_author(
             name=f'@{msg.author} deleted a message in #{msg.channel}:',
@@ -391,11 +400,11 @@ async def WARUDO(ctx):
     embed.set_author(
         name='D--> 「ザ・ワールド」!!',
         icon_url='https://cdn.discordapp.com/attachments/'
-        '663452978237407265/666347705450102824/tumblr_pmsciwJBF71v7ql19_1280.png',
+        '663453347763716110/667117484612124694/DIOICON.png',
         )
     embed.set_image(
         url='https://cdn.discordapp.com/attachments/'
-        '663452978237407265/666344503371759617/ZAWARUDO.gif'
+        '663453347763716110/667117771099734052/ZAWARUDO.gif'
         )
     await ctx.channel.send(embed=embed) # Order of operations is important
     await ctx.channel.set_permissions(
@@ -405,7 +414,7 @@ async def WARUDO(ctx):
 
 @ZA.command()
 async def HANDO(ctx):
-    deleted_crap = await ctx.channel.purge(limit=11, bulk=True)
+    msgs = await ctx.channel.purge(limit=11)
     embed = dc.Embed(
         color=dc.Color(0x303EBB),
         timestamp=ctx.message.created_at,
@@ -414,38 +423,32 @@ async def HANDO(ctx):
     embed.set_author(
         name='D--> 「ザ・ハンド」!!',
         icon_url='https://cdn.discordapp.com/attachments/'
-        '663452978237407265/667094151594115072/unknown.png'
+        '663453347763716110/667117479910440976/OKUYASUICON.png',
         )
     embed.set_image(
         url='https://cdn.discordapp.com/attachments/'
-        '663452978237407265/667094855683538983/ZAHANDO.gif'
+        '663453347763716110/667117626128072714/ZAHANDO.gif'
         )
-        
-    #NOW FOR SOMETHING WE HOPE YOU'LL REALLY ENJOY!
-    if deleted_crap[0].guild is None:
-        return
-    guild = deleted_crap[0].guild
-    if guild_config.getlog(guild, 'msglog'):
-        print(f'MESSAGES DELETED: {len(deleted_crap)}')
+    await ctx.channel.send(embed=embed)
+    if guild_config.getlog(ctx.guild, 'msglog'): # Log immediately after.
         user_msgs = {}
-        for msg in deleted_crap:
+        for msg in msgs:
             if msg.author not in user_msgs:
-                user_msgs[msg.author] = 0
-            user_msgs[msg.author] += 1
-        for thing in user_msgs:
-            print(thing.mention)
-            print(user_msgs[thing])
+                user_msgs[msg.author.id] = 0
+            user_msgs[msg.author.id] += 1
         log_embed = dc.Embed(
             color=dc.Color.magenta(),
-            timestamp=datetime.utcnow(),
-            description='\n'.join(f'**@{user}**: {count}' for user, count in user_msgs.items()),
+            timestamp=ctx.message.created_at,
+            description='\n'.join(
+                f'**@{user}**: {count} messages' for user, count in user_msgs.items()
+                ),
             )
         log_embed.set_author(
-            name=f'A whole bunch of messages were deleted in {deleted_crap[0].channel}',
-            icon_url=bot.user.avatar_url,
+            name=f'{ctx.channel} has been ZA HANDO\'d:',
+            icon_url='https://cdn.discordapp.com/attachments/'
+            '663453347763716110/667117479910440976/OKUYASUICON.png',
             )
-        await guild_config.log(guild, 'msglog', embed=log_embed)
-    await ctx.channel.send(embed=embed)
+        await guild_config.log(ctx.guild, 'msglog', embed=log_embed)
 
 @bot.group()
 @commands.bot_has_permissions(manage_roles=True)
@@ -470,7 +473,7 @@ async def resumes(ctx):
     embed.set_author(
         name='D--> 時は動きです。',
         icon_url='https://cdn.discordapp.com/attachments/'
-        '663452978237407265/666347705450102824/tumblr_pmsciwJBF71v7ql19_1280.png',
+        '663453347763716110/667117484612124694/DIOICON.png',
         )
     await ctx.channel.send(embed=embed)
 
