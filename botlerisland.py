@@ -405,7 +405,7 @@ async def HANDO(ctx):
     embed = dc.Embed(
         color=dc.Color(0x303EBB),
         timestamp=ctx.message.created_at,
-        description=f'D--> I shall show you my magneighficent STRENGTH, **{ctx.channel}**!'
+        description=f'D--> I shall show you my magneighficent STRENGTH, **#{ctx.channel}**!'
         )
     embed.set_author(
         name='D--> 「ザ・ハンド」!!',
