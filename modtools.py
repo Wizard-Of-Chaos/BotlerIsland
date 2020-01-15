@@ -111,7 +111,7 @@ class StarWarsPunisher(commands.Cog):
 
     def detect(self, msg):
         content = msg.content.lower()
-        return (self.order66
+        return bool(self.order66
             and msg.channel.id == self.order66[0]
             and any(pattern.search(content) for pattern in triggers)
             )
