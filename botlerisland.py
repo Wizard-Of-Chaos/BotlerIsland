@@ -426,15 +426,11 @@ async def HANDO(ctx):
         return
     guild = deleted_crap[0].guild
     if guild_config.getlog(guild, 'msglog'):
-        print(f'MESSAGES DELETED: {len(deleted_crap)}')
         user_msgs = {}
         for msg in deleted_crap:
             if msg.author not in user_msgs:
                 user_msgs[msg.author] = 0
             user_msgs[msg.author] += 1
-        for thing in user_msgs:
-            print(thing.mention)
-            print(user_msgs[thing])
         log_embed = dc.Embed(
             color=dc.Color.magenta(),
             timestamp=datetime.utcnow(),
