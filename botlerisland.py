@@ -124,14 +124,10 @@ async def on_message_delete(msg): # Log deleted messages
         return
     guild = msg.channel.guild
     if guild_config.getlog(guild, 'msglog'):
-        if len(msg.content) <= 1024:
-            content = msg.content
-        else:
-            content = '`D--> The deleted message is too long to contain.`'
         embed = dc.Embed(
             color=dc.Color.darker_grey(),
             timestamp=msg.created_at,
-            description=content,
+            description=msg.content,
             )
         embed.set_author(
             name=f'@{msg.author} deleted a message in #{msg.channel}:',
@@ -145,10 +141,6 @@ async def on_message_delete(msg): # Log deleted messages
             inline=False,
             )
         await guild_config.log(guild, 'msglog', embed=embed)
-
-@bot.event 
-async def on_bulk_message_delete(msgs):
-    pass
 
 @bot.event
 async def on_member_join(member): # Log joined members
@@ -203,7 +195,7 @@ async def on_member_update(bfr, aft): # Log role and nickname changes
         changetype = None
         if bfr.nick != aft.nick:
             embed = dc.Embed(
-                color=dc.Color.blue(),
+                color=dc.Color.magenta(),
                 timestamp=datetime.utcnow(),
                 description=f'**{bfr}** had their nickname changed to **{aft.nick}**',
                 )
@@ -434,10 +426,10 @@ async def HANDO(ctx):
         user_msgs = {}
         for msg in msgs:
             if msg.author not in user_msgs:
-                user_msgs[msg.author.id] = 0
-            user_msgs[msg.author.id] += 1
+                user_msgs[msg.author] = 0
+            user_msgs[msg.author] += 1
         log_embed = dc.Embed(
-            color=dc.Color.magenta(),
+            color=dc.Color.blue(),
             timestamp=ctx.message.created_at,
             description='\n'.join(
                 f'**@{user}**: {count} messages' for user, count in user_msgs.items()
