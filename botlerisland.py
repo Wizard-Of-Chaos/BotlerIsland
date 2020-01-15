@@ -139,30 +139,7 @@ async def on_message_delete(msg): # Log deleted messages
 
 @bot.event 
 async def on_bulk_message_delete(msgs):
-    if msgs[0].guild is None:
-        return
-    guild = msgs[0].guild
-    if guild_config.getlog(guild, 'msglog'):
-        print(f'MESSAGES DELETED: {len(msgs)}')
-        user_msgs = {}
-        for msg in msgs:
-            if msg.author not in user_msgs:
-                user_msgs[msg.author] = 0
-            user_msgs[msg.author] += 1
-        for thing in user_msgs:
-            print(thing.mention)
-            print(user_msgs[thing])
-        embed = dc.Embed(
-            color=dc.Color.magenta(),
-            timestamp=datetime.utcnow(),
-            description='\n'.join(f'**@{user}**: {count}' for user, count in user_msgs.items()),
-            )
-        embed.set_author(
-            name=f'A whole bunch of messages were deleted in {msgs[0].channel}',
-            icon_url=bot.user.avatar_url,
-            )
-        await guild_config.log(guild, 'msglog', embed=embed)
-
+    pass
 
 @bot.event
 async def on_member_join(member): # Log joined members
@@ -428,7 +405,7 @@ async def WARUDO(ctx):
 
 @ZA.command()
 async def HANDO(ctx):
-    await ctx.channel.purge(limit=11, bulk=True)
+    deleted_crap = await ctx.channel.purge(limit=11, bulk=True)
     embed = dc.Embed(
         color=dc.Color(0x303EBB),
         timestamp=ctx.message.created_at,
@@ -443,6 +420,31 @@ async def HANDO(ctx):
         url='https://cdn.discordapp.com/attachments/'
         '663452978237407265/667094855683538983/ZAHANDO.gif'
         )
+        
+    #NOW FOR SOMETHING WE HOPE YOU'LL REALLY ENJOY!
+    if deleted_crap[0].guild is None:
+        return
+    guild = deleted_crap[0].guild
+    if guild_config.getlog(guild, 'msglog'):
+        print(f'MESSAGES DELETED: {len(deleted_crap)}')
+        user_msgs = {}
+        for msg in deleted_crap:
+            if msg.author not in user_msgs:
+                user_msgs[msg.author] = 0
+            user_msgs[msg.author] += 1
+        for thing in user_msgs:
+            print(thing.mention)
+            print(user_msgs[thing])
+        log_embed = dc.Embed(
+            color=dc.Color.magenta(),
+            timestamp=datetime.utcnow(),
+            description='\n'.join(f'**@{user}**: {count}' for user, count in user_msgs.items()),
+            )
+        log_embed.set_author(
+            name=f'A whole bunch of messages were deleted in {deleted_crap[0].channel}',
+            icon_url=bot.user.avatar_url,
+            )
+        await guild_config.log(guild, 'msglog', embed=log_embed)
     await ctx.channel.send(embed=embed)
 
 @bot.group()
