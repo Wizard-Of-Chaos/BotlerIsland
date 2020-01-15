@@ -367,10 +367,10 @@ async def woc_counter(ctx): # Beta statistic feature: Woc's Tard Counter!
             )
 
 # END OF STATS
-# ZA WARUDO COMMANDS (includes time resumes) 
+# JOJO's Bizarre Adventure Commands
 
 @bot.group()
-@commands.bot_has_permissions(manage_roles=True)
+@commands.bot_has_permissions(manage_roles=True, manage_messages=True)
 @commands.has_permissions(administrator=True)
 async def ZA(ctx):
     if ctx.invoked_subcommand is None:
@@ -378,12 +378,11 @@ async def ZA(ctx):
         
 @ZA.command()
 async def WARUDO(ctx):
-    msg = ctx.message
     embed = dc.Embed(
-        color=dc.Color(0xFFFF00),
-        timestamp=msg.created_at,
+        color=dc.Color(0xE4E951),
+        timestamp=ctx.message.created_at,
         description=f'D--> The time is neigh; your foolish actions shall face STRONG '
-        f'consequences, **#{msg.channel}**! It is __***USELESS***__ to resist!'
+        f'consequences, **#{ctx.channel}**! It is __***USELESS***__ to resist!'
         )
     embed.set_author(
         name='D--> 「ザ・ワールド」!!',
@@ -394,11 +393,30 @@ async def WARUDO(ctx):
         url='https://cdn.discordapp.com/attachments/'
         '663452978237407265/666344503371759617/ZAWARUDO.gif'
         )
-    await msg.channel.send(embed=embed) # Order of operations is important
-    await msg.channel.set_permissions(
-        msg.guild.roles[0],
+    await ctx.channel.send(embed=embed) # Order of operations is important
+    await ctx.channel.set_permissions(
+        ctx.guild.roles[0],
         overwrite=dc.PermissionOverwrite(send_messages=False)
         )
+
+@ZA.command()
+async def HANDO(ctx):
+    await ctx.channel.purge(limit=11)
+    embed = dc.Embed(
+        color=dc.Color(0x303EBB),
+        timestamp=ctx.message.created_at,
+        description=f'D--> I shall show you my magneighficent STRENGTH, **{ctx.channel}**!'
+        )
+    embed.set_author(
+        name='D--> 「ザ・ハンド」!!',
+        icon_url='https://cdn.discordapp.com/attachments/'
+        '663452978237407265/667094151594115072/unknown.png'
+        )
+    embed.set_image(
+        url='https://cdn.discordapp.com/attachments/'
+        '663452978237407265/667094855683538983/ZAHANDO.gif'
+        )
+    await ctx.channel.send(embed=embed)
 
 @bot.group()
 @commands.bot_has_permissions(manage_roles=True)
@@ -409,27 +427,25 @@ async def time(ctx):
 
 @time.command()
 async def resumes(ctx):
-    msg = ctx.message
     if dict(iter(ctx.channel.overwrites_for(ctx.guild.roles[0])))['send_messages'] == None:
         return
-    await msg.channel.set_permissions(
-        msg.guild.roles[0],
+    await ctx.channel.set_permissions(
+        ctx.guild.roles[0],
         overwrite=dc.PermissionOverwrite(send_messages=None)
         )
     embed = dc.Embed(
-        color=dc.Color(0xFFFF00),
-        timestamp=msg.created_at,
-        description=f'D--> Time has resumed in **#{msg.channel}**.'
+        color=dc.Color(0xE4E951),
+        timestamp=ctx.message.created_at,
+        description=f'D--> Time has resumed in **#{ctx.channel}**.'
         )
     embed.set_author(
         name='D--> 時は動きです。',
         icon_url='https://cdn.discordapp.com/attachments/'
         '663452978237407265/666347705450102824/tumblr_pmsciwJBF71v7ql19_1280.png',
         )
-    await msg.channel.send(embed=embed)
+    await ctx.channel.send(embed=embed)
 
-
-# END OF ZA WARUDO
+# <== To Be Continued...
 # "TAG" COMMANDS
 
 @bot.command(aliases=['tc', 'tt'])
