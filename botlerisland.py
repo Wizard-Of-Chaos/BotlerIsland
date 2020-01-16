@@ -41,7 +41,7 @@ async def grab_avatar(user):
                 '663453347763716110/664578577479761920/unknown.png'
                 )
     with open('avatar.png', mode='rb') as avatarfile:
-        await avy_channel.send(file=dc.File(avatarfile))
+        await avy_channel.send(f'`@{user}`: ID {user.id}', file=dc.File(avatarfile))
     async for msg in avy_channel.history(limit=1):
         return msg.attachments[0].url
 
@@ -101,176 +101,179 @@ async def on_message_edit(bfr, aft): # Log edited messages
     if bfr.author == bot.user or bfr.content == aft.content:
         return
     guild = bfr.guild
-    if guild_config.getlog(guild, 'msglog'):
-        if len(bfr.content) <= 1024:
-            bfrmsg = bfr.content
-        else:
-            bfrmsg = '`D--> The edited message is too long to contain.`'
-        aftmsg = aft.content if len(aft.content) <= 1024 else aft.jump_url
-        embed = dc.Embed(color=dc.Color.gold(), timestamp=aft.edited_at)
-        embed.set_author(
-            name=f'@{bfr.author} edited a message in #{bfr.channel}:',
-            icon_url=bfr.author.avatar_url,
-            )
-        embed.add_field(name='**Before:**', value=bfrmsg, inline=False)
-        embed.add_field(name='**After:**', value=aftmsg, inline=False)
-        embed.add_field(name='**Message ID:**', value=f'`{aft.id}`')
-        embed.add_field(name='**User ID:**', value=f'`{bfr.author.id}`')
-        await guild_config.log(guild, 'msglog', embed=embed)
+    if not guild_config.getlog(guild, 'msglog'):
+        return
+    if len(bfr.content) <= 1024:
+        bfrmsg = bfr.content
+    else:
+        bfrmsg = '`D--> The edited message is too long to contain.`'
+    aftmsg = aft.content if len(aft.content) <= 1024 else aft.jump_url
+    embed = dc.Embed(color=dc.Color.gold(), timestamp=aft.edited_at)
+    embed.set_author(
+        name=f'@{bfr.author} edited a message in #{bfr.channel}:',
+        icon_url=bfr.author.avatar_url,
+        )
+    embed.add_field(name='**Before:**', value=bfrmsg, inline=False)
+    embed.add_field(name='**After:**', value=aftmsg, inline=False)
+    embed.add_field(name='**Message ID:**', value=f'`{aft.id}`')
+    embed.add_field(name='**User ID:**', value=f'`{bfr.author.id}`')
+    await guild_config.log(guild, 'msglog', embed=embed)
 
 @bot.event
 async def on_message_delete(msg): # Log deleted messages
     if msg.guild is None:
         return
     guild = msg.channel.guild
-    if guild_config.getlog(guild, 'msglog'):
-        embed = dc.Embed(
-            color=dc.Color.darker_grey(),
-            timestamp=msg.created_at,
-            description=msg.content,
-            )
-        embed.set_author(
-            name=f'@{msg.author} deleted a message in #{msg.channel}:',
-            icon_url=msg.author.avatar_url,
-            )
-        embed.add_field(name='**Message ID:**', value=f'`{msg.id}`')
-        embed.add_field(name='**User ID:**', value=f'`{msg.author.id}`')
-        embed.add_field(
-            name='**Attachments:**',
-            value='\n'.join(att.url for att in msg.attachments) or None,
-            inline=False,
-            )
-        await guild_config.log(guild, 'msglog', embed=embed)
+    if not guild_config.getlog(guild, 'msglog'):
+        return
+    embed = dc.Embed(
+        color=dc.Color.darker_grey(),
+        timestamp=msg.created_at,
+        description=msg.content,
+        )
+    embed.set_author(
+        name=f'@{msg.author} deleted a message in #{msg.channel}:',
+        icon_url=msg.author.avatar_url,
+        )
+    embed.add_field(name='**Message ID:**', value=f'`{msg.id}`')
+    embed.add_field(name='**User ID:**', value=f'`{msg.author.id}`')
+    embed.add_field(
+        name='**Attachments:**',
+        value='\n'.join(att.url for att in msg.attachments) or None,
+        inline=False,
+        )
+    await guild_config.log(guild, 'msglog', embed=embed)
 
 @bot.event
 async def on_member_join(member): # Log joined members
     guild = member.guild 
-    if guild_config.getlog(guild, 'usrlog'):
-        await role_saver.load_roles(member)
-        embed = dc.Embed(
-            color=dc.Color.green(),
-            timestamp=datetime.utcnow(),
-            description=f':green_circle: <@!{member.id}>: ``{member}`` has joined **{guild}**!\n'
-            f'The guild now has {guild.member_count} members!\n'
-            f'This account was created on `{member.created_at.strftime("%d/%m/%Y %H:%M:%S")}`'
-            )
-        embed.set_author(name=f'A user has joined the server!')
-        embed.set_thumbnail(url=member.avatar_url)
-        embed.add_field(name='**User ID**', value=f'`{member.id}`')
-        await guild_config.log(guild, 'usrlog', embed=embed)
+    if not guild_config.getlog(guild, 'usrlog'):
+        return
+    await role_saver.load_roles(member)
+    embed = dc.Embed(
+        color=dc.Color.green(),
+        timestamp=datetime.utcnow(),
+        description=f':green_circle: {member.mention}: ``{member}`` has joined **{guild}**!\n'
+        f'The guild now has {guild.member_count} members!\n'
+        f'This account was created on `{member.created_at.strftime("%d/%m/%Y %H:%M:%S")}`'
+        )
+    embed.set_author(name=f'A user has joined the server!')
+    embed.set_thumbnail(url=member.avatar_url)
+    embed.add_field(name='**User ID**', value=f'`{member.id}`')
+    await guild_config.log(guild, 'usrlog', embed=embed)
 
 @bot.event
 async def on_member_remove(member): # Log left/kicked/banned members
     guild = member.guild
-    if guild_config.getlog(guild, 'usrlog'):
-        role_saver.save_roles(member)
-        lastseen = member_stalker.get(member)
-        if lastseen is not None:
-            lastseenmsg = f'This user was last seen on `{lastseen.strftime("%d/%m/%Y %H:%M:%S")}`'
-        else:
-            lastseenmsg = 'This user has not spoken to my knowledge!'
-        embed = dc.Embed(
-            color=dc.Color.red(),
-            timestamp=datetime.utcnow(),
-            description=f':red_circle: **{member}** has left **{guild}**!\n'
-            f'The guild now has {guild.member_count} members!\n{lastseenmsg}'
-            )
-        embed.set_author(name=f'A user left or got beaned!')
-        embed.set_thumbnail(url=member.avatar_url)
-        embed.add_field(
-            name='**Roles Snagged:**',
-            value=(', '.join(
-                    f'`{guild.get_role(role).name}`'
-                    for role in role_saver.get_roles(member)
-                    )
-                or None),
-            inline=False)
-        embed.add_field(name='**User ID:**', value=f'`{member.id}`')
-        await guild_config.log(guild, 'usrlog', embed=embed)
+    if not guild_config.getlog(guild, 'usrlog'):
+        return
+    role_saver.save_roles(member)
+    lastseen = member_stalker.get(member)
+    if lastseen is not None:
+        lastseenmsg = f'This user was last seen on `{lastseen.strftime("%d/%m/%Y %H:%M:%S")}`'
+    else:
+        lastseenmsg = 'This user has not spoken to my knowledge.'
+    embed = dc.Embed(
+        color=dc.Color.red(),
+        timestamp=datetime.utcnow(),
+        description=f':red_circle: **{member}** has left **{guild}**!\n'
+        f'The guild now has {guild.member_count} members!\n{lastseenmsg}'
+        )
+    embed.set_author(name=f'A user left or got bucked off.')
+    embed.set_thumbnail(url=member.avatar_url)
+    embed.add_field(
+        name='**Roles Snagged:**',
+        value=(', '.join(
+                f'`{guild.get_role(role).name}`'
+                for role in role_saver.get_roles(member)
+                )
+            or None),
+        inline=False)
+    embed.add_field(name='**User ID:**', value=f'`{member.id}`')
+    await guild_config.log(guild, 'usrlog', embed=embed)
 
 @bot.event
 async def on_member_update(bfr, aft): # Log role and nickname changes
     guild = bfr.guild
-    if guild_config.getlog(guild, 'msglog'):
-        changetype = None
-        if bfr.nick != aft.nick:
-            embed = dc.Embed(
-                color=dc.Color.magenta(),
-                timestamp=datetime.utcnow(),
-                description=f'**{bfr}** had their nickname changed to **{aft.nick}**',
-                )
-            embed.set_author(name='Nickname Update:', icon_url=aft.avatar_url)
-            embed.add_field(name='**User ID:**', value=f'`{aft.id}`', inline=False)
-            await guild_config.log(guild, 'msglog', embed=embed)
-        if bfr.roles != aft.roles:
-            embed = dc.Embed(
-                color=dc.Color.teal(),
-                timestamp=datetime.utcnow(),
-                description=f'**{bfr}** had the following roles changed:',
-                )
-            embed.set_author(name='Role Update:', icon_url=aft.avatar_url)
-            rolesprev, rolesnext = set(bfr.roles), set(aft.roles)
-            embed.add_field(
-                name='**Roles Added:**',
-                value=', '.join(f'`{role.name}`' for role in rolesnext-rolesprev) or None,
-                inline=False
-                )
-            embed.add_field(
-                name='**Roles Removed:**',
-                value=', '.join(f'`{role.name}`' for role in rolesprev-rolesnext) or None,
-                inline=False
-                )
-            embed.add_field(name='**User ID:**', value=f'`{aft.id}`', inline=False)
-            await guild_config.log(guild, 'msglog', embed=embed)
+    if not guild_config.getlog(guild, 'msglog'):
+        return
+    if bfr.nick != aft.nick:
+        embed = dc.Embed(
+            color=dc.Color.magenta(),
+            timestamp=datetime.utcnow(),
+            description=f'**{bfr}** had their nickname changed to **{aft.nick}**',
+            )
+        embed.set_author(name='Nickname Update:', icon_url=aft.avatar_url)
+        embed.add_field(name='**User ID:**', value=f'`{aft.id}`', inline=False)
+        await guild_config.log(guild, 'msglog', embed=embed)
+    if bfr.roles != aft.roles:
+        embed = dc.Embed(
+            color=dc.Color.teal(),
+            timestamp=datetime.utcnow(),
+            description=f'**{bfr}** had the following roles changed:',
+            )
+        embed.set_author(name='Role Update:', icon_url=aft.avatar_url)
+        rolesprev, rolesnext = set(bfr.roles), set(aft.roles)
+        embed.add_field(
+            name='**Roles Added:**',
+            value=', '.join(f'`{role.name}`' for role in rolesnext-rolesprev) or None,
+            inline=False
+            )
+        embed.add_field(
+            name='**Roles Removed:**',
+            value=', '.join(f'`{role.name}`' for role in rolesprev-rolesnext) or None,
+            inline=False
+            )
+        embed.add_field(name='**User ID:**', value=f'`{aft.id}`', inline=False)
+        await guild_config.log(guild, 'msglog', embed=embed)
 
 @bot.event
 async def on_user_update(bfr, aft): # Log avatar, name, discrim changes
     for guild in bot.guilds:
-        if guild_config.getlog(guild, 'msglog') and guild.get_member(bfr.id):
-            changetype = []
-            changelog = []
-            if bfr.name != aft.name:
-                changetype.append('Username Update:')
-                changelog.append(
-                    f'**Old Username:** {bfr}\n'
-                    f'**New Username:** {aft}'
-                    )
-            if bfr.discriminator != aft.discriminator:
-                changetype.append('Discriminator Update:')
-                changelog.append(
-                    f'{bfr} had their discriminator changed from '
-                    f'{bfr.discriminator} to {aft.discriminator}'
-                    )
-            if bfr.avatar != aft.avatar:
-                changetype.append('Avatar Update:')
-                changelog.append(f'{bfr} has changed their avatar to:')
-            for ctype, clog in zip(changetype, changelog):
-                embed = dc.Embed(
-                    color=dc.Color.purple(),
-                    timestamp=datetime.utcnow(),
-                    description=clog,
-                    )
-                if ctype.startswith('Avatar'):
-                    embed.set_thumbnail(url=f'{aft.avatar_url}')
-                    embed.set_author(name=ctype, icon_url=await grab_avatar(bfr))
-                else:
-                    embed.set_author(name=ctype, icon_url=aft.avatar_url)
-                embed.add_field(name='**User ID:**', value=f'`{aft.id}`', inline=False)
-                await guild_config.log(guild, 'msglog', embed=embed)
+        if not (guild_config.getlog(guild, 'msglog') and guild.get_member(bfr.id)):
+            continue
+        changelog = []
+        if bfr.name != aft.name:
+            changelog.append((
+                'Username Update:',
+                f'**Old Username:** {bfr}\n**New Username:** {aft}',
+                ))
+        if bfr.discriminator != aft.discriminator:
+            changelog.append((
+                'Discriminator Update:',
+                f'{bfr} had their discriminator changed from '
+                f'{bfr.discriminator} to {aft.discriminator}',
+                ))
+        if bfr.avatar != aft.avatar:
+            changelog.append(('Avatar Update:', f'{bfr} has changed their avatar to:'))
+        for ctype, desc in changelog:
+            embed = dc.Embed(
+                color=dc.Color.purple(),
+                timestamp=datetime.utcnow(),
+                description=desc,
+                )
+            if ctype.startswith('Avatar'):
+                embed.set_author(name=ctype, icon_url=await grab_avatar(bfr))
+                embed.set_thumbnail(url=await grab_avatar(aft))
+            else:
+                embed.set_author(name=ctype, icon_url=aft.avatar_url)
+            embed.add_field(name='**User ID:**', value=f'`{aft.id}`', inline=False)
+            await guild_config.log(guild, 'msglog', embed=embed)
                     
 @bot.event
 async def on_voice_state_update(member, bfr, aft): # Logged when a member joins and leaves VC
     guild = member.guild
-    if guild_config.getlog(guild, 'msglog'):
-        changelog = None
-        if bfr.channel != aft.channel:
-            if bfr.channel == None:
-                changelog = f':loud_sound: **{member}** has joined **{aft.channel}**'
-            elif aft.channel == None:
-                changelog = f':loud_sound: **{member}** has left **{bfr.channel}**'
-        if changelog is not None: 
-            embed = dc.Embed(color=dc.Color.blurple(), description=changelog)
-            await guild_config.log(guild, 'msglog', embed=embed)
+    if not guild_config.getlog(guild, 'msglog'):
+        return
+    changelog = None
+    if bfr.channel != aft.channel:
+        if bfr.channel == None:
+            changelog = f':loud_sound: **{member}** has joined **{aft.channel}**'
+        elif aft.channel == None:
+            changelog = f':loud_sound: **{member}** has left **{bfr.channel}**'
+    if changelog is not None: 
+        embed = dc.Embed(color=dc.Color.blurple(), description=changelog)
+        await guild_config.log(guild, 'msglog', embed=embed)
 
 # END OF EVENTS
 # EXECUTE ORDER 66
@@ -422,25 +425,26 @@ async def HANDO(ctx):
         '663453347763716110/667117626128072714/ZAHANDO.gif'
         )
     await ctx.channel.send(embed=embed)
-    if guild_config.getlog(ctx.guild, 'msglog'): # Log immediately after.
-        user_msgs = {}
-        for msg in msgs:
-            if msg.author not in user_msgs:
-                user_msgs[msg.author] = 0
-            user_msgs[msg.author] += 1
-        log_embed = dc.Embed(
-            color=dc.Color.blue(),
-            timestamp=ctx.message.created_at,
-            description='\n'.join(
-                f'**@{user}**: {count} messages' for user, count in user_msgs.items()
-                ),
-            )
-        log_embed.set_author(
-            name=f'{ctx.channel} has been ZA HANDO\'d:',
-            icon_url='https://cdn.discordapp.com/attachments/'
-            '663453347763716110/667117479910440976/OKUYASUICON.png',
-            )
-        await guild_config.log(ctx.guild, 'msglog', embed=log_embed)
+    if not guild_config.getlog(ctx.guild, 'msglog'): # Log immediately after.
+        return
+    user_msgs = {}
+    for msg in msgs:
+        if msg.author not in user_msgs:
+            user_msgs[msg.author] = 0
+        user_msgs[msg.author] += 1
+    log_embed = dc.Embed(
+        color=dc.Color.blue(),
+        timestamp=ctx.message.created_at,
+        description='\n'.join(
+            f'**@{user}**: {count} messages' for user, count in user_msgs.items()
+            ),
+        )
+    log_embed.set_author(
+        name=f'{ctx.channel} has been ZA HANDO\'d:',
+        icon_url='https://cdn.discordapp.com/attachments/'
+        '663453347763716110/667117479910440976/OKUYASUICON.png',
+        )
+    await guild_config.log(ctx.guild, 'msglog', embed=log_embed)
 
 @bot.group()
 @commands.bot_has_permissions(manage_roles=True)
@@ -451,6 +455,7 @@ async def time(ctx):
 
 @time.command()
 async def resumes(ctx):
+    print(ctx.channel.overwrites_for(ctx.guild.roles[0]).pair())
     if dict(iter(ctx.channel.overwrites_for(ctx.guild.roles[0])))['send_messages'] == None:
         return
     await ctx.channel.set_permissions(
@@ -531,6 +536,11 @@ async def _help(ctx):
         value='(Senate only) Declares all Jedi to be enemies of the Republic for 5 minutes.',
         inline=False
         )
+    embed.add_field(
+        name='`ZA (WARUDO|HANDO)`',
+        value='(Admin Only) Utilizes highly dangerous Stand power to moderate the server.',
+        inline=False
+        )
     await ctx.send(embed=embed)
 
 @_help.error
@@ -560,7 +570,7 @@ async def info(ctx, *, name=None):
     embed.add_field(name='User ID:', value=f'`{member.id}`')
     embed.add_field(name='Last Seen:', value=lastseenmsg, inline=False)
     embed.add_field(name='Account Created On:', value=member.created_at.strftime('%d/%m/%Y %H:%M:%S'))
-    embed.add_field(name='Guild Joined On:', value=member.joined_at.strftime('%d/%m/%Y %H:%M:%S'))
+    embed.add_field(name='Guild Last Joined On:', value=member.joined_at.strftime('%d/%m/%Y %H:%M:%S'))
     embed.add_field(
         name='Roles:',
         value=', '.join(f'`{role.name}`' for role in member.roles[1:]),
@@ -583,7 +593,7 @@ async def info_error(ctx, error):
 @bot.command()
 @commands.bot_has_permissions(send_messages=True)
 async def ping(ctx):
-    await ctx.send(f'D--> <@!{ctx.message.author.id}>')
+    await ctx.send(f'D--> {ctx.message.author.mention}')
 
 @ping.error
 async def ping_error(ctx, error):
