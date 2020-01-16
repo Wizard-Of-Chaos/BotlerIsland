@@ -455,13 +455,11 @@ async def time(ctx):
 
 @time.command()
 async def resumes(ctx):
-    print(ctx.channel.overwrites_for(ctx.guild.roles[0]).pair())
-    if dict(iter(ctx.channel.overwrites_for(ctx.guild.roles[0])))['send_messages'] == None:
+    perms = ctx.channel.overwrites_for(ctx.guild.roles[0])
+    if not perms.pair()[1].send_messages:
         return
-    await ctx.channel.set_permissions(
-        ctx.guild.roles[0],
-        overwrite=dc.PermissionOverwrite(send_messages=None)
-        )
+    perms.update(send_messages=None)
+    await ctx.channel.set_permissions(ctx.guild.roles[0], overwrite=perms)
     embed = dc.Embed(
         color=dc.Color(0xE4E951),
         timestamp=ctx.message.created_at,
