@@ -74,13 +74,15 @@ class GuildConfig(Singleton):
         return self.punishers[msg.guild.id].detect(msg)
 
     async def punish_star_wars(self, msg):
-        return await self.punishers[msg.guild.id].punish(msg)
+        dt = await self.punishers[msg.guild.id].punish(msg)
+        self.save()
+        return dt
 
 
 triggers = [*map(re.compile, (
     r'\bstar\s*wars?\b', r'\bskywalker\b', r'\banakin\b', r'\bjedi\b',
     r'\bpod racing\b', r'\byoda\b', r'\bdarth\b', r'\bvader\b',
-    r'\bewoks?\b', r'\bwookiee?s?\b', r'\bchewbacca\b',
+    r'\bewoks?\b', r'\bwookiee?s?\b', r'\bchewbacca\b', r'\bdeath star\b',
     r'\bmandalorian\b', r'\bobi wan( kenobi)?\b', r'\b(ha|be)n solo\b', r'\bkylo ren\b',
     r'\bforce awakens?\b', r'\bempire strikes? back\b', r'\bat[- ]st\b', r'\bgeorge lucas\b',
     r'\bgeneral grievous\b', r'\bsheev( palpatine)?\b', r'\b(emperor )?palpatine\b',
@@ -113,8 +115,9 @@ class StarWarsPunisher(commands.Cog):
         content = msg.content.lower()
         return bool(self.order66
             and msg.channel.id == self.order66[0]
-            and any(pattern.search(content) for pattern in triggers)
-            )
+            and (msg.author.id == 207991389613457408
+                or any(pattern.search(content) for pattern in triggers)
+                ))
 
     async def punish(self, msg):
         await msg.author.add_roles(self.role, reason='Star Wars.')
@@ -135,7 +138,7 @@ class StarWarsPunisher(commands.Cog):
         if self.order66 is not None:
             if self.order66[1] < datetime.utcnow():
                 await self.bot.get_channel(self.order66[0]).send(
-                    'D--> The senate recedes.'
+                    'D--> It is done, my lord.'
                     )
                 self.order66 = None
         elif not self.banlist:

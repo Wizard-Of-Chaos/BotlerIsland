@@ -284,7 +284,7 @@ async def on_voice_state_update(member, bfr, aft): # Logged when a member joins 
 async def execute(ctx, *, args=None):
     if args == 'order 66':
         guild_config.set_containment(ctx)
-        await ctx.send('D--> I have done it, master.')
+        await ctx.send('D--> It will be done, my lord.')
     else:
         await ctx.send(
             'D--> It seems you were not quite clear. Vocalize your desire STRONGLY.'
