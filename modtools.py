@@ -218,7 +218,6 @@ class MemberStalker(object):
         return self.member_data[member.guild.id][member.id][log]
 
     def update(self, log, msg):
-        member_data = self.member_data[msg.guild.id][msg.author.id]
-        if log == 'first_join' and member_data[log]:
+        if log == 'first_join' and self.member_data[log]:
             return
-        member_data[log] = msg.created_at
+        self.member_data[log] = msg.created_at
