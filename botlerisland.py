@@ -346,7 +346,6 @@ async def modlog(ctx):
 # STATS COMMANDS
 
 @bot.group()
-@commands.bot_has_permissions(send_messages=True)
 @commands.has_permissions(manage_roles=True)
 async def stats(ctx):
     if ctx.invoked_subcommand is None:
@@ -601,7 +600,6 @@ async def ban(ctx, *args): #WE'RE GRABBING A MEMBER WE GIVE NO SHITS
                 await guild_config.log(ctx.guild, 'modlog', embed=embed)
                 return
                 #BOOM! SUUUUUUUUCK - IT!
-    await ctx.send('D--> It seems no role was found for this channel.')
 
 @channel.command()
 async def unban(ctx, *, member: dc.Member):
@@ -618,7 +616,6 @@ async def unban(ctx, *, member: dc.Member):
                     )
                 await guild_config.log(ctx.guild, 'modlog', embed=embed)
                 return
-    await ctx.send('D--> It seems they were not banned from this channel in the first place.')
 #ALRIGHT BACK TO YOUR REGULARLY SCHEDULED FUNCTIONS
 
 @bot.command()
