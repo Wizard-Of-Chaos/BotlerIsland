@@ -582,10 +582,16 @@ async def ban(ctx, *args): #WE'RE GRABBING A MEMBER WE GIVE NO SHITS
                     timestamp=ctx.message.created_at,
                     description=f'{ctx.author} has channel-banned {member} from {ctx.channel}'
                     )
-                if args[1] and args[2]:
+                if len(args) >= 3:
                     embed.add_field(
                         name='Duration:',
                         value=f'{args[1]} {args[2]}',
+                        inline=False
+                        )
+                else:
+                    embed.add_field(
+                        name='Duration not specified.',
+                        value=None,
                         inline=False
                         )
                 embed.set_author(
