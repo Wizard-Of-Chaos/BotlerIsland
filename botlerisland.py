@@ -563,7 +563,6 @@ async def channel(ctx):
     if ctx.invoked_subcommand is None:
         pass
 
-@commands.bot_has_permissions(send_messages=True)
 @channel.command()
 async def ban(ctx, *args): #WE'RE GRABBING A MEMBER WE GIVE NO SHITS
     member = await commands.MemberConverter().convert(ctx, args[0])
@@ -598,7 +597,6 @@ async def ban(ctx, *args): #WE'RE GRABBING A MEMBER WE GIVE NO SHITS
                 #BOOM! SUUUUUUUUCK - IT!
     await ctx.send('D--> It seems no role was found for this channel.')
 
-@commands.bot_has_permissions(send_messages=True)
 @channel.command()
 async def unban(ctx, *, member: dc.Member):
     if not member:
