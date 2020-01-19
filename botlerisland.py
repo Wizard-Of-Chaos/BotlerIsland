@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # HSDBot code by Wizard of Chaos#2459 and virtuNat#7998
 from datetime import datetime
-from operator import attrgetter
 import asyncio as aio
 import discord as dc
 from discord.ext import commands
@@ -44,18 +43,6 @@ async def grab_avatar(user):
         await avy_channel.send(f'`@{user}`: ID {user.id}', file=dc.File(avatarfile))
     async for msg in avy_channel.history(limit=1):
         return msg.attachments[0].url
-
-async def find_member(guild, name):
-    name = name.strip()
-    for predicate in (str, attrgetter('name'), attrgetter('nick')):
-        for member in guild.members:
-            if predicate(member) == name:
-                break
-        else:
-            await aio.sleep(0)
-            continue
-        return member
-    return None
 
 #END OF FUNCTIONS
 #EVENTS
@@ -389,8 +376,8 @@ async def ZA(ctx):
     if ctx.invoked_subcommand is None:
         pass
         
-@ZA.command()
-async def WARUDO(ctx):
+@ZA.command(name='WARUDO')
+async def freeze(ctx):
     embed = dc.Embed(
         color=dc.Color(0xE4E951),
         timestamp=ctx.message.created_at,
@@ -412,8 +399,8 @@ async def WARUDO(ctx):
         overwrite=dc.PermissionOverwrite(send_messages=False)
         )
 
-@ZA.command()
-async def HANDO(ctx):
+@ZA.command(name='HANDO')
+async def purge(ctx):
     msgs = await ctx.channel.purge(limit=11)
     embed = dc.Embed(
         color=dc.Color(0x303EBB),
@@ -563,15 +550,14 @@ async def channel(ctx):
         pass
 
 @channel.command()
-async def ban(ctx, *args): #WE'RE GRABBING A MEMBER WE GIVE NO SHITS
-    member = await commands.MemberConverter().convert(ctx, args[0])
+async def ban(ctx, *, args: dc.Member): #WE'RE GRABBING A MEMBER WE GIVE NO SHITS
     if not member:
         return
     #WE'RE GONNA FIND THE FIRST FUCKING ROLE THAT HAS NO PERMS IN THIS CHANNEL
     #AND GUESS HOW WE DO THAT?
     #THAT'S RIGHT, CURSED IF STATEMENT
     for role in ctx.guild.roles:
-        if dict(iter(ctx.channel.overwrites_for(role)))['send_messages'] == False: #BOOM LOOK AT THAT SHIT SUCK MY DICK
+        if ctx.channel.overwrites_for(role).pair()[1].send_messages: #BOOM LOOK AT THAT SHIT SUCK MY DICK
             await member.add_roles(role)
             #OH BUT NOW SOMEONES GONNA WHINE THAT WE DIDNT LOG IT?
             #HOLD YOUR ASS TIGHT BECAUSE WE'RE ABOUT TO
@@ -624,7 +610,7 @@ async def info(ctx, *, name=None):
     if name is None:
         member = ctx.author
     else:
-        member = await find_member(ctx.guild, name)
+        member = await commands.MemberConverter().convert(ctx, name)
         if member is None:
             await ctx.send('D--> It seems that user can\'t be found. Please check your spelling.')
             return
