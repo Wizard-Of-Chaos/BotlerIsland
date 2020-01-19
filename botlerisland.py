@@ -556,10 +556,16 @@ async def help_error(ctx, error):
 #ALRIGHT HUNGOVER WIZARD OF CHAOS CODE IN THE HIZ-OUSE
 #WE GONNA WRITE SOME MOTHERFUCKING BAN COMMANDS
 #INITIALIZE THAT SHIT
-@bot.command()
+@bot.group()
 @commands.bot_has_permissions(send_messages=True)
 @commands.has_permissions(manage_roles=True)
-async def channelban(ctx, *args): #WE'RE GRABBING A MEMBER WE GIVE NO SHITS
+async def channel(ctx):
+    if ctx.invoked_subcommand is None:
+        pass
+
+@commands.bot_has_permissions(send_messages=True)
+@channel.command()
+async def ban(ctx, *args): #WE'RE GRABBING A MEMBER WE GIVE NO SHITS
     member = await commands.MemberConverter().convert(ctx, args[0])
     if not member:
         return
@@ -584,14 +590,31 @@ async def channelban(ctx, *args): #WE'RE GRABBING A MEMBER WE GIVE NO SHITS
                         inline=False
                         )
                 embed.set_author(
-                    name='**Channel Ban**',
+                    name='**CHANNEL-BAN**',
                     icon_url=ctx.author.avatar_url,
                     )
                 await guild_config.log(ctx.guild, 'modlog', embed=embed)
                 return
                 #BOOM! SUUUUUUUUCK - IT!
-            await ctx.send('D--> It seems that no role was found for this channel.')
+    await ctx.send('D--> It seems no role was found for this channel.')
 
+@commands.bot_has_permissions(send_messages=True)
+@channel.command()
+async def unban(ctx, *, member: dc.Member):
+    if not member:
+        return
+    for role in member.roles:
+        if dict(iter(ctx.channel.overwrites_for(role)))['send_messages'] == False:
+            await member.remove_roles(role)
+            if guild_config.getlog(ctx.guild, 'modlog'):
+                embed=dc.Embed(
+                    color = ctx.author.color,
+                    timestamp=ctx.message.created_at,
+                    description=f'{ctx.author} has removed a channel-ban on {member} from {ctx.channel}'
+                    )
+                await guild_config.log(ctx.guild, 'modlog', embed=embed)
+                return
+    await ctx.send('D--> It seems they were not banned from this channel in the first place.')
 #ALRIGHT BACK TO YOUR REGULARLY SCHEDULED FUNCTIONS
 
 @bot.command()
