@@ -559,7 +559,8 @@ async def help_error(ctx, error):
 @bot.command()
 @commands.bot_has_permissions(send_messages=True)
 @commands.has_permissions(manage_roles=True)
-async def channelban(ctx, *, member: dc.Member): #WE'RE GRABBING A MEMBER WE GIVE NO SHITS
+async def channelban(ctx, *args): #WE'RE GRABBING A MEMBER WE GIVE NO SHITS
+    member = await commands.MemberConverter().convert(ctx, args[0])
     if not member:
         return
     #WE'RE GONNA FIND THE FIRST FUCKING ROLE THAT HAS NO PERMS IN THIS CHANNEL
@@ -576,11 +577,12 @@ async def channelban(ctx, *, member: dc.Member): #WE'RE GRABBING A MEMBER WE GIV
                     timestamp=ctx.message.created_at,
                     description=f'{ctx.author} has channel-banned {member} from {ctx.channel}'
                     )
-                embed.add_field(
-                    name='Duration:',
-                    value='Not implemented yet, sorry.',
-                    inline=False
-                    )
+                if args[1] and args[2]:
+                    embed.add_field(
+                        name='Duration:',
+                        value=f'{args[1]} {args[2]}',
+                        inline=False
+                        )
                 embed.set_author(
                     name='**Channel Ban**',
                     icon_url=ctx.author.avatar_url,
