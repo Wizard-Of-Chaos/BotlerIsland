@@ -56,9 +56,9 @@ async def on_ready():
     
 @bot.event
 async def on_message(msg):
-    member_stalker.update(msg)
     if msg.guild is None:
         return
+    member_stalker.update('last_seen', msg)
     ctx = await bot.get_context(msg)
     if ctx.valid and msg.author.id != 167131099456208898:
         await bot.process_commands(msg)
@@ -136,6 +136,7 @@ async def on_member_join(member): # Log joined members
     guild = member.guild 
     if not guild_config.getlog(guild, 'usrlog'):
         return
+    member_stalker.update('first_join', member)
     await role_saver.load_roles(member)
     embed = dc.Embed(
         color=dc.Color.green(),
@@ -154,15 +155,20 @@ async def on_member_remove(member): # Log left/kicked/banned members
     guild = member.guild
     if not guild_config.getlog(guild, 'usrlog'):
         return
+    member_stalker.update('first_join', member)
     role_saver.save_roles(member)
-    lastseen = member_stalker.get(member)
+    now = datetime.utcnow()
+    lastseen = member_stalker.get('last_seen', member)
     if lastseen is not None:
-        lastseenmsg = f'This user was last seen on `{lastseen.strftime("%d/%m/%Y %H:%M:%S")}`'
+        lastseenmsg = (
+            f'This user was last seen on `{lastseen.strftime("%d/%m/%Y %H:%M:%S")}` '
+            f'({max(0, (now-lastseen).days)} days ago)'
+            )
     else:
         lastseenmsg = 'This user has not spoken to my knowledge.'
     embed = dc.Embed(
         color=dc.Color.red(),
-        timestamp=datetime.utcnow(),
+        timestamp=now,
         description=f':red_circle: **{member}** has left **{guild}**!\n'
         f'The guild now has {guild.member_count} members!\n{lastseenmsg}'
         )
@@ -369,14 +375,20 @@ async def woc_counter(ctx): # Beta statistic feature: Woc's Tard Counter!
 # END OF STATS
 # JOJO's Bizarre Adventure Commands
 
-@bot.group()
-@commands.bot_has_permissions(manage_roles=True, manage_messages=True)
+@bot.group(name='ZA')
 @commands.has_permissions(administrator=True)
-async def ZA(ctx):
+async def moderate(ctx):
     if ctx.invoked_subcommand is None:
         pass
+
+@moderate.error
+async def moderate_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        return
+    raise error
         
-@ZA.command(name='WARUDO')
+@moderate.command(name='WARUDO')
+@commands.bot_has_permissions(manage_roles=True)
 async def freeze(ctx):
     embed = dc.Embed(
         color=dc.Color(0xE4E951),
@@ -399,7 +411,14 @@ async def freeze(ctx):
         overwrite=dc.PermissionOverwrite(send_messages=False)
         )
 
-@ZA.command(name='HANDO')
+@freeze.error
+async def freeze_error(ctx, error):
+    if isinstance(error, commands.BotMissingPermissions):
+        return
+    raise error
+
+@moderate.command(name='HANDO')
+@commands.bot_has_permissions(manage_messages=True)
 async def purge(ctx):
     msgs = await ctx.channel.purge(limit=11)
     embed = dc.Embed(
@@ -432,11 +451,17 @@ async def purge(ctx):
             ),
         )
     log_embed.set_author(
-        name=f'{ctx.channel} has been ZA HANDO\'d:',
+        name=f'{ctx.channel} has been purged:',
         icon_url='https://cdn.discordapp.com/attachments/'
         '663453347763716110/667117479910440976/OKUYASUICON.png',
         )
     await guild_config.log(ctx.guild, 'msglog', embed=log_embed)
+
+@purge.error
+async def purge_error(ctx, error):
+    if isinstance(error, commands.BotMissingPermissions):
+        return
+    raise error
 
 @bot.group()
 @commands.bot_has_permissions(manage_roles=True)
@@ -465,22 +490,114 @@ async def resumes(ctx):
     await ctx.channel.send(embed=embed)
 
 # <== To Be Continued...
+# BAN COMMANDS
+
+# ALRIGHT HUNGOVER WIZARD OF CHAOS CODE IN THE HIZ-OUSE
+# WE GONNA WRITE SOME MOTHERFUCKING BAN COMMANDS; INITIALIZE THAT SHIT
+@bot.group()
+@commands.bot_has_permissions(send_messages=True)
+@commands.has_permissions(manage_roles=True)
+async def channel(ctx):
+    if ctx.invoked_subcommand is None:
+        pass
+
+@channel.error
+async def channel_error(ctx, error):
+    if isinstance(error, (commands.MissingPermissions, commands.BotMissingPermissions)):
+        return
+    raise error
+
+@channel.command()
+async def ban(ctx, member: dc.Member, *, duration=None):
+    if not member: # WE'RE GRABBING A MEMBER WE GIVE NO SHITS
+        return
+    # WE'RE GONNA FIND THE FIRST FUCKING ROLE THAT HAS NO PERMS IN THIS CHANNEL
+    # AND GUESS HOW WE DO THAT? THAT'S RIGHT, CURSED IF STATEMENT
+    for role in ctx.guild.roles:
+        if ctx.channel.overwrites_for(role).pair()[1].send_messages: # BOOM LOOK AT THAT SHIT SUCK MY DICK
+            await member.add_roles(role)
+            # OH BUT NOW SOMEONES GONNA WHINE THAT WE DIDNT LOG IT? HOLD YOUR ASS TIGHT BECAUSE WE'RE ABOUT TO
+            if guild_config.getlog(ctx.guild, 'modlog'): # OHHHHHHH! HE DID IT! THE FUCKING MADMAN!
+                embed = dc.Embed(
+                    color=ctx.author.color,
+                    timestamp=ctx.message.created_at,
+                    description=f'**@{member}** has been banned in **#{ctx.channel}**'
+                    )
+                embed.add_field(name='**Role Granted:**', value=f'`{role}`')
+                embed.add_field(name='**Duration:**', value=duration or 'None specified')
+                embed.set_author(
+                    name=f'@{ctx.author} Issued Channel Ban:',
+                    icon_url=ctx.author.avatar_url,
+                    )
+                await guild_config.log(ctx.guild, 'modlog', embed=embed)
+            return
+            # BOOM! SUUUUUUUUCK - IT!
+
+@ban.error
+async def ban_error(ctx, error):
+    if isinstance(error, commands.BadArgument):
+        channel = await ctx.author.create_dm()
+        await channel.send(f'D--> {error.args[0]}.')
+
+@channel.command()
+async def unban(ctx, *, member: dc.Member):
+    if not member:
+        return
+    for role in member.roles:
+        if ctx.channel.overwrites_for(role).pair()[1].send_messages:
+            await member.remove_roles(role)
+            if guild_config.getlog(ctx.guild, 'modlog'):
+                embed = dc.Embed(
+                    color=ctx.author.color,
+                    timestamp=ctx.message.created_at,
+                    description=f'**@{member}** has been unbanned in **#{ctx.channel}**'
+                    )
+                embed.add_field(name='**Role Revoked:**', value=f'`{role}`')
+                embed.set_author(
+                    name=f'@{ctx.author} Issued Channel Unban:',
+                    icon_url=ctx.author.avatar_url,
+                    )
+                await guild_config.log(ctx.guild, 'modlog', embed=embed)
+                return
+
+# END OF BANS
 # "TAG" COMMANDS
+
+@bot.command(name='fle%')
+@commands.bot_has_permissions(send_messages=True)
+async def flex(ctx):
+    await ctx.send(
+        embed=dc.Embed(
+            color=ctx.guild.get_member(bot.user.id).color,
+            description='D--> It seems you have STRONGLY requested to gaze upon my beautiful body, '
+            'and who am I to refuse such a request?'
+            ).set_author(
+            name='D--> I STRONGLY agree.', icon_url=bot.user.avatar_url
+            ).set_image(
+            url='https://cdn.discordapp.com/attachments/'
+            '152981670507577344/664624516370268191/arquius.gif'
+            ))
+
+@flex.error
+async def flex_error(ctx, error):
+    if isinstance(error, commands.BotMissingPermissions):
+        return
+    raise error
 
 @bot.command(aliases=['tc', 'tt'])
 @commands.bot_has_permissions(send_messages=True)
 async def tag(ctx):
-    denial = dc.Embed(
-        color=dc.Color(0xFF0000),
-        description='D--> I would never stoop so low as to entertain the likes of this. '
-        'You are STRONGLY recommended to instead gaze upon my beautiful body.'
-        )
-    denial.set_author(name='D--> No.', icon_url=bot.user.avatar_url)
-    denial.set_image(
-        url='https://cdn.discordapp.com/attachments/'
-        '152981670507577344/664624516370268191/arquius.gif'
-        )
-    await ctx.send(embed=denial)
+    await ctx.send(
+        embed=dc.Embed(
+            color=ctx.guild.get_member(bot.user.id).color,
+            description='D--> I would never stoop so low as to entertain the likes of this. '
+            'You are STRONGLY recommended to instead gaze upon my beautiful body.'
+            ).set_author(
+            name='D--> No.', icon_url=bot.user.avatar_url
+            ).set_image(
+            url='https://cdn.discordapp.com/attachments/'
+            '152981670507577344/664624516370268191/arquius.gif'
+            ))
 
 @tag.error
 async def tag_error(ctx, error):
@@ -539,71 +656,6 @@ async def help_error(ctx, error):
         return
     raise error
 
-#ALRIGHT HUNGOVER WIZARD OF CHAOS CODE IN THE HIZ-OUSE
-#WE GONNA WRITE SOME MOTHERFUCKING BAN COMMANDS
-#INITIALIZE THAT SHIT
-@bot.group()
-@commands.bot_has_permissions(send_messages=True)
-@commands.has_permissions(manage_roles=True)
-async def channel(ctx):
-    if ctx.invoked_subcommand is None:
-        pass
-
-@channel.command()
-async def ban(ctx, *, args: dc.Member): #WE'RE GRABBING A MEMBER WE GIVE NO SHITS
-    if not member:
-        return
-    #WE'RE GONNA FIND THE FIRST FUCKING ROLE THAT HAS NO PERMS IN THIS CHANNEL
-    #AND GUESS HOW WE DO THAT?
-    #THAT'S RIGHT, CURSED IF STATEMENT
-    for role in ctx.guild.roles:
-        if ctx.channel.overwrites_for(role).pair()[1].send_messages: #BOOM LOOK AT THAT SHIT SUCK MY DICK
-            await member.add_roles(role)
-            #OH BUT NOW SOMEONES GONNA WHINE THAT WE DIDNT LOG IT?
-            #HOLD YOUR ASS TIGHT BECAUSE WE'RE ABOUT TO
-            if guild_config.getlog(ctx.guild, 'modlog'): #OHHHHHHH! HE DID IT! THE FUCKING MADMAN!
-                embed=dc.Embed(
-                    color = ctx.author.color,
-                    timestamp=ctx.message.created_at,
-                    description=f'{ctx.author} has channel-banned {member} from {ctx.channel}'
-                    )
-                if len(args) >= 3:
-                    embed.add_field(
-                        name='Duration:',
-                        value=f'{args[1]} {args[2]}',
-                        inline=False
-                        )
-                else:
-                    embed.add_field(
-                        name='Duration not specified.',
-                        value=None,
-                        inline=False
-                        )
-                embed.set_author(
-                    name='**CHANNEL-BAN**',
-                    icon_url=ctx.author.avatar_url,
-                    )
-                await guild_config.log(ctx.guild, 'modlog', embed=embed)
-                return
-                #BOOM! SUUUUUUUUCK - IT!
-
-@channel.command()
-async def unban(ctx, *, member: dc.Member):
-    if not member:
-        return
-    for role in member.roles:
-        if dict(iter(ctx.channel.overwrites_for(role)))['send_messages'] == False:
-            await member.remove_roles(role)
-            if guild_config.getlog(ctx.guild, 'modlog'):
-                embed=dc.Embed(
-                    color = ctx.author.color,
-                    timestamp=ctx.message.created_at,
-                    description=f'{ctx.author} has removed a channel-ban on {member} from {ctx.channel}'
-                    )
-                await guild_config.log(ctx.guild, 'modlog', embed=embed)
-                return
-#ALRIGHT BACK TO YOUR REGULARLY SCHEDULED FUNCTIONS
-
 @bot.command()
 @commands.bot_has_permissions(send_messages=True)
 async def info(ctx, *, name=None):
@@ -614,18 +666,31 @@ async def info(ctx, *, name=None):
         if member is None:
             await ctx.send('D--> It seems that user can\'t be found. Please check your spelling.')
             return
-    lastseen = member_stalker.get(member)
+    now = datetime.utcnow()
+    lastseen = member_stalker.get('last_seen', member)
     if lastseen is not None:
-        lastseenmsg = f'This user was last seen on `{lastseen.strftime("%d/%m/%Y %H:%M:%S")}`'
+        lastseenmsg = (
+            f'This user was last seen on `{lastseen.strftime("%d/%m/%Y %H:%M:%S")}` '
+            f'({max(0, (now-lastseen).days)} days ago)'
+            )
     else:
         lastseenmsg = 'This user has not spoken to my knowledge!'
-    embed = dc.Embed(color=member.color, timestamp=datetime.utcnow())
+    firstjoin = member_stalker.get('first_join', member) or member.joined_at
+    embed = dc.Embed(color=member.color, timestamp=now)
     embed.set_author(name=f'Information for {member}')
     embed.set_thumbnail(url=member.avatar_url)
     embed.add_field(name='User ID:', value=f'`{member.id}`')
     embed.add_field(name='Last Seen:', value=lastseenmsg, inline=False)
-    embed.add_field(name='Account Created On:', value=member.created_at.strftime('%d/%m/%Y %H:%M:%S'))
-    embed.add_field(name='Guild Last Joined On:', value=member.joined_at.strftime('%d/%m/%Y %H:%M:%S'))
+    embed.add_field(
+        name='Account Created On:',
+        value=f"`{member.created_at.strftime('%d/%m/%Y %H:%M:%S')}` "
+        f'({(now-member.created_at).days} days ago)'
+        )
+    embed.add_field(
+        name='Guild Last Joined On:',
+        value=f"`{member.joined_at.strftime('%d/%m/%Y %H:%M:%S')}` "
+        f'({(now-member.joined_at).days} days ago, {(now-firstjoin).days} days since first recorded join)'
+        )
     embed.add_field(
         name='Roles:',
         value=', '.join(f'`{role.name}`' for role in member.roles[1:]),

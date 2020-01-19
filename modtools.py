@@ -6,7 +6,7 @@ import discord as dc
 from discord.ext import tasks, commands
 
 def callback(): # Lambdas can't be pickled, but named functions can.
-    return {'usrlog': None, 'msglog': None, 'banlog': None, 'star_wars': None} #Added an additional log for bans applied.
+    return {'usrlog': None, 'msglog': None, 'modlog': None, 'star_wars': None} #Added an additional log for bans applied.
 
 class Singleton(object):
     instance = None
@@ -28,6 +28,10 @@ class GuildConfig(Singleton):
         try:
             with open(self.fname, 'rb') as config_file:
                 self.mod_channels = pickle.load(config_file)
+            for guild, config in self.mod_channels.items():
+                if 'modlog' not in config:
+                    config['modlog'] = None
+            self.save()
         except (OSError, EOFError):
             self.mod_channels = defaultdict(callback, {})
         self.save()
@@ -37,7 +41,8 @@ class GuildConfig(Singleton):
             try:
                 config['star_wars'] = self.punishers[guild_id].dump()
             except KeyError:
-                config['star_wars'] = None
+                if 'star_wars' not in config:
+                    config['star_wars'] = None
         with open(self.fname, 'wb') as config_file:
             pickle.dump(self.mod_channels, config_file)
 
@@ -180,6 +185,12 @@ class RoleSaver(object):
         self.save()
 
 
+def data_callback():
+    return {'last_seen': None, 'first_join': None}
+
+def member_callback():
+    return defaultdict(data_callback, {})
+
 class MemberStalker(object):
     def __init__(self, fname):
         self.fname = fname
@@ -188,22 +199,26 @@ class MemberStalker(object):
     def load(self):
         try:
             with open(self.fname, 'rb') as role_file:
-                self.last_msgs = pickle.load(role_file)
+                self.member_data = pickle.load(role_file)
+            self.member_data = defaultdict(member_callback, self.member_data)
+            for guild, members in self.member_data.items():
+                if isinstance(members, dict): continue
+                for member, data in members.items():
+                    members[member] = {'last_seen': data, 'first_join': None}
+            self.save()
         except (OSError, EOFError):
-            self.last_msgs = defaultdict(dict, {})
+            self.member_data = defaultdict(member_callback, defaultdict(data_callback, {}))
             self.save()
 
     def save(self):
         with open(self.fname, 'wb') as role_file:
-            pickle.dump(self.last_msgs, role_file)
+            pickle.dump(self.member_data, role_file)
 
-    def get(self, member):
-        try:
-            return self.last_msgs[member.guild.id][member.id]
-        except KeyError:
-            return None
+    def get(self, log, member):
+        return self.member_data[member.guild.id][member.id][log]
 
-    def update(self, msg):
-        if msg.guild is None:
+    def update(self, log, msg):
+        member_data = self.member_data[msg.guild.id][msg.author.id]
+        if log == 'first_join' and member_data[log]:
             return
-        self.last_msgs[msg.guild.id][msg.author.id] = msg.created_at
+        member_data[log] = msg.created_at

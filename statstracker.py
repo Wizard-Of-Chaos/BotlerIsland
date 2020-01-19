@@ -20,8 +20,9 @@ class StatsTracker(object):
         try:
             with open(self.fname, 'rb') as role_file:
                 self.stats = pickle.load(role_file)
+            self.stats = defaultdict(callback, self.stats)
         except (OSError, EOFError):
-            self.stats = defaultdict(callback, {})
+            self.stats = defaultdict(callback, defaultdict(dict, {}))
             self.save()
 
     def save(self):
