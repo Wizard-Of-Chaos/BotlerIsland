@@ -332,6 +332,12 @@ async def usrlog(ctx):
 async def msglog(ctx):
     guild_config.setlog(ctx, 'msglog')
     await ctx.send('D--> The join log channel has been set and saved.')
+    
+@config.command()
+async def modlog(ctx):
+    guild_config.setlog(ctx, 'modlog')
+    await ctx.send('D--> The ban log channel has been set and saved.')
+
 
 # END OF CONFIG
 # STATS COMMANDS
@@ -538,6 +544,45 @@ async def help_error(ctx, error):
     if isinstance(error, commands.BotMissingPermissions):
         return
     raise error
+
+#ALRIGHT HUNGOVER WIZARD OF CHAOS CODE IN THE HIZ-OUSE
+#WE GONNA WRITE SOME MOTHERFUCKING BAN COMMANDS
+#INITIALIZE THAT SHIT
+@bot.command()
+@commands.bot_has_permissions(send_messages=True)
+@commands.has_permissions(manage_roles=True)
+async def channelban(ctx, *, member: dc.Member): #WE'RE GRABBING A MEMBER WE GIVE NO SHITS
+    if not member:
+        return
+    #WE'RE GONNA FIND THE FIRST FUCKING ROLE THAT HAS NO PERMS IN THIS CHANNEL
+    #AND GUESS HOW WE DO THAT?
+    #THAT'S RIGHT, CURSED IF STATEMENT
+    for role in ctx.guild.roles:
+        if dict(iter(ctx.channel.overwrites_for(role)))['send_messages'] == False: #BOOM LOOK AT THAT SHIT SUCK MY DICK
+            await member.add_roles(role)
+            #OH BUT NOW SOMEONES GONNA WHINE THAT WE DIDNT LOG IT?
+            #HOLD YOUR ASS TIGHT BECAUSE WE'RE ABOUT TO
+            if guild_config.getlog(ctx.guild, 'modlog'): #OHHHHHHH! HE DID IT! THE FUCKING MADMAN!
+                embed=dc.Embed(
+                    color = ctx.author.color,
+                    timestamp=ctx.message.created_at,
+                    description=f'{ctx.author} has channel-banned {member} from {ctx.channel}'
+                    )
+                embed.add_field(
+                    name='Duration:',
+                    value='Not implemented yet, sorry.',
+                    inline=False
+                    )
+                embed.set_author(
+                    name='**Channel Ban**',
+                    icon_url=ctx.author.avatar_url,
+                    )
+                await guild_config.log(ctx.guild, 'modlog', embed=embed)
+                return
+                #BOOM! SUUUUUUUUCK - IT!
+            await ctx.send('D--> It seems that no role was found for this channel.')
+
+#ALRIGHT BACK TO YOUR REGULARLY SCHEDULED FUNCTIONS
 
 @bot.command()
 @commands.bot_has_permissions(send_messages=True)

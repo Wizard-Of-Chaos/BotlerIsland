@@ -6,7 +6,7 @@ import discord as dc
 from discord.ext import tasks, commands
 
 def callback(): # Lambdas can't be pickled, but named functions can.
-    return {'usrlog': None, 'msglog': None, 'star_wars': None}
+    return {'usrlog': None, 'msglog': None, 'banlog': None, 'star_wars': None} #Added an additional log for bans applied.
 
 class Singleton(object):
     instance = None
