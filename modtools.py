@@ -5,8 +5,13 @@ import pickle
 import discord as dc
 from discord.ext import tasks, commands
 
+guild_whitelist = {152981670507577344, 663452978237407262}
+
 def callback(): # Lambdas can't be pickled, but named functions can.
-    return {'usrlog': None, 'msglog': None, 'modlog': None, 'star_wars': None} #Added an additional log for bans applied.
+    return {
+    'usrlog': None, 'msglog': None, 'modlog': None,
+    'autoreact': set(), 'star_wars': {},
+    }
 
 class Singleton(object):
     instance = None
@@ -28,12 +33,13 @@ class GuildConfig(Singleton):
         try:
             with open(self.fname, 'rb') as config_file:
                 self.mod_channels = pickle.load(config_file)
-            for guild, config in self.mod_channels.items():
-                if 'modlog' not in config:
-                    config['modlog'] = None
-            self.save()
+            for guild, config in self.mod_channels.copy().items():
+                if guild not in guild_whitelist:
+                    del self.mod_channels[guild]
+                    continue
+                self.mod_channels[guild] = {**callback(), **config}
         except (OSError, EOFError):
-            self.mod_channels = defaultdict(callback, {})
+            self.mod_channels = defaultdict(callback)
         self.save()
 
     def save(self):
@@ -55,11 +61,20 @@ class GuildConfig(Singleton):
         return self.mod_channels[guild.id][log]
 
     def setlog(self, ctx, log):
-        try:
-            self.mod_channels[ctx.guild.id][log] = ctx.channel.id
-        except KeyError:
+        if log not in {'usrlog', 'msglog', 'modlog'}:
             raise ValueError(f'Invalid log channel type {log}')
+        self.mod_channels[ctx.guild.id][log] = ctx.channel.id
         self.save()
+
+    def toggle_reacts(self, ctx):
+        config = self.mod_channels[ctx.guild.id]['autoreact']
+        channel_id = ctx.channel.id
+        if channel_id in config:
+            config.remove(channel_id)
+            return False
+        else:
+            config.add(channel_id)
+            return True
 
     def set_containment(self, ctx):
         guild_id = ctx.guild.id
@@ -150,7 +165,7 @@ class StarWarsPunisher(commands.Cog):
             self.manage_bans.cancel()
 
 
-class RoleSaver(object):
+class RoleSaver(Singleton):
     def __init__(self, fname):
         self.fname = fname
         self.load()
@@ -159,8 +174,12 @@ class RoleSaver(object):
         try:
             with open(self.fname, 'rb') as role_file:
                 self.user_roles = pickle.load(role_file)
+            for guild in self.user_roles.copy():
+                if guild not in guild_whitelist:
+                    del self.user_roles[guild]
+                    continue
         except (OSError, EOFError):
-            self.user_roles = defaultdict(dict, {})
+            self.user_roles = defaultdict(dict)
             self.save()
 
     def save(self):
@@ -189,9 +208,9 @@ def data_callback():
     return {'last_seen': None, 'first_join': None}
 
 def member_callback():
-    return defaultdict(data_callback, {})
+    return defaultdict(data_callback)
 
-class MemberStalker(object):
+class MemberStalker(Singleton):
     def __init__(self, fname):
         self.fname = fname
         self.load()
@@ -200,14 +219,10 @@ class MemberStalker(object):
         try:
             with open(self.fname, 'rb') as role_file:
                 self.member_data = pickle.load(role_file)
-            self.member_data = defaultdict(member_callback, self.member_data)
-            for guild, members in self.member_data.items():
-                if isinstance(members, dict): continue
-                for member, data in members.items():
-                    members[member] = {'last_seen': data, 'first_join': None}
-            self.save()
+            if not isinstance(self.member_data, tuple):
+                raise OSError('Invalid file format')
         except (OSError, EOFError):
-            self.member_data = defaultdict(member_callback, defaultdict(data_callback, {}))
+            self.member_data = (True, defaultdict(member_callback))
             self.save()
 
     def save(self):
@@ -215,10 +230,10 @@ class MemberStalker(object):
             pickle.dump(self.member_data, role_file)
 
     def get(self, log, member):
-        return self.member_data[member.guild.id][member.id][log]
+        return self.member_data[1][member.guild.id][member.id][log]
 
     def update(self, log, msg):
-        member_data = self.member_data[msg.guild.id][msg.author.id]
+        member_data = self.member_data[1][msg.guild.id][msg.author.id]
         if log == 'first_join' and member_data[log]:
             return
         member_data[log] = msg.created_at

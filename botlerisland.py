@@ -4,7 +4,7 @@ from datetime import datetime
 import asyncio as aio
 import discord as dc
 from discord.ext import commands
-from modtools import GuildConfig, RoleSaver, MemberStalker
+from modtools import guild_whitelist, GuildConfig, RoleSaver, MemberStalker
 from statstracker import StatsTracker
 
 bot = commands.Bot(command_prefix='D--> ')
@@ -18,6 +18,7 @@ stats_tracker.locked_msg = (
     'I STRONGLY suggest that you wait for me to finish.'
     )
 
+image_exts = ('png', 'gif', 'jpg', 'jpeg', 'jpe', 'jfif')
 CONST_BAD_ID = 148346796186271744 # You-know-who
 
 #FUNCTIONS
@@ -49,11 +50,19 @@ async def grab_avatar(user):
 
 @bot.event
 async def on_ready():
-    print('D--> At your command.\n')
-    return await bot.change_presence(
+    for guild in bot.guilds:
+        if guild.id not in guild_whitelist:
+            await guild.leave()
+    await bot.change_presence(
         activity=dc.Game(name='D--> A beautiful stallion.')
         )
-    
+    print('D--> At your command.\n')
+
+@bot.event
+async def on_guild_join(guild):
+    if guild.id not in guild_whitelist:
+        await guild.leave()
+
 @bot.event
 async def on_message(msg):
     if msg.guild is None:
@@ -63,7 +72,11 @@ async def on_message(msg):
     if ctx.valid and msg.author.id != 167131099456208898:
         await bot.process_commands(msg)
     elif msg.content == 'good work arquius':
-        await msg.channel.send('D--> :sunglasses:')
+        await msg.channel.send('D--> 😎')
+    elif (msg.channel.id in guild_config.getlog(msg.guild, 'autoreact')
+        and any(any(map(att.url.lower().endswith, image_exts)) for att in msg.attachments)
+        ):
+        await msg.add_reaction('❤️')
     elif msg.author != bot.user and guild_config.detect_star_wars(msg):
         dt = await guild_config.punish_star_wars(msg)
         embed = dc.Embed(
@@ -81,8 +94,7 @@ async def on_message(msg):
             f'{dt.seconds//60%60} minutes and {dt.seconds%60} seconds.'
             )
         await msg.channel.send(embed=embed)
-
-    
+   
 @bot.event
 async def on_message_edit(bfr, aft): # Log edited messages
     if bfr.author == bot.user or bfr.content == aft.content:
@@ -611,6 +623,7 @@ async def tag_error(ctx, error):
 @bot.command(name='help')
 @commands.bot_has_permissions(send_messages=True)
 async def _help(ctx):
+    perms = ctx.author.permissions_in(ctx.channel)
     embed = dc.Embed(
         color=ctx.author.color,
         timestamp=ctx.message.created_at,
@@ -628,26 +641,35 @@ async def _help(ctx):
         inline=False
         )
     embed.add_field(name='`ping`', value='Pong!', inline=False)
-    embed.add_field(
-        name='`stats`',
-        value='(Manage Roles only) Show server statistics.',
-        inline=False
-        )
-    embed.add_field(
-        name='`config (msglog|usrlog)`',
-        value='(Manage Server only) Sets the appropriate log channel.',
-        inline=False
-        )
-    embed.add_field(
-        name='`execute order 66`',
-        value='(Senate only) Declares all Jedi to be enemies of the Republic for 5 minutes.',
-        inline=False
-        )
-    embed.add_field(
-        name='`ZA (WARUDO|HANDO)`',
-        value='(Admin Only) Utilizes highly dangerous Stand power to moderate the server.',
-        inline=False
-        )
+    embed.add_field(name='`fle%`', value='Provides you with STRONG eye candy.', inline=False)
+    if perms.manage_roles:
+        embed.add_field(
+            name='`stats`',
+            value='(Manage Roles only) Show server statistics.',
+            inline=False
+            )
+        embed.add_field(
+            name='`autoreact`',
+            value='(Manage Roles only) Toggle auto-react feature.',
+            inline=False
+            )
+    if perms.manage_guild:
+        embed.add_field(
+            name='`config (msglog|usrlog)`',
+            value='(Manage Server only) Sets the appropriate log channel.',
+            inline=False
+            )
+    if perms.administrator:
+        embed.add_field(
+            name='`execute order 66`',
+            value='(Senate only) Declares all Jedi to be enemies of the Republic for 5 minutes.',
+            inline=False
+            )
+        embed.add_field(
+            name='`ZA (WARUDO|HANDO)`',
+            value='(Stand User Only) Utilizes highly dangerous Stand power to moderate the server.',
+            inline=False
+            )
     await ctx.send(embed=embed)
 
 @_help.error
@@ -718,6 +740,21 @@ async def ping(ctx):
 @ping.error
 async def ping_error(ctx, error):
     if isinstance(error, commands.BotMissingPermissions):
+        return
+    raise error
+
+@bot.command()
+@commands.bot_has_permissions(add_reactions=True, read_message_history=True)
+@commands.has_permissions(manage_roles=True)
+async def autoreact(ctx):
+    if guild_config.toggle_reacts(ctx):
+        await ctx.send('D--> ❤️')
+    else:
+        await ctx.send('D--> 💔')
+
+@autoreact.error
+async def autoreact_error(ctx, error):
+    if isinstance(error, (MissingPermissions, BotMissingPermissions)):
         return
     raise error
 
