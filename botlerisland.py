@@ -311,7 +311,7 @@ async def execute_error(ctx, error):
 
 @bot.group()
 @commands.bot_has_permissions(send_messages=True)
-@commands.has_permissions(manage_guild=True)
+@commands.has_guild_permissions(manage_guild=True)
 async def config(ctx):
     if ctx.invoked_subcommand is None:
         await ctx.send(
@@ -351,7 +351,7 @@ async def modlog(ctx):
 # STATS COMMANDS
 
 @bot.group()
-@commands.has_permissions(manage_roles=True)
+@commands.has_guild_permissions(manage_roles=True)
 async def stats(ctx):
     if ctx.invoked_subcommand is None:
         await ctx.send(
@@ -745,7 +745,7 @@ async def ping_error(ctx, error):
 
 @bot.command()
 @commands.bot_has_permissions(add_reactions=True, read_message_history=True)
-@commands.has_permissions(manage_roles=True)
+@commands.has_guild_permissions(manage_roles=True)
 async def autoreact(ctx):
     if guild_config.toggle_reacts(ctx):
         await ctx.send('D--> ❤️')
