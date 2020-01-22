@@ -7,7 +7,7 @@ A Discord utility bot intended for use only in the Homestuck &amp; Hiveswap Disc
 D--> It seems you have asked about the *Homestuck and Hiveswap Discord Utility Bot(TM)*.
 This is a bot designed to cater to the server's moderation, utility, and statistic 
 tracking needs. If the functions herein described are not performing to the degree 
-that is claimed, please direct your attention to **Wizard of Chaos#2459**.
+that is claimed, please direct your attention to **Wizard of Chaos#2459** or **virtuNat#7998**.
 
 ---------------------------------------------------------------------------------------------------------------
 Command List:
