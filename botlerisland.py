@@ -623,7 +623,7 @@ async def tag_error(ctx, error):
 @bot.command(name='help')
 @commands.bot_has_permissions(send_messages=True)
 async def _help(ctx):
-    perms = ctx.author.permissions_in(ctx.channel)
+    perms = ctx.author.guild_permissions
     embed = dc.Embed(
         color=ctx.author.color,
         timestamp=ctx.message.created_at,
