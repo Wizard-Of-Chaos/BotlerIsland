@@ -625,10 +625,10 @@ async def _help(ctx):
     embed = dc.Embed(
         color=ctx.author.color,
         timestamp=ctx.message.created_at,
-        description=f'D--> It seems you have asked about the Homestuck and Hiveswap Discord Utility Bot:tm:.'
+        description=f'D--> It seems you have asked about the *Homestuck and Hiveswap Discord Utility Bot*:tm:.'
         f'This is a bot designed to cater to the server\'s moderation, utility, and statistic '
         f'tracking needs. If the functions herein described are not performing to the degree '
-        f'that is claimed, please direct your attention to Wizard of Chaos#2459.\n\n'
+        f'that is claimed, please direct your attention to **Wizard of Chaos#2459**.\n\n'
         f'**Command List:**',
         )
     embed.set_author(name='Help message', icon_url=bot.user.avatar_url)
