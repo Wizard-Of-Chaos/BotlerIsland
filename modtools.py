@@ -232,8 +232,11 @@ class MemberStalker(Singleton):
     def get(self, log, member):
         return self.member_data[1][member.guild.id][member.id][log]
 
-    def update(self, log, msg):
-        member_data = self.member_data[1][msg.guild.id][msg.author.id]
-        if log == 'first_join' and member_data[log]:
-            return
+    def update(self, log, obj):
+        if log == 'first_join':
+            member_data = self.member_data[1][obj.guild.id][obj.id]
+            if member_data[log]:
+                return
+        elif log == 'last_seen':
+            member_data = self.member_data[1][obj.guild.id][obj.author.id]
         member_data[log] = msg.created_at
