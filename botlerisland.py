@@ -715,7 +715,7 @@ async def info(ctx, *, name=None):
         )
     embed.add_field(
         name='Roles:',
-        value=', '.join(f'`{role.name}`' for role in member.roles[1:]),
+        value=', '.join(f'`{role.name}`' for role in member.roles[1:]) or None,
         inline=False
         )
     if bot.user == member:

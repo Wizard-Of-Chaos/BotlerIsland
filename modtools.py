@@ -237,6 +237,6 @@ class MemberStalker(Singleton):
             member_data = self.member_data[1][obj.guild.id][obj.id]
             if member_data[log]:
                 return
+            member_data[log] = obj.joined_at
         elif log == 'last_seen':
-            member_data = self.member_data[1][obj.guild.id][obj.author.id]
-        member_data[log] = msg.created_at
+            self.member_data[1][obj.guild.id][obj.author.id][log] = obj.created_at
