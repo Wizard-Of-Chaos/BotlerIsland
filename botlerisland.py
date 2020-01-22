@@ -25,10 +25,8 @@ CONST_BAD_ID = 148346796186271744 # You-know-who
 
 def get_token():
     with open('token.dat', 'r') as tokenfile:
-        return ''.join(
-            chr(int(''.join(c), 16))
-            for c in zip(*[iter(tokenfile.read().strip())]*2)
-            )
+        raw = tokenfile.read().strip()
+        return ''.join(chr(int(raw[2*i:2*i+2], 16)) for i in range(len(raw)//2))
 
 async def grab_avatar(user):
     avy_channel = bot.get_channel(664541525350547496)
@@ -311,7 +309,7 @@ async def execute_error(ctx, error):
 
 @bot.group()
 @commands.bot_has_permissions(send_messages=True)
-@commands.has_guild_permissions(manage_guild=True)
+@commands.has_permissions(manage_guild=True)
 async def config(ctx):
     if ctx.invoked_subcommand is None:
         await ctx.send(
@@ -351,7 +349,7 @@ async def modlog(ctx):
 # STATS COMMANDS
 
 @bot.group()
-@commands.has_guild_permissions(manage_roles=True)
+@commands.has_permissions(manage_roles=True)
 async def stats(ctx):
     if ctx.invoked_subcommand is None:
         await ctx.send(
@@ -745,7 +743,7 @@ async def ping_error(ctx, error):
 
 @bot.command()
 @commands.bot_has_permissions(add_reactions=True, read_message_history=True)
-@commands.has_guild_permissions(manage_roles=True)
+@commands.has_permissions(manage_roles=True)
 async def autoreact(ctx):
     if guild_config.toggle_reacts(ctx):
         await ctx.send('D--> ❤️')
