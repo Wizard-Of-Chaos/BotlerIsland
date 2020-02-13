@@ -4,14 +4,13 @@ from datetime import datetime
 import asyncio as aio
 import discord as dc
 from discord.ext import commands
-from modtools import guild_whitelist, GuildConfig, RoleSaver, MemberStalker
+from modtools import guild_whitelist, GuildConfig, MemberStalker
 from statstracker import StatsTracker
 
 bot = commands.Bot(command_prefix='D--> ')
 bot.remove_command('help')
 guild_config = GuildConfig(bot, 'config.pkl')
-role_saver = RoleSaver('roles.pkl')
-member_stalker = MemberStalker('times.pkl')
+member_stalker = MemberStalker('members.pkl')
 stats_tracker = StatsTracker('stats.pkl')
 stats_tracker.locked_msg = (
     'D--> It seems that I am currently in the middle of something. '
@@ -38,10 +37,16 @@ async def grab_avatar(user):
                 'https://cdn.discordapp.com/attachments/'
                 '663453347763716110/664578577479761920/unknown.png'
                 )
+    msg_id = hex(member_stalker.member_data['count'])[2:]
+    member_stalker.member_data['count'] += 1
     with open('avatar.png', mode='rb') as avatarfile:
-        await avy_channel.send(f'`@{user}`: ID {user.id}', file=dc.File(avatarfile))
-    async for msg in avy_channel.history(limit=1):
-        return msg.attachments[0].url
+        await avy_channel.send(
+            f'`@{user}`: UID {user.id}: MID {msg_id}',
+            file=dc.File(avatarfile)
+            )
+    async for msg in avy_channel.history(limit=100):
+        if msg.content.split()[-1] == msg_id:
+            return msg.attachments[0].url
 
 #END OF FUNCTIONS
 #EVENTS
@@ -147,7 +152,7 @@ async def on_member_join(member): # Log joined members
     if not guild_config.getlog(guild, 'usrlog'):
         return
     member_stalker.update('first_join', member)
-    await role_saver.load_roles(member)
+    await member_stalker.load_roles(member)
     embed = dc.Embed(
         color=dc.Color.green(),
         timestamp=datetime.utcnow(),
@@ -166,7 +171,7 @@ async def on_member_remove(member): # Log left/kicked/banned members
     if not guild_config.getlog(guild, 'usrlog'):
         return
     member_stalker.update('first_join', member)
-    role_saver.save_roles(member)
+    member_stalker.update('last_roles', member)
     now = datetime.utcnow()
     lastseen = member_stalker.get('last_seen', member)
     if lastseen is not None:
@@ -188,7 +193,7 @@ async def on_member_remove(member): # Log left/kicked/banned members
         name='**Roles Snagged:**',
         value=(', '.join(
                 f'`{guild.get_role(role).name}`'
-                for role in role_saver.get_roles(member)
+                for role in member_stalker.get('last_roles', member)
                 )
             or None),
         inline=False)
@@ -505,7 +510,6 @@ async def resumes(ctx):
 # ALRIGHT HUNGOVER WIZARD OF CHAOS CODE IN THE HIZ-OUSE
 # WE GONNA WRITE SOME MOTHERFUCKING BAN COMMANDS; INITIALIZE THAT SHIT
 @bot.group()
-@commands.bot_has_permissions(send_messages=True)
 @commands.has_permissions(manage_roles=True)
 async def channel(ctx):
     if ctx.invoked_subcommand is None:
@@ -763,5 +767,4 @@ if __name__ == '__main__':
         raise
     finally:
         guild_config.save()
-        role_saver.save()
         member_stalker.save()

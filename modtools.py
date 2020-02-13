@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from collections import defaultdict, deque
 import re
+import os
 import pickle
 import discord as dc
 from discord.ext import tasks, commands
@@ -14,11 +15,11 @@ def callback(): # Lambdas can't be pickled, but named functions can.
     }
 
 class Singleton(object):
-    instance = None
+    _self_instance_ref = None
     def __new__(cls, *args, **kwargs):
-        if cls.instance is None:
-            cls.instance = super().__new__(cls)
-        return cls.instance
+        if cls._self_instance_ref is None:
+            cls._self_instance_ref = super().__new__(cls)
+        return cls._self_instance_ref
 
 
 class GuildConfig(Singleton):
@@ -165,50 +166,20 @@ class StarWarsPunisher(commands.Cog):
             self.manage_bans.cancel()
 
 
-class RoleSaver(Singleton):
-    def __init__(self, fname):
-        self.fname = fname
-        self.load()
+def data_callback(): # Legacy callback for the first load, delete on the next update
+    return {'first_join': None, 'last_seen': None}
 
-    def load(self):
-        try:
-            with open(self.fname, 'rb') as role_file:
-                self.user_roles = pickle.load(role_file)
-            for guild in self.user_roles.copy():
-                if guild not in guild_whitelist:
-                    del self.user_roles[guild]
-                    continue
-        except (OSError, EOFError):
-            self.user_roles = defaultdict(dict)
-            self.save()
-
-    def save(self):
-        with open(self.fname, 'wb') as role_file:
-            pickle.dump(self.user_roles, role_file)
-
-    def get_roles(self, member):
-        return self.user_roles[member.guild.id][member.id]
-
-    async def load_roles(self, member):
-        try:
-            roles = self.user_roles[member.guild.id][member.id]
-        except KeyError:
-            return
-        await member.add_roles(
-            *map(member.guild.get_role, roles),
-            reason='Restore roles'
-            )
-
-    def save_roles(self, member):
-        self.user_roles[member.guild.id][member.id] = [role.id for role in member.roles[1:]]
-        self.save()
+def member_callback(): # Legacy callback for the first load, delete on the next update
+    return defaultdict(data_callback)
 
 
-def data_callback():
-    return {'last_seen': None, 'first_join': None}
+
+def guild_callback():
+    return {'first_join': None, 'last_seen': None, 'last_roles': []}
 
 def member_callback():
-    return defaultdict(data_callback)
+    return defaultdict(guild_callback)
+
 
 class MemberStalker(Singleton):
     def __init__(self, fname):
@@ -216,27 +187,44 @@ class MemberStalker(Singleton):
         self.load()
 
     def load(self):
-        try:
-            with open(self.fname, 'rb') as role_file:
-                self.member_data = pickle.load(role_file)
-            if not isinstance(self.member_data, tuple):
-                raise OSError('Invalid file format')
-        except (OSError, EOFError):
-            self.member_data = (True, defaultdict(member_callback))
+        if os.path.exists(self.fname):
+            with open(self.fname, 'rb') as member_file:
+                self.member_data = pickle.load(member_file)
+        else:
+            with open('times.pkl', 'rb') as old_member_file:
+                old_member_data = pickle.load(old_member_file)[1]
+            os.remove('times.pkl')
+            self.member_data = defaultdict(member_callback, {'count': 0})
+            for guild_id, members in old_member_data.items():
+                for member_id, member_data in members.items():
+                    self.member_data[member_id][guild_id].update(member_data)
+            with open('roles.pkl', 'rb') as old_role_file:
+                old_role_data = pickle.load(old_role_file)
+            os.remove('roles.pkl')
+            for guild_id, members in old_role_data.items():
+                for member_id, roles in members.items():
+                    self.member_data[member_id][guild_id]['last_roles'] = roles
             self.save()
 
     def save(self):
-        with open(self.fname, 'wb') as role_file:
-            pickle.dump(self.member_data, role_file)
+        with open(self.fname, 'wb') as member_file:
+            pickle.dump(self.member_data, member_file)
 
-    def get(self, log, member):
-        return self.member_data[1][member.guild.id][member.id][log]
+    def get(self, field, member):
+        return self.member_data[member.id][member.guild.id][field]
 
-    def update(self, log, obj):
-        if log == 'first_join':
-            member_data = self.member_data[1][obj.guild.id][obj.id]
-            if member_data[log]:
-                return
-            member_data[log] = obj.joined_at
-        elif log == 'last_seen':
-            self.member_data[1][obj.guild.id][obj.author.id][log] = obj.created_at
+    def update(self, field, data):
+        if field == 'first_join': # data is a discord.Member instance
+            member_data = self.member_data[data.id][data.guild.id]
+            if not member_data[field]:
+                member_data[field] = data.joined_at
+        elif field == 'last_seen': # data is a discord.Message instance
+            self.member_data[data.author.id][data.guild.id][field] = data.created_at
+        elif field == 'last_roles': # data is a discord.Member instance
+            self.member_data[data.id][data.guild.id][field] = [role.id for role in data.roles[1:]]
+
+    async def load_roles(self, member):
+        await member.add_roles(
+            *map(member.guild.get_role, self.member_data[member.id][member.guild.id]['last_roles']),
+            reason='Restore last roles'
+            )
