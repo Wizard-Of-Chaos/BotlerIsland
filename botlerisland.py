@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # HSDBot code by Wizard of Chaos#2459 and virtuNat#7998
 from datetime import datetime
+from random import randint
 import asyncio as aio
 import discord as dc
 from discord.ext import commands
@@ -643,6 +644,11 @@ async def _help(ctx):
         inline=False
         )
     embed.add_field(name='`ping`', value='Pong!', inline=False)
+    embed.add_field(
+        name='`roll <n>d<f>[(+|-)<m>]`',
+        value='Try your luck! Roll n f-faced dice, and maybe add a baseline m!',
+        inline=False
+        )
     embed.add_field(name='`fle%`', value='Provides you with STRONG eye candy.', inline=False)
     if perms.manage_roles:
         embed.add_field(
@@ -741,6 +747,17 @@ async def ping(ctx):
 
 @ping.error
 async def ping_error(ctx, error):
+    if isinstance(error, commands.BotMissingPermissions):
+        return
+    raise error
+
+@bot.command()
+@commands.bot_has_permissions(send_messages=True)
+async def roll(ctx, *, args):
+    pass # Code roll function later
+
+@ping.error
+async def roll_error(ctx, error):
     if isinstance(error, commands.BotMissingPermissions):
         return
     raise error
