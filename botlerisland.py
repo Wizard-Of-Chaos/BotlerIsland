@@ -644,12 +644,12 @@ async def _help(ctx):
         inline=False
         )
     embed.add_field(name='`ping`', value='Pong!', inline=False)
+    embed.add_field(name='`fle%`', value='Provides you with STRONG eye candy.', inline=False)
     embed.add_field(
         name='`roll <n>d<f>[(+|-)<m>]`',
-        value='Try your luck! Roll n f-faced dice, and maybe add a baseline m!',
+        value='Try your luck! Roll n f-faced dice, and maybe add a modifier m!',
         inline=False
         )
-    embed.add_field(name='`fle%`', value='Provides you with STRONG eye candy.', inline=False)
     if perms.manage_roles:
         embed.add_field(
             name='`stats`',
@@ -661,9 +661,14 @@ async def _help(ctx):
             value='(Manage Roles only) Toggle auto-react feature.',
             inline=False
             )
+        embed.add_field(
+            name='`channel (ban|unban) <username>`',
+            value='(Manage Roles only) Add or remove a channel mute role.',
+            inline=False
+            )
     if perms.manage_guild:
         embed.add_field(
-            name='`config (msglog|usrlog)`',
+            name='`config (msglog|usrlog|modlog)`',
             value='(Manage Server only) Sets the appropriate log channel.',
             inline=False
             )
