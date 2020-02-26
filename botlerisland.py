@@ -776,6 +776,15 @@ async def autoreact(ctx):
     else:
         await ctx.send('D--> 💔')
 
+@bot.command()
+@commands.bot_has_permissions(ban_members=True, send_messages=True)
+@commands.has_permissions(ban_members=True)
+async def raidban(ctx, *args):
+    for id in args:
+        smackdown = await commands.UserConverter().convert(ctx, id)
+        await ctx.guild.ban(smackdown, reason='ROBOT', delete_message_days=1)
+    await ctx.send(f'Destroyed users with IDs of {args}.')
+    
 @autoreact.error
 async def autoreact_error(ctx, error):
     if isinstance(error, (MissingPermissions, BotMissingPermissions)):
