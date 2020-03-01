@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # HSDBot code by Wizard of Chaos#2459 and virtuNat#7998
+import re
 from datetime import datetime
 from random import randint
 import asyncio as aio
@@ -784,7 +785,22 @@ async def ping_error(ctx, error):
 @bot.command()
 @commands.bot_has_permissions(send_messages=True)
 async def roll(ctx, *, args):
-    pass # Code roll function later
+    match = re.match(r'(\d+)\s*d\s*(\d+)\s*(?:([-+])\s*(\d+))?', args.strip())
+    if match:
+        ndice, nfaces, sign, mod = (group or '0' for group in match.groups())
+        ndice, nfaces = int(ndice), int(nfaces)
+        modnum = int(sign + mod)
+        rolls = [random.randint(1, nfaces) for _ in range(ndice)]
+        if modnum:
+            await ctx.send(
+                f'Rolled {ndice}d{nfaces}{sign}{mod}: '
+                f'({" + ".join(map(str, rolls))}) {sign} {mod} = {sum(rolls) + modnum}'
+                )
+        else:
+            await ctx.send(
+                f'Rolled {ndice}d{nfaces}: '
+                f'({" + ".join(map(str, rolls))}) = {sum(rolls)}'
+                )
 
 @ping.error
 async def roll_error(ctx, error):
