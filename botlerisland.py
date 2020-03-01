@@ -822,7 +822,7 @@ async def autoreact(ctx):
         await ctx.send('D--> ❤️')
     else:
         await ctx.send('D--> 💔')
-    
+
 @autoreact.error
 async def autoreact_error(ctx, error):
     if isinstance(error, (MissingPermissions, BotMissingPermissions)):
