@@ -665,8 +665,8 @@ async def _help(ctx):
     embed.set_author(name='Help message', icon_url=bot.user.avatar_url)
     embed.add_field(name='`help`', value='Display this message.', inline=False)
     embed.add_field(
-        name='`info [username]`',
-        value='Grabs user information. Leave username empty to get your own info.',
+        name='`info [user]`',
+        value='Grabs user information. Leave user field empty to get your own info.',
         inline=False
         )
     embed.add_field(name='`ping`', value='Pong!', inline=False)
@@ -690,6 +690,12 @@ async def _help(ctx):
         embed.add_field(
             name='`channel (ban|unban) <username>`',
             value='(Manage Roles only) Add or remove a channel mute role.',
+            inline=False
+            )
+    if perms.ban_members:
+        embed.add_field(
+            name='`raidban <user1> [<user2> <user3> ...]`',
+            value='(Ban Members only) Ban a list of raiders.',
             inline=False
             )
     if perms.manage_guild:
