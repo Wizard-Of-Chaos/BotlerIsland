@@ -166,20 +166,11 @@ class StarWarsPunisher(commands.Cog):
             self.manage_bans.cancel()
 
 
-def data_callback(): # Legacy callback for the first load, delete on the next update
-    return {'first_join': None, 'last_seen': None}
-
-def member_callback(): # Legacy callback for the first load, delete on the next update
-    return defaultdict(data_callback)
-
-
-
 def guild_callback():
     return {'first_join': None, 'last_seen': None, 'last_roles': []}
 
 def member_callback():
     return defaultdict(guild_callback)
-
 
 class MemberStalker(Singleton):
     def __init__(self, fname):
@@ -187,24 +178,8 @@ class MemberStalker(Singleton):
         self.load()
 
     def load(self):
-        if os.path.exists(self.fname):
-            with open(self.fname, 'rb') as member_file:
-                self.member_data = pickle.load(member_file)
-        else:
-            with open('times.pkl', 'rb') as old_member_file:
-                old_member_data = pickle.load(old_member_file)[1]
-            os.remove('times.pkl')
-            self.member_data = defaultdict(member_callback, {'count': 0})
-            for guild_id, members in old_member_data.items():
-                for member_id, member_data in members.items():
-                    self.member_data[member_id][guild_id].update(member_data)
-            with open('roles.pkl', 'rb') as old_role_file:
-                old_role_data = pickle.load(old_role_file)
-            os.remove('roles.pkl')
-            for guild_id, members in old_role_data.items():
-                for member_id, roles in members.items():
-                    self.member_data[member_id][guild_id]['last_roles'] = roles
-            self.save()
+        with open(self.fname, 'rb') as member_file:
+            self.member_data = pickle.load(member_file)
 
     def save(self):
         with open(self.fname, 'wb') as member_file:
