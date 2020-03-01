@@ -575,6 +575,31 @@ async def unban(ctx, *, member: dc.Member):
                 await guild_config.log(ctx.guild, 'modlog', embed=embed)
                 return
 
+@bot.command()
+@commands.bot_has_permissions(ban_members=True)
+@commands.has_permissions(ban_members=True)
+async def raidban(ctx, *args):
+    banned = []
+    for arg in args:
+        member = await commands.UserConverter().convert(ctx, arg)
+        await ctx.guild.ban(member, reason='Raid banned', delete_message_days=1)
+        banned.append(str(member.id))
+    if guild_config.getlog(ctx.guild, 'modlog')
+        embed = dc.Embed(
+            color=ctx.author.color,
+            timestamp=ctx.message.created_at,
+            description=f'**@{member}** has been banned in **#{ctx.channel}**'
+            )
+        embed.add_field(
+            name='**Raiders Demolished:**',
+            value=', '.join(banned),
+            )
+        embed.set_author(
+            name=f'@{ctx.author} Issued Raid Ban(s):',
+            icon_url=ctx.author.avatar_url,
+            )
+        await guild_config.log(ctx.guild, 'modlog', embed=embed)
+
 # END OF BANS
 # "TAG" COMMANDS
 
@@ -775,15 +800,6 @@ async def autoreact(ctx):
         await ctx.send('D--> ❤️')
     else:
         await ctx.send('D--> 💔')
-
-@bot.command()
-@commands.bot_has_permissions(ban_members=True, send_messages=True)
-@commands.has_permissions(ban_members=True)
-async def raidban(ctx, *args):
-    for id in args:
-        smackdown = await commands.UserConverter().convert(ctx, id)
-        await ctx.guild.ban(smackdown, reason='ROBOT', delete_message_days=1)
-    await ctx.send(f'D--> Destroyed users with IDs of {args}.')
     
 @autoreact.error
 async def autoreact_error(ctx, error):
