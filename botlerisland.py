@@ -807,6 +807,8 @@ async def roll(ctx, *, args):
                 f'Rolled {ndice}d{nfaces}: '
                 f'({" + ".join(map(str, rolls))}) = {sum(rolls)}'
                 )
+        return
+    await ctx.send('Malformed command was sent!')
 
 @ping.error
 async def roll_error(ctx, error):
