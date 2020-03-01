@@ -585,7 +585,7 @@ async def raidban(ctx, *args):
         member = await commands.UserConverter().convert(ctx, arg)
         await ctx.guild.ban(member, reason='Raid banned', delete_message_days=1)
         banned.append(str(member.id))
-    if guild_config.getlog(ctx.guild, 'modlog')
+    if guild_config.getlog(ctx.guild, 'modlog'):
         embed = dc.Embed(
             color=ctx.author.color,
             timestamp=ctx.message.created_at,
