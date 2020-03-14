@@ -811,7 +811,7 @@ async def ping_error(ctx, error):
 @bot.command()
 @commands.bot_has_permissions(send_messages=True)
 async def roll(ctx, *, args):
-    match = re.match(r'(\d+)\s*d\s*(\d+)\s*?(?:([-+])\s*(\d+))?\s*$', args.strip())
+    match = re.match(r'(\d+)\s*d\s*(\d+)\s*(?:([-+])\s*(\d+))?$', args.strip())
     if match:
         ndice, nfaces, sign, mod = (group or '0' for group in match.groups())
         ndice, nfaces = int(ndice), int(nfaces)
