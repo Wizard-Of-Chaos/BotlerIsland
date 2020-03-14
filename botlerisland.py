@@ -487,6 +487,12 @@ async def time(ctx):
     if ctx.invoked_subcommand is None:
         pass
 
+@time.error
+async def time_error(ctx, error):
+    if isinstance(error, (commands.MissingPermissions, commands.BotMissingPermissions)):
+        return
+    raise error
+
 @time.command()
 async def resumes(ctx):
     perms = ctx.channel.overwrites_for(ctx.guild.roles[0])
@@ -512,7 +518,7 @@ async def resumes(ctx):
 # ALRIGHT HUNGOVER WIZARD OF CHAOS CODE IN THE HIZ-OUSE
 # WE GONNA WRITE SOME MOTHERFUCKING BAN COMMANDS; INITIALIZE THAT SHIT
 @bot.group()
-@commands.has_permissions(manage_roles=True)
+@commands.has_guild_permissions(manage_roles=True)
 async def channel(ctx):
     if ctx.invoked_subcommand is None:
         pass
@@ -576,9 +582,15 @@ async def unban(ctx, *, member: dc.Member):
                 await guild_config.log(ctx.guild, 'modlog', embed=embed)
                 return
 
+@unban.error
+async def unban_error(ctx, error):
+    if isinstance(error, commands.BadArgument):
+        channel = await ctx.author.create_dm()
+        await channel.send(f'D--> {error.args[0]}.')
+
 @bot.command()
-@commands.bot_has_permissions(ban_members=True)
-@commands.has_permissions(ban_members=True)
+@commands.bot_has_guild_permissions(ban_members=True)
+@commands.has_guild_permissions(ban_members=True)
 async def raidban(ctx, *args):
     banned = []
     for arg in args:
@@ -600,6 +612,12 @@ async def raidban(ctx, *args):
             icon_url=ctx.author.avatar_url,
             )
         await guild_config.log(ctx.guild, 'modlog', embed=embed)
+
+@raidban.error
+async def raidban_error(ctx, error):
+    if isinstance(error, commands.BadArgument):
+        channel = await ctx.author.create_dm()
+        await channel.send(f'D--> {error.args[0]}.')
 
 # END OF BANS
 # "TAG" COMMANDS
