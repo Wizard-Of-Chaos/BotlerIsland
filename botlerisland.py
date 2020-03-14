@@ -75,7 +75,15 @@ async def on_message(msg):
     member_stalker.update('last_seen', msg)
     ctx = await bot.get_context(msg)
     if ctx.valid and msg.author.id != 167131099456208898:
-        await bot.process_commands(msg)
+        if msg.channel.id in guild_config.getlog(msg.guild, 'plebcommands'):
+            print('plebcommands is turned on in this channel')
+            if msg.author.guild_permissions.manage_roles == True:
+                await bot.process_commands(msg)
+                return 
+            else:
+                return
+        else:
+            await bot.process_commands(msg)
     elif msg.content == 'good work arquius':
         await msg.channel.send('D--> 😎')
     elif (msg.channel.id in guild_config.getlog(msg.guild, 'autoreact')
@@ -710,6 +718,11 @@ async def _help(ctx):
             value='(Manage Roles only) Add or remove a channel mute role.',
             inline=False
             )
+        embed.add_field(
+            name='`plebcommands`',
+            value=' (Manage Roles only) Toggle whether or not people without the manage roles permission can use commands in this channel.',
+            inline=False
+            )
     if perms.ban_members:
         embed.add_field(
             name='`raidban <user1> [<user2> <user3> ...]`',
@@ -850,6 +863,16 @@ async def autoreact_error(ctx, error):
     if isinstance(error, (MissingPermissions, BotMissingPermissions)):
         return
     raise error
+
+@bot.command()
+@commands.bot_has_permissions(read_message_history=True)
+@commands.has_permissions(manage_roles=True)
+async def plebcommands(ctx):
+    if guild_config.toggle_cmd(ctx):
+        await ctx.send('D--> Ignoring all non b100 b100d commands.')
+    else:
+        await ctx.send('D--> Unfortunately, I am now listening to the lower classes.')
+
 
 if __name__ == '__main__':
     try:
