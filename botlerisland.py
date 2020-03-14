@@ -76,10 +76,8 @@ async def on_message(msg):
     ctx = await bot.get_context(msg)
     if ctx.valid and msg.author.id != 167131099456208898:
         if msg.channel.id in guild_config.getlog(msg.guild, 'plebcommands'):
-            print('plebcommands is turned on in this channel')
             if msg.author.guild_permissions.manage_roles == True:
                 await bot.process_commands(msg)
-                return 
             else:
                 return
         else:
