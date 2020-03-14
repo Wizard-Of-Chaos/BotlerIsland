@@ -811,22 +811,21 @@ async def ping_error(ctx, error):
 @bot.command()
 @commands.bot_has_permissions(send_messages=True)
 async def roll(ctx, *, args):
-    match = re.match(r'(\d+)\s*d\s*(\d+)\s*(?:([-+])\s*(\d+))?', args.strip())
-    print(args)
+    match = re.match(r'(\d+)\s*d\s*(\d+)\s*?(?:([-+])\s*(\d+))?\s*$', args.strip())
     if match:
         ndice, nfaces, sign, mod = (group or '0' for group in match.groups())
         ndice, nfaces = int(ndice), int(nfaces)
         modnum = int(sign + mod)
-        rolls = [random.randint(1, nfaces) for _ in range(ndice)]
+        rolls = [randint(1, nfaces) for _ in range(ndice)]
         if modnum:
             await ctx.send(
-                f'Rolled {ndice}d{nfaces}{sign}{mod}: '
-                f'({" + ".join(map(str, rolls))}) {sign} {mod} = {sum(rolls) + modnum}'
+                f'**Rolled {ndice}d{nfaces}{sign}{mod}:** '
+                f'`({" + ".join(map(str, rolls))}) {sign} {mod} = {sum(rolls) + modnum}`'
                 )
         else:
             await ctx.send(
-                f'Rolled {ndice}d{nfaces}: '
-                f'({" + ".join(map(str, rolls))}) = {sum(rolls)}'
+                f'**Rolled {ndice}d{nfaces}:** '
+                f'`({" + ".join(map(str, rolls))}) = {sum(rolls)}`'
                 )
         return
     await ctx.send('Malformed command was sent!')
