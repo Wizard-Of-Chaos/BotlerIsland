@@ -830,12 +830,12 @@ async def roll(ctx, *, args):
         rolls = [randint(1, nfaces) for _ in range(ndice)]
         if modnum:
             await ctx.send(
-                f'**Rolled {ndice}d{nfaces}{sign}{mod}:** '
+                f'{ctx.author.mention} **rolled {ndice}d{nfaces}{sign}{mod}:** '
                 f'`({" + ".join(map(str, rolls))}) {sign} {mod} = {sum(rolls) + modnum}`'
                 )
         else:
             await ctx.send(
-                f'**Rolled {ndice}d{nfaces}:** '
+                f'{ctx.author.mention} **rolled {ndice}d{nfaces}:** '
                 f'`({" + ".join(map(str, rolls))}) = {sum(rolls)}`'
                 )
         return
