@@ -734,20 +734,22 @@ async def info(ctx, *, name=None):
             await ctx.send('D--> It seems that user can\'t be found. Please check your spelling.')
             return
     now = datetime.utcnow()
-    lastseen = member_stalker.get('last_seen', member)
-    if lastseen is not None:
-        lastseenmsg = (
-            f'This user was last seen on `{lastseen.strftime("%d/%m/%Y %H:%M:%S")}` '
-            f'({max(0, (now-lastseen).days)} days ago)'
-            )
-    else:
-        lastseenmsg = 'This user has not spoken to my knowledge!'
+    
     firstjoin = member_stalker.get('first_join', member) or member.joined_at
     embed = dc.Embed(color=member.color, timestamp=now)
     embed.set_author(name=f'Information for {member}')
     embed.set_thumbnail(url=member.avatar_url)
     embed.add_field(name='User ID:', value=f'`{member.id}`')
-    embed.add_field(name='Last Seen:', value=lastseenmsg, inline=False)
+    if ctx.author != member:
+        lastseen = member_stalker.get('last_seen', member)
+        if lastseen is not None:
+            lastseenmsg = (
+                f'This user was last seen on `{lastseen.strftime("%d/%m/%Y %H:%M:%S")}` '
+                f'({max(0, (now-lastseen).days)} days ago)'
+                )
+        else:
+            lastseenmsg = 'This user has not spoken to my knowledge!'
+        embed.add_field(name='Last Seen:', value=lastseenmsg, inline=False)
     embed.add_field(
         name='Account Created On:',
         value=f"`{member.created_at.strftime('%d/%m/%Y %H:%M:%S')}` "
@@ -792,6 +794,7 @@ async def ping_error(ctx, error):
 @commands.bot_has_permissions(send_messages=True)
 async def roll(ctx, *, args):
     match = re.match(r'(\d+)\s*d\s*(\d+)\s*(?:([-+])\s*(\d+))?', args.strip())
+    print(args)
     if match:
         ndice, nfaces, sign, mod = (group or '0' for group in match.groups())
         ndice, nfaces = int(ndice), int(nfaces)
