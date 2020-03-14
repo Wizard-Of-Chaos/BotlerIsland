@@ -11,7 +11,7 @@ guild_whitelist = {152981670507577344, 663452978237407262}
 def callback(): # Lambdas can't be pickled, but named functions can.
     return {
     'usrlog': None, 'msglog': None, 'modlog': None,
-    'autoreact': set(), 'star_wars': {}, 'plebcommands': set(),
+    'autoreact': set(), 'star_wars': {}, 'ignoreplebs': set(),
     }
 
 class Singleton(object):
@@ -78,7 +78,7 @@ class GuildConfig(Singleton):
             return True
 
     def toggle_cmd(self, ctx):
-        config = self.mod_channels[ctx.guild.id]['plebcommands']
+        config = self.mod_channels[ctx.guild.id]['ignoreplebs']
         channel_id = ctx.channel.id
         if channel_id in config:
             config.remove(channel_id)

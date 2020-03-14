@@ -21,6 +21,8 @@ stats_tracker.locked_msg = (
 
 image_exts = ('png', 'gif', 'jpg', 'jpeg', 'jpe', 'jfif')
 CONST_BAD_ID = 148346796186271744 # You-know-who
+CONST_MOTHER = 257144766901256192
+CONST_FATHER = 125433170047795200
 
 #FUNCTIONS
 
@@ -74,15 +76,11 @@ async def on_message(msg):
         return
     member_stalker.update('last_seen', msg)
     ctx = await bot.get_context(msg)
-    if ctx.valid and msg.author.id != 167131099456208898:
-        if msg.channel.id in guild_config.getlog(msg.guild, 'plebcommands'):
-            print('plebcommands is turned on in this channel')
-            if msg.author.guild_permissions.manage_roles == True:
-                await bot.process_commands(msg)
-                return 
-            else:
-                return
-        else:
+    if ctx.valid and ctx.author.id != 167131099456208898:
+        perms = ctx.author.guild_permissions
+        if (perms.administrator or perms.manage_guild or perms.manage_roles
+            or ctx.channel.id not in guild_config.getlog(ctx.guild, 'ignoreplebs')
+            ):
             await bot.process_commands(msg)
     elif msg.content == 'good work arquius':
         await msg.channel.send('D--> 😎')
@@ -90,12 +88,12 @@ async def on_message(msg):
         and any(any(map(att.url.lower().endswith, image_exts)) for att in msg.attachments)
         ):
         await msg.add_reaction('❤️')
-    elif msg.author != bot.user and guild_config.detect_star_wars(msg):
+    elif ctx.author != bot.user and guild_config.detect_star_wars(msg):
         dt = await guild_config.punish_star_wars(msg)
         embed = dc.Embed(
-            color=msg.author.color,
+            color=ctx.author.color,
             timestamp=msg.created_at,
-            description=f'D--> It seems that **{msg.author.name}** has mentioned that which '
+            description=f'D--> It seems that **{ctx.author.name}** has mentioned that which '
             'has been expressly forbidden by the powers that be, and has thus been '
             'STRONGLY punished accordingly.'
             )
@@ -106,7 +104,7 @@ async def on_message(msg):
             f'It has been {dt.days} days, {dt.seconds//3600} hours, '
             f'{dt.seconds//60%60} minutes and {dt.seconds%60} seconds.'
             )
-        await msg.channel.send(embed=embed)
+        await ctx.send(embed=embed)
    
 @bot.event
 async def on_message_edit(bfr, aft): # Log edited messages
@@ -714,13 +712,13 @@ async def _help(ctx):
             inline=False
             )
         embed.add_field(
-            name='`channel (ban|unban) <username>`',
-            value='(Manage Roles only) Add or remove a channel mute role.',
+            name='`ignoreplebs`',
+            value='(Manage Roles only) Toggle non-mod commands getting ignored in a channel.',
             inline=False
             )
         embed.add_field(
-            name='`plebcommands`',
-            value=' (Manage Roles only) Toggle whether or not people without the manage roles permission can use commands in this channel.',
+            name='`channel (ban|unban) <username>`',
+            value='(Manage Roles only) Add or remove a channel mute role.',
             inline=False
             )
     if perms.ban_members:
@@ -825,23 +823,26 @@ async def ping_error(ctx, error):
 @commands.bot_has_permissions(send_messages=True)
 async def roll(ctx, *, args):
     match = re.match(r'(\d+)\s*d\s*(\d+)\s*(?:([-+])\s*(\d+))?$', args.strip())
-    if match:
-        ndice, nfaces, sign, mod = (group or '0' for group in match.groups())
-        ndice, nfaces = int(ndice), int(nfaces)
-        modnum = int(sign + mod)
-        rolls = [randint(1, nfaces) for _ in range(ndice)]
-        if modnum:
-            await ctx.send(
-                f'{ctx.author.mention} **rolled {ndice}d{nfaces}{sign}{mod}:** '
-                f'`({" + ".join(map(str, rolls))}) {sign} {mod} = {sum(rolls) + modnum}`'
-                )
-        else:
-            await ctx.send(
-                f'{ctx.author.mention} **rolled {ndice}d{nfaces}:** '
-                f'`({" + ".join(map(str, rolls))}) = {sum(rolls)}`'
-                )
+    if not match:
+        await ctx.send('Malformed command was sent!')
         return
-    await ctx.send('Malformed command was sent!')
+    ndice, nfaces, sign, mod = (group or '0' for group in match.groups())
+    ndice, nfaces = int(ndice), int(nfaces)
+    if ndice == nfaces == 8 and ctx.author.id == CONST_FATHER:
+        rolls = [8] * 8
+    else:
+        rolls = [randint(1, nfaces) for _ in range(ndice)]
+    modnum = int(sign + mod)
+    if modnum:
+        await ctx.send(
+            f'{ctx.author.mention} **rolled {ndice}d{nfaces}{sign}{mod}:** '
+            f'`({" + ".join(map(str, rolls))}) {sign} {mod} = {sum(rolls) + modnum}`'
+            )
+    else:
+        await ctx.send(
+            f'{ctx.author.mention} **rolled {ndice}d{nfaces}:** '
+            f'`({" + ".join(map(str, rolls))}) = {sum(rolls)}`'
+            )
 
 @ping.error
 async def roll_error(ctx, error):
@@ -865,14 +866,18 @@ async def autoreact_error(ctx, error):
     raise error
 
 @bot.command()
-@commands.bot_has_permissions(read_message_history=True)
 @commands.has_permissions(manage_roles=True)
-async def plebcommands(ctx):
+async def ignoreplebs(ctx):
     if guild_config.toggle_cmd(ctx):
-        await ctx.send('D--> Ignoring all non b100 b100d commands.')
+        await ctx.send('D--> I shall listen only to b100 b100ded commands.')
     else:
-        await ctx.send('D--> Unfortunately, I am now listening to the lower classes.')
+        await ctx.send('D--> Unfortunately, I must now listen to the lower classes.')
 
+@ignoreplebs.error
+async def ignoreplebs_error(ctx, error):
+    if isinstance(error, MissingPermissions):
+        return
+    raise error
 
 if __name__ == '__main__':
     try:
