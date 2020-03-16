@@ -61,6 +61,13 @@ class GuildConfig(Singleton):
     def getlog(self, guild, log):
         return self.mod_channels[guild.id][log]
 
+    def getcmd(self, ctx):
+        perms = ctx.author.guild_permissions
+        return (
+            perms.administrator or perms.manage_guild or perms.manage_roles
+            or ctx.channel.id not in self.mod_channels[ctx.guild.id]['ignoreplebs']
+            )
+
     def setlog(self, ctx, log):
         if log not in {'usrlog', 'msglog', 'modlog'}:
             raise ValueError(f'Invalid log channel type {log}')

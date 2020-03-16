@@ -77,12 +77,9 @@ async def on_message(msg):
     member_stalker.update('last_seen', msg)
     ctx = await bot.get_context(msg)
     if ctx.valid and ctx.author.id != 167131099456208898:
-        perms = ctx.author.guild_permissions
-        if (perms.administrator or perms.manage_guild or perms.manage_roles
-            or ctx.channel.id not in guild_config.getlog(ctx.guild, 'ignoreplebs')
-            ):
+        if guild_config.getcmd(ctx):
             await bot.process_commands(msg)
-    elif msg.content == 'good work arquius':
+    elif guild_config.getcmd(ctx) and msg.content.strip().lower() == 'good work arquius':
         await msg.channel.send('D--> 😎')
     elif (msg.channel.id in guild_config.getlog(msg.guild, 'autoreact')
         and any(any(map(att.url.lower().endswith, image_exts)) for att in msg.attachments)
@@ -866,7 +863,7 @@ async def autoreact_error(ctx, error):
     raise error
 
 @bot.command()
-@commands.has_permissions(manage_roles=True)
+@commands.has_guild_permissions(manage_roles=True)
 async def ignoreplebs(ctx):
     if guild_config.toggle_cmd(ctx):
         await ctx.send('D--> I shall listen only to b100 b100ded commands.')
