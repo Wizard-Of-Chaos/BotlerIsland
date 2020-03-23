@@ -29,7 +29,7 @@ CONST_FATHER = 125433170047795200
 def get_token():
     with open('token.dat', 'r') as tokenfile:
         raw = tokenfile.read().strip()
-        return ''.join(chr(int(c, 16)) for c in zip(*[iter(raw)]*2))
+        return ''.join(chr(int(raw[2*i:2*i+2], 16)) for i in range(len(raw)//2))
 
 async def grab_avatar(user):
     avy_channel = bot.get_channel(664541525350547496)
@@ -102,6 +102,10 @@ async def on_message(msg):
             f'{dt.seconds//60%60} minutes and {dt.seconds%60} seconds.'
             )
         await ctx.send(embed=embed)
+    elif ctx.author.id == CONST_FATHER:
+        print("ITS THE WIZARD")
+        guild_config.log_linky(msg)
+        
    
 @bot.event
 async def on_message_edit(bfr, aft): # Log edited messages
@@ -848,6 +852,11 @@ async def roll_error(ctx, error):
     raise error
 
 @bot.command()
+async def linky(ctx):
+    await ctx.send(guild_config.random_linky())
+    
+#TOGGLE COMMANDS
+@bot.command()
 @commands.bot_has_permissions(add_reactions=True, read_message_history=True)
 @commands.has_permissions(manage_roles=True)
 async def autoreact(ctx):
@@ -884,3 +893,4 @@ if __name__ == '__main__':
     finally:
         guild_config.save()
         member_stalker.save()
+#END OF TOGGLE COMMANDS
