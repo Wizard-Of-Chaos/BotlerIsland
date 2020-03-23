@@ -29,7 +29,7 @@ CONST_FATHER = 125433170047795200
 def get_token():
     with open('token.dat', 'r') as tokenfile:
         raw = tokenfile.read().strip()
-        return ''.join(chr(int(c, 16)) for c in zip(*[iter(raw)]*2))
+        return ''.join(chr(int(''.join(c), 16)) for c in zip(*[iter(raw)]*2))
 
 async def grab_avatar(user):
     avy_channel = bot.get_channel(664541525350547496)
