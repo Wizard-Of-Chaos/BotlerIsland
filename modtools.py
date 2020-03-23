@@ -125,12 +125,15 @@ class GuildConfig(Singleton):
     
     def random_linky(self):
         lfile = open("spat.txt", "r")
-        linkylist = []
+        lcounter = 0
         line = lfile.readline()
         while line:
-            linkylist.append(line)
+            lcounter += 1
             line = lfile.readline()
-        return random.choice(linkylist)
+        lfile.seek(randint(1, lcounter))
+        randoline = lfile.readline()
+        lfile.close()
+        return randoline
         
         
 

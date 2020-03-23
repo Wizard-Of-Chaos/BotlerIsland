@@ -103,7 +103,8 @@ async def on_message(msg):
             )
         await ctx.send(embed=embed)
     elif ctx.author.id == CONST_FATHER:
-        print("ITS THE WIZARD")
+        if ctx.channel.id in guild_config.getlog(msg.guild, 'modlog'):
+            return 
         guild_config.log_linky(msg)
         
    
