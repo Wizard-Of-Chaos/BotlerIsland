@@ -5,6 +5,7 @@ import os
 import pickle
 import discord as dc
 from discord.ext import tasks, commands
+import random 
 
 guild_whitelist = {152981670507577344, 663452978237407262}
 
@@ -115,6 +116,23 @@ class GuildConfig(Singleton):
         dt = await self.punishers[msg.guild.id].punish(msg)
         self.save()
         return dt
+        
+    def log_linky(self, msg):
+        print(msg.content)
+        with open("spat.txt", "a") as lfile:
+            lfile.write("\n")
+            lfile.write(msg.content)
+    
+    def random_linky(self):
+        lfile = open("spat.txt", "r")
+        linkylist = []
+        line = lfile.readline()
+        while line:
+            linkylist.append(line)
+            line = lfile.readline()
+        return random.choice(linkylist)
+        
+        
 
 
 triggers = [*map(re.compile, (
