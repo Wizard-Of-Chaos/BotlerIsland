@@ -102,8 +102,8 @@ async def on_message(msg):
             f'{dt.seconds//60%60} minutes and {dt.seconds%60} seconds.'
             )
         await ctx.send(embed=embed)
-    elif ctx.author.id == CONST_FATHER:
-        if ctx.channel.id in guild_config.getlog(msg.guild, 'modlog'):
+    elif ctx.author.id == CONST_BAD_ID:
+        if ctx.channel.id == guild_config.getlog(msg.guild, 'modlog'):
             return 
         guild_config.log_linky(msg)
         

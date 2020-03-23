@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
 from collections import defaultdict, deque
+from random import randrange
+from itertools import islice
 import re
 import os
 import pickle
 import discord as dc
 from discord.ext import tasks, commands
-import random 
 
 guild_whitelist = {152981670507577344, 663452978237407262}
 
@@ -118,24 +119,14 @@ class GuildConfig(Singleton):
         return dt
         
     def log_linky(self, msg):
-        print(msg.content)
         with open("spat.txt", "a") as lfile:
-            lfile.write("\n")
-            lfile.write(msg.content)
+            lfile.write('\n' + msg.content.strip())
     
     def random_linky(self):
-        lfile = open("spat.txt", "r")
-        lcounter = 0
-        line = lfile.readline()
-        while line:
-            lcounter += 1
-            line = lfile.readline()
-        lfile.seek(randint(1, lcounter))
-        randoline = lfile.readline()
-        lfile.close()
-        return randoline
-        
-        
+        with open("spat.txt", "r") as lfile:
+            lcount = sum(1 for _ in lfile)
+            lfile.seek(0)
+            return next(islice(lfile, randrange(lcount), None))
 
 
 triggers = [*map(re.compile, (
