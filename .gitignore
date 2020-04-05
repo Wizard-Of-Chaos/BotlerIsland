@@ -2,5 +2,6 @@
 *.pkl
 /__pycache__
 /avatar.png
-/encrypttoken.py
+/tmpmsg.txt
 /token.txt
+/encrypttoken.py
