@@ -35,6 +35,9 @@ def get_token():
         raw = tokenfile.read().strip()
         return ''.join(chr(int(''.join(c), 16)) for c in zip(*[iter(raw)]*2))
 
+def get_name(member_id):
+    return str(bot.get_user(int(member_id)))
+
 async def grab_avatar(user):
     avy_channel = bot.get_channel(664541525350547496)
     with open('avatar.png', mode='wb') as avatarfile:
@@ -957,7 +960,7 @@ async def latex_error(ctx, error):
 @commands.bot_has_permissions(send_messages=True)
 async def linky(ctx):
     msg = guild_config.random_linky()
-    await ctx.send(re.sub(r'<@!\d{18,}>', f'<@!{CONST_BAD_ID}>', msg))
+    await ctx.send(re.sub(r'<@!\d{18,}>', get_name, msg))
 
 @linky.error
 async def linky_error(ctx, error):
