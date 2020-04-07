@@ -126,7 +126,12 @@ class GuildConfig(Singleton):
         with open("spat.txt", "r") as lfile:
             lcount = sum(1 for _ in lfile)
             lfile.seek(0)
-            return next(islice(lfile, randrange(lcount), None))
+            try:
+                return next(islice(lfile, randrange(lcount), None))
+            except StopIteration:
+                with open('spat.txt', 'w') as lfile:
+                    lfile.write('i love dirt so much')
+                return 'i love dirt so much'
 
 
 triggers = [*map(re.compile, (
