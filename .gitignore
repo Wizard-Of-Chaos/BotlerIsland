@@ -2,7 +2,7 @@
 *.pkl
 /__pycache__
 /avatar.png
+/encrypttoken.py
+/spat.txt
 /tmpmsg.txt
 /token.txt
-/spat.txt
-/encrypttoken.py
