@@ -66,7 +66,7 @@ class GuildConfig(Singleton):
     def getcmd(self, ctx):
         perms = ctx.author.guild_permissions
         return (
-            perms.administrator or perms.manage_guild or perms.manage_roles
+            perms.administrator or perms.view_audit_log or perms.manage_guild or perms.manage_roles
             or ctx.channel.id not in self.mod_channels[ctx.guild.id]['ignoreplebs']
             )
 
