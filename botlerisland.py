@@ -75,9 +75,9 @@ async def post_dailies():
             for chan_id, count in daily_msg[guild_id].most_common()
             )
         embed = dc.Embed(
-            color = admin.color,
-            timestamp = now,
-            description = f'**Message counts since midnight UTC or bot start:**\n\n{msg_counts}',
+            color=admin.color,
+            timestamp=now,
+            description=f'**Message counts since midnight UTC or bot start:**\n\n{msg_counts}',
             )
         embed.set_author(name=f'Daily counts for {admin}', icon_url=admin.avatar_url)
         embed.add_field(name='Users Gained:', value=daily_usr[guild_id]['join'])
@@ -977,9 +977,9 @@ async def daily(ctx):
         for chan_id, count in daily_msg[ctx.guild.id].most_common()
         )
     embed = dc.Embed(
-        color = ctx.author.color,
-        timestamp = now,
-        description = f'**Message counts since midnight UTC or bot start:**\n{msg_counts}',
+        color=ctx.author.color,
+        timestamp=now,
+        description=f'**Message counts since midnight UTC or bot start:**\n{msg_counts}',
         )
     embed.set_author(name=f'Daily counts for {ctx.author}', icon_url=ctx.author.avatar_url)
     embed.add_field(name='Users Gained:', value=daily_usr[ctx.guild.id]['join'])
