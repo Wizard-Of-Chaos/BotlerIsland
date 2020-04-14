@@ -555,6 +555,7 @@ async def ban(ctx, member: dc.Member, *, duration=None):
                     )
                 embed.add_field(name='**Role Granted:**', value=f'`{role}`')
                 embed.add_field(name='**Duration:**', value=duration or 'None specified')
+                embed.add_field(name='**User ID:**', value=member.id)
                 embed.set_author(
                     name=f'@{ctx.author} Issued Channel Ban:',
                     icon_url=ctx.author.avatar_url,
@@ -583,6 +584,7 @@ async def unban(ctx, *, member: dc.Member):
                     description=f'**@{member}** has been unbanned in **#{ctx.channel}**'
                     )
                 embed.add_field(name='**Role Revoked:**', value=f'`{role}`')
+                embed.add_field(name='**User ID:**', value=member.id)
                 embed.set_author(
                     name=f'@{ctx.author} Issued Channel Unban:',
                     icon_url=ctx.author.avatar_url,
