@@ -36,7 +36,7 @@ def get_token():
         return ''.join(chr(int(''.join(c), 16)) for c in zip(*[iter(raw)]*2))
 
 def get_name(member_id):
-    return str(bot.get_user(int(member_id)))
+    return str(bot.get_user(int(member_id[1])))
 
 async def grab_avatar(user):
     avy_channel = bot.get_channel(664541525350547496)
@@ -958,8 +958,17 @@ async def latex_error(ctx, error):
 @bot.command()
 @commands.bot_has_permissions(send_messages=True)
 async def linky(ctx):
-    msg = guild_config.random_linky()
-    await ctx.send(re.sub(r'<@!\d{18,}>', get_name, msg))
+    msg = re.sub(r'<@!(\d{18,})>', get_name, guild_config.random_linky())
+    msg = re.sub(r'(?<!<)(https?://[^\s]+)(?!>)', r'<\1>', msg)
+    admin = ctx.guild.get_member(CONST_BAD_ID)
+    if admin is None:
+        admin = ctx.guild.get_member(CONST_FATHER)
+    embed = dc.Embed(
+        color=admin.color,
+        description=msg,
+        )
+    embed.set_author(name=f'{admin.name} says:', icon_url=admin.avatar_url)
+    await ctx.send(embed=embed)
 
 @linky.error
 async def linky_error(ctx, error):

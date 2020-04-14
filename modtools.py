@@ -119,19 +119,19 @@ class GuildConfig(Singleton):
         return dt
         
     def log_linky(self, msg):
-        with open("spat.txt", "a") as lfile:
-            lfile.write('\n' + msg.content.strip())
+        with open('spat.txt', 'a', encoding='utf-8') as lfile:
+            lfile.write(msg.content.strip() + '\n')
     
     def random_linky(self):
         try:
-            with open("spat.txt", "r") as lfile:
+            with open('spat.txt', 'r', encoding='utf-8') as lfile:
                 lcount = sum(1 for _ in lfile)
                 lfile.seek(0)
                 return next(islice(lfile, randrange(lcount), None))
         except FileNotFoundError:
-            with open('spat.txt', 'w') as lfile:
-                lfile.write('i love dirt so much')
-            return 'i love dirt so much'
+            with open('spat.txt', 'w', encoding='utf-8') as lfile:
+                lfile.write('i love dirt so much\n')
+            return 'i love dirt so much\n'
 
 
 triggers = [*map(re.compile, (
