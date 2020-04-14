@@ -606,11 +606,11 @@ async def ban(ctx, member: dc.Member, *, duration=None):
                 embed = dc.Embed(
                     color=ctx.author.color,
                     timestamp=ctx.message.created_at,
-                    description=f'**@{member}** has been banned in **#{ctx.channel}**'
+                    description=f'{member.mention} has been banned in **#{ctx.channel}**'
                     )
                 embed.add_field(name='**Role Granted:**', value=f'`{role}`')
-                embed.add_field(name='**Duration:**', value=duration or 'None specified')
-                embed.add_field(name='**User ID:**', value=member.id)
+                embed.add_field(name='**Duration/Reason:**', value=duration or 'None specified')
+                embed.add_field(name='**User ID:**', value=member.id, inline=False)
                 embed.set_author(
                     name=f'@{ctx.author} Issued Channel Ban:',
                     icon_url=ctx.author.avatar_url,
@@ -636,7 +636,7 @@ async def unban(ctx, *, member: dc.Member):
                 embed = dc.Embed(
                     color=ctx.author.color,
                     timestamp=ctx.message.created_at,
-                    description=f'**@{member}** has been unbanned in **#{ctx.channel}**'
+                    description=f'{member.mention} has been unbanned in **#{ctx.channel}**'
                     )
                 embed.add_field(name='**Role Revoked:**', value=f'`{role}`')
                 embed.add_field(name='**User ID:**', value=member.id)
@@ -661,16 +661,13 @@ async def raidban(ctx, *args):
     for arg in args:
         member = await commands.UserConverter().convert(ctx, arg)
         await ctx.guild.ban(member, reason='Raid banned', delete_message_days=1)
-        banned.append(str(member.id))
+        banned.append(f'`{member.id}`')
+    banned = ',\n'.join(banned)
     if guild_config.getlog(ctx.guild, 'modlog'):
         embed = dc.Embed(
             color=ctx.author.color,
             timestamp=ctx.message.created_at,
-            description=f'**@{member}** has been banned in **#{ctx.channel}**'
-            )
-        embed.add_field(
-            name='**Raiders Demolished:**',
-            value=', '.join(banned),
+            description=f'Raiders demolished in **#{ctx.channel}**:\n{banned}'
             )
         embed.set_author(
             name=f'@{ctx.author} Issued Raid Ban(s):',
