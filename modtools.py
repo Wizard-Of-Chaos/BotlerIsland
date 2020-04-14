@@ -8,7 +8,7 @@ import pickle
 import discord as dc
 from discord.ext import tasks, commands
 
-guild_whitelist = {152981670507577344, 663452978237407262}
+guild_whitelist = (152981670507577344, 663452978237407262)
 
 def callback(): # Lambdas can't be pickled, but named functions can.
     return {
@@ -66,7 +66,7 @@ class GuildConfig(Singleton):
     def getcmd(self, ctx):
         perms = ctx.author.guild_permissions
         return (
-            perms.administrator or perms.manage_guild or perms.manage_roles
+            perms.administrator or perms.view_audit_log or perms.manage_guild or perms.manage_roles
             or ctx.channel.id not in self.mod_channels[ctx.guild.id]['ignoreplebs']
             )
 
@@ -123,10 +123,15 @@ class GuildConfig(Singleton):
             lfile.write('\n' + msg.content.strip())
     
     def random_linky(self):
-        with open("spat.txt", "r") as lfile:
-            lcount = sum(1 for _ in lfile)
-            lfile.seek(0)
-            return next(islice(lfile, randrange(lcount), None))
+        try:
+            with open("spat.txt", "r") as lfile:
+                lcount = sum(1 for _ in lfile)
+                lfile.seek(0)
+                return next(islice(lfile, randrange(lcount), None))
+        except FileNotFoundError:
+            with open('spat.txt', 'w') as lfile:
+                lfile.write('i love dirt so much')
+            return 'i love dirt so much'
 
 
 triggers = [*map(re.compile, (

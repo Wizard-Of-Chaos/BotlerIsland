@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # HSDBot code by Wizard of Chaos#2459 and virtuNat#7998
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from random import randint
+from collections import Counter
 import asyncio as aio
 import discord as dc
-from discord.ext import commands
+from discord.ext import commands, tasks
 from modtools import guild_whitelist, GuildConfig, MemberStalker
 from statstracker import StatsTracker
 
@@ -19,6 +20,9 @@ stats_tracker.locked_msg = (
     'I STRONGLY suggest that you wait for me to finish.'
     )
 
+daily_msg = {guild_id: Counter() for guild_id in guild_whitelist}
+daily_usr = {guild_id: Counter({'join': 0, 'leave': 0}) for guild_id in guild_whitelist}
+
 image_exts = ('png', 'gif', 'jpg', 'jpeg', 'jpe', 'jfif')
 CONST_BAD_ID = 148346796186271744 # You-know-who
 CONST_MOTHER = 257144766901256192
@@ -30,6 +34,9 @@ def get_token():
     with open('token.dat', 'r') as tokenfile:
         raw = tokenfile.read().strip()
         return ''.join(chr(int(''.join(c), 16)) for c in zip(*[iter(raw)]*2))
+
+def get_name(member_id):
+    return str(bot.get_user(int(member_id)))
 
 async def grab_avatar(user):
     avy_channel = bot.get_channel(664541525350547496)
@@ -48,11 +55,50 @@ async def grab_avatar(user):
             f'`@{user}`: UID {user.id}: MID {msg_id}',
             file=dc.File(avatarfile)
             )
-    async for msg in avy_channel.history(limit=100):
+    async for msg in avy_channel.history(limit=16):
         if msg.content.split()[-1] == msg_id:
             return msg.attachments[0].url
 
 #END OF FUNCTIONS
+#TASKS
+
+@tasks.loop(hours=24)
+async def post_dailies():
+    for guild_id, admin_id in zip(guild_whitelist, (CONST_BAD_ID, CONST_MOTHER)):
+        guild = bot.get_guild(guild_id)
+        if guild is None or guild.get_member(bot.user.id) is None:
+            continue
+        admin = guild.get_member(admin_id)
+        now = datetime.utcnow()
+        msg_counts = "\n".join(
+            f'`{guild.get_channel(chan_id)}:` **{count}**'
+            for chan_id, count in daily_msg[guild_id].most_common()
+            )
+        embed = dc.Embed(
+            color=admin.color,
+            timestamp=now,
+            description=f'**Message counts since midnight UTC or bot start:**\n\n{msg_counts}',
+            )
+        embed.set_author(name=f'Daily counts for {admin}', icon_url=admin.avatar_url)
+        embed.add_field(name='Users Gained:', value=daily_usr[guild_id]['join'])
+        embed.add_field(name='Users Lost:', value=daily_usr[guild_id]['leave'])
+        embed.add_field(
+            name='**DISCLAIMER:**',
+            value='Counts may not be accurate if the bot has been stopped at any point during the day.',
+            inline=False,
+            )
+        daily_msg[guild_id].clear()
+        daily_usr[guild_id].clear()
+        await guild_config.log(guild, 'modlog', admin.mention, embed=embed)
+
+@post_dailies.before_loop
+async def start_timer():
+    now = datetime.utcnow()
+    await aio.sleep(
+        (datetime.combine(now.date() + timedelta(1), datetime.min.time()) - now).seconds
+        )
+
+#END OF TASKS
 #EVENTS
 
 @bot.event
@@ -63,6 +109,7 @@ async def on_ready():
     await bot.change_presence(
         activity=dc.Game(name='D--> A beautiful stallion.')
         )
+    post_dailies.start()
     print('D--> At your command.\n')
 
 @bot.event
@@ -74,9 +121,11 @@ async def on_guild_join(guild):
 async def on_message(msg):
     if msg.guild is None:
         return
+    if msg.guild.id in guild_whitelist:
+        daily_msg[msg.guild.id][msg.channel.id] += 1
     member_stalker.update('last_seen', msg)
     ctx = await bot.get_context(msg)
-    if ctx.valid and ctx.author.id != 167131099456208898:
+    if ctx.valid:
         if guild_config.getcmd(ctx):
             await bot.process_commands(msg)
     elif guild_config.getcmd(ctx) and msg.content.strip().lower() == 'good work arquius':
@@ -106,7 +155,6 @@ async def on_message(msg):
         if ctx.channel.id == guild_config.getlog(msg.guild, 'modlog'):
             return 
         guild_config.log_linky(msg)
-        
    
 @bot.event
 async def on_message_edit(bfr, aft): # Log edited messages
@@ -117,9 +165,16 @@ async def on_message_edit(bfr, aft): # Log edited messages
         return
     if len(bfr.content) <= 1024:
         bfrmsg = bfr.content
+        long_edit = False
     else:
-        bfrmsg = '`D--> The edited message is too long to contain.`'
-    aftmsg = aft.content if len(aft.content) <= 1024 else aft.jump_url
+        bfrmsg = '`D--> The pre-edit message is too long to contain.`'
+        long_edit = True
+        with open('tmpmsg.txt', 'w') as bfrfile:
+            bfrfile.write(bfr.content)
+    if len(aft.content) <= 1024:
+        aftmsg = aft.content
+    else:
+        aftmsg = f'`D--> The post-edit message is too long, use this:` {aft.jump_url}'
     embed = dc.Embed(color=dc.Color.gold(), timestamp=aft.edited_at)
     embed.set_author(
         name=f'@{bfr.author} edited a message in #{bfr.channel}:',
@@ -129,7 +184,14 @@ async def on_message_edit(bfr, aft): # Log edited messages
     embed.add_field(name='**After:**', value=aftmsg, inline=False)
     embed.add_field(name='**Message ID:**', value=f'`{aft.id}`')
     embed.add_field(name='**User ID:**', value=f'`{bfr.author.id}`')
-    await guild_config.log(guild, 'msglog', embed=embed)
+    if long_edit:
+        with open('tmpmsg.txt', 'r') as bfrfile:
+            await guild_config.log(
+                guild, 'msglog', embed=embed,
+                file=dc.File(bfrfile, f'{bfr.id}-old.txt'),
+                )
+    else:
+        await guild_config.log(guild, 'msglog', embed=embed)
 
 @bot.event
 async def on_message_delete(msg): # Log deleted messages
@@ -149,16 +211,20 @@ async def on_message_delete(msg): # Log deleted messages
         )
     embed.add_field(name='**Message ID:**', value=f'`{msg.id}`')
     embed.add_field(name='**User ID:**', value=f'`{msg.author.id}`')
-    embed.add_field(
-        name='**Attachments:**',
-        value='\n'.join(att.url for att in msg.attachments) or None,
-        inline=False,
-        )
+    if msg.attachments:
+        # att_channel = bot.get_channel(696209752434278400)
+        embed.add_field(
+            name='**Attachments:**',
+            value='\n'.join(att.url for att in msg.attachments),
+            inline=False,
+            )
     await guild_config.log(guild, 'msglog', embed=embed)
 
 @bot.event
 async def on_member_join(member): # Log joined members
-    guild = member.guild 
+    guild = member.guild
+    if guild.id in guild_whitelist:
+        daily_usr[guild.id]['join'] += 1
     if not guild_config.getlog(guild, 'usrlog'):
         return
     member_stalker.update('first_join', member)
@@ -178,6 +244,8 @@ async def on_member_join(member): # Log joined members
 @bot.event
 async def on_member_remove(member): # Log left/kicked/banned members
     guild = member.guild
+    if guild.id in guild_whitelist:
+        daily_usr[guild.id]['leave'] += 1
     if not guild_config.getlog(guild, 'usrlog'):
         return
     member_stalker.update('first_join', member)
@@ -322,15 +390,17 @@ async def execute_error(ctx, error):
 # END OF EXECUTE
 # CONFIG COMMANDS
 
-@bot.group()
+@bot.command()
 @commands.bot_has_permissions(send_messages=True)
 @commands.has_permissions(manage_guild=True)
-async def config(ctx):
-    if ctx.invoked_subcommand is None:
+async def config(ctx, log):
+    if log not in ('usrlog', 'msglog', 'modlog'):
         await ctx.send(
-            'D--> It seems that you have attempted to run a nonexistent command. '
+            'D--> It seems that you have attempted to create an invalid log. '
             'Would you like to try again? Redos are free, you know.'
             )
+        return
+    await ctx.send(f'D--> The {log} channel has been set and saved.')
 
 @config.error
 async def config_error(ctx, error):
@@ -343,21 +413,6 @@ async def config_error(ctx, error):
     elif isinstance(error, commands.BotMissingPermissions):
         return
     raise error
-
-@config.command()
-async def usrlog(ctx):
-    guild_config.setlog(ctx, 'usrlog')
-    await ctx.send('D--> The moderation log channel has been set and saved.')
-        
-@config.command()
-async def msglog(ctx):
-    guild_config.setlog(ctx, 'msglog')
-    await ctx.send('D--> The join log channel has been set and saved.')
-    
-@config.command()
-async def modlog(ctx):
-    guild_config.setlog(ctx, 'modlog')
-    await ctx.send('D--> The ban log channel has been set and saved.')
 
 
 # END OF CONFIG
@@ -697,17 +752,42 @@ async def _help(ctx):
         value='Grabs user information. Leave user field empty to get your own info.',
         inline=False
         )
-    embed.add_field(name='`ping`', value='Pong!', inline=False)
+    embed.add_field(name='`ping`', value='Pings the user.', inline=False)
     embed.add_field(name='`fle%`', value='Provides you with STRONG eye candy.', inline=False)
     embed.add_field(
         name='`roll <n>d<f>[(+|-)<m>]`',
         value='Try your luck! Roll n f-faced dice, and maybe add a modifier m!',
         inline=False
         )
+    embed.add_field(name='`linky`', value=':drewkas:', inline=False)
+    await ctx.send(embed=embed)
+
+@_help.error
+async def help_error(ctx, error):
+    if isinstance(error, commands.BotMissingPermissions):
+        return
+    raise error
+
+@bot.command()
+@commands.has_guild_permissions(manage_roles=True)
+@commands.bot_has_permissions(send_messages=True)
+async def modhelp(ctx):
+    perms = ctx.author.guild_permissions
+    embed = dc.Embed(
+        color=ctx.author.color,
+        timestamp=ctx.message.created_at,
+        description=f'D--> It seems you have asked about the *Homestuck and Hiveswap Discord Utility Bot*:tm:.'
+        f'This is a bot designed to cater to the server\'s moderation, utility, and statistic '
+        f'tracking needs. If the functions herein described are not performing to the degree '
+        f'that is claimed, please direct your attention to **Wizard of Chaos#2459** or **virtuNat#7998**.\n\n'
+        f'**Moderation Command List:**',
+        )
+    embed.set_author(name='Moderation Help message', icon_url=bot.user.avatar_url)
+    embed.add_field(name='`modhelp`', value='Display this message.', inline=False)
     if perms.manage_roles:
         embed.add_field(
-            name='`stats`',
-            value='(Manage Roles only) Show server statistics.',
+            name='`daily`',
+            value='(Manage Roles only) Show server daily counts.',
             inline=False
             )
         embed.add_field(
@@ -731,7 +811,7 @@ async def _help(ctx):
             value='(Ban Members only) Ban a list of raiders.',
             inline=False
             )
-    if perms.manage_guild:
+    if perms.view_audit_log:
         embed.add_field(
             name='`config (msglog|usrlog|modlog)`',
             value='(Manage Server only) Sets the appropriate log channel.',
@@ -750,9 +830,12 @@ async def _help(ctx):
             )
     await ctx.send(embed=embed)
 
-@_help.error
-async def help_error(ctx, error):
+@modhelp.error
+async def modhelp_error(ctx, error):
     if isinstance(error, commands.BotMissingPermissions):
+        return
+    elif isinstance(error, commands.MissingPermissions):
+        await ctx.send('D--> Neigh, user.')
         return
     raise error
 
@@ -772,8 +855,7 @@ async def info(ctx, *, name=None):
     embed = dc.Embed(color=member.color, timestamp=now)
     embed.set_author(name=f'Information for {member}')
     embed.set_thumbnail(url=member.avatar_url)
-    embed.add_field(name='User ID:', value=f'`{member.id}`')
-    if ctx.author != member:
+    if ctx.author != member and ctx.author != bot.user:
         lastseen = member_stalker.get('last_seen', member)
         if lastseen is not None:
             lastseenmsg = (
@@ -793,6 +875,7 @@ async def info(ctx, *, name=None):
         value=f"`{member.joined_at.strftime('%d/%m/%Y %H:%M:%S')}` "
         f'({(now-member.joined_at).days} days ago, {(now-firstjoin).days} days since first recorded join)'
         )
+    embed.add_field(name='User ID:', value=f'`{member.id}`', inline=False)
     embed.add_field(
         name='Roles:',
         value=', '.join(f'`{role.name}`' for role in member.roles[1:]) or None,
@@ -828,25 +911,35 @@ async def ping_error(ctx, error):
 async def roll(ctx, *, args):
     match = re.match(r'(\d+)\s*d\s*(\d+)\s*(?:([-+])\s*(\d+))?$', args.strip())
     if not match:
-        await ctx.send('Malformed command was sent!')
+        await ctx.send('D--> Use your words, straight from the horse\'s mouth.')
         return
     ndice, nfaces, sign, mod = (group or '0' for group in match.groups())
     ndice, nfaces = int(ndice), int(nfaces)
+    if ndice == 0 or nfaces == 0:
+        await ctx.send('D--> That doesn\'t math very well. I STRONGLY suggest you try again.')
+        return
     if ndice == nfaces == 8 and ctx.author.id == CONST_FATHER:
         rolls = [8] * 8
     else:
         rolls = [randint(1, nfaces) for _ in range(ndice)]
     modnum = int(sign + mod)
     if modnum:
-        await ctx.send(
+        msg = (
             f'{ctx.author.mention} **rolled {ndice}d{nfaces}{sign}{mod}:** '
             f'`({" + ".join(map(str, rolls))}) {sign} {mod} = {sum(rolls) + modnum}`'
             )
     else:
-        await ctx.send(
+        msg = (
             f'{ctx.author.mention} **rolled {ndice}d{nfaces}:** '
             f'`({" + ".join(map(str, rolls))}) = {sum(rolls)}`'
             )
+    if len(msg) > 2000:
+        await ctx.send(
+            'D--> Woah there pardner, that\'s a few too many dice '
+            'or a few too large a die. Try again with something smaller.'
+            )
+    else:
+        await ctx.send(msg)
 
 @ping.error
 async def roll_error(ctx, error):
@@ -855,13 +948,63 @@ async def roll_error(ctx, error):
     raise error
 
 @bot.command()
+@commands.bot_has_permissions(send_messages=True)
+async def latex(ctx, latex):
+    await ctx.send('D--> Coming soon.')
+
+@latex.error
+async def latex_error(ctx, error):
+    if isinstance(error, commands.BotMissingPermissions):
+        return
+    raise error
+
+@bot.command()
+@commands.bot_has_permissions(send_messages=True)
 async def linky(ctx):
-    await ctx.send(guild_config.random_linky())
+    msg = guild_config.random_linky()
+    await ctx.send(re.sub(r'<@!\d{18,}>', get_name, msg))
+
+@linky.error
+async def linky_error(ctx, error):
+    if isinstance(error, commands.BotMissingPermissions):
+        return
+    raise error
+
+@bot.command()
+@commands.has_guild_permissions(manage_roles=True)
+async def daily(ctx):
+    now = datetime.utcnow()
+    msg_counts = "\n".join(
+        f'`{ctx.guild.get_channel(chan_id)}:` **{count}**'
+        for chan_id, count in daily_msg[ctx.guild.id].most_common()
+        )
+    embed = dc.Embed(
+        color=ctx.author.color,
+        timestamp=now,
+        description=f'**Message counts since midnight UTC or bot start:**\n{msg_counts}',
+        )
+    embed.set_author(name=f'Daily counts for {ctx.author}', icon_url=ctx.author.avatar_url)
+    embed.add_field(name='Users Gained:', value=daily_usr[ctx.guild.id]['join'])
+    embed.add_field(name='Users Lost:', value=daily_usr[ctx.guild.id]['leave'])
+    embed.add_field(
+        name='**DISCLAIMER**:',
+        value=
+            'Counts may not be accurate if the bot has been stopped at any point during the day.\n'
+            'Counts will reset upon midnight UTC, upon which an automated message will display.',
+        inline=False,
+        )
+    await guild_config.log(ctx.guild, 'modlog', embed=embed)
+
+@daily.error
+async def daily_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send('D--> It seems you have insufficient permission elevations.')
+    raise error
     
 #TOGGLE COMMANDS
 @bot.command()
 @commands.bot_has_permissions(add_reactions=True, read_message_history=True)
-@commands.has_permissions(manage_roles=True)
+@commands.has_guild_permissions(manage_roles=True)
 async def autoreact(ctx):
     if guild_config.toggle_reacts(ctx):
         await ctx.send('D--> ❤️')
@@ -870,7 +1013,10 @@ async def autoreact(ctx):
 
 @autoreact.error
 async def autoreact_error(ctx, error):
-    if isinstance(error, (MissingPermissions, BotMissingPermissions)):
+    if isinstance(error, BotMissingPermissions):
+        return
+    elif isinstance(error, MissingPermissions):
+        await ctx.error('D--> Neigh.')
         return
     raise error
 
@@ -885,8 +1031,10 @@ async def ignoreplebs(ctx):
 @ignoreplebs.error
 async def ignoreplebs_error(ctx, error):
     if isinstance(error, MissingPermissions):
+        await ctx.send('D--> Neigh, plebian.')
         return
     raise error
+#END OF TOGGLE COMMANDS
 
 if __name__ == '__main__':
     try:
@@ -896,4 +1044,3 @@ if __name__ == '__main__':
     finally:
         guild_config.save()
         member_stalker.save()
-#END OF TOGGLE COMMANDS
