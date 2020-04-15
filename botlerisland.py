@@ -1022,7 +1022,7 @@ async def autoreact_error(ctx, error):
     if isinstance(error, BotMissingPermissions):
         return
     elif isinstance(error, MissingPermissions):
-        await ctx.error('D--> Neigh.')
+        await ctx.send('D--> Neigh.')
         return
     raise error
 
