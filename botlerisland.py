@@ -696,7 +696,7 @@ async def flex(ctx):
             name='D--> I STRONGLY agree.', icon_url=bot.user.avatar_url
             ).set_image(
             url='https://cdn.discordapp.com/attachments/'
-            '152981670507577344/664624516370268191/arquius.gif'
+            '390337910244769792/704686351228076132/arquius_smooth.gif'
             ))
 
 @flex.error
