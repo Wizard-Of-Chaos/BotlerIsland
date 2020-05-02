@@ -1,8 +1,8 @@
 # Ignore all pickle files, copies should work sterile.
 *.pkl
-/__pycache__
-/avatar.png
-/encrypttoken.py
-/spat.txt
-/tmpmsg.txt
-/token.txt
+__pycache__
+avatar.png
+encrypttoken.py
+spat.txt
+tmpmsg.txt
+token.txt
