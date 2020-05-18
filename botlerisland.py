@@ -912,31 +912,47 @@ async def roll(ctx, *, args):
         return
     ndice, nfaces, sign, mod = (group or '0' for group in match.groups())
     ndice, nfaces = int(ndice), int(nfaces)
-    if ndice == 0 or nfaces == 0:
+    # Stop people from doing the 0 dice 0 faces bullshit
+    if ndice <= 0 or nfaces <= 0:
         await ctx.send('D--> That doesn\'t math very well. I STRONGLY suggest you try again.')
         return
+    modnum = int(sign + mod)
+    # Precalc minimum length to see if roll should go
+    if modnum:
+        bfr = f'{ctx.author.mention} **rolled {ndice}d{nfaces}{sign}{mod}:** `('
+        aft = f') {sign} {mod} = '
+    else:
+        bfr = f'{ctx.author.mention} **rolled {ndice}d{nfaces}:** `('
+        aft = f') = '
+    if len(bfr+aft) + 3*(ndice-1) > 2000:
+        await ctx.send(
+            'D--> Woah there pardner, that\'s a few too many dice '
+            'or a few too large a die. Try again with something smaller.'
+            )
+        return
+    # Do the rolls
     if ndice == nfaces == 8 and ctx.author.id == CONST_FATHER:
         rolls = [8] * 8
     else:
         rolls = [randint(1, nfaces) for _ in range(ndice)]
-    modnum = int(sign + mod)
-    if modnum:
-        msg = (
-            f'{ctx.author.mention} **rolled {ndice}d{nfaces}{sign}{mod}:** '
-            f'`({" + ".join(map(str, rolls))}) {sign} {mod} = {sum(rolls) + modnum}`'
-            )
-    else:
-        msg = (
-            f'{ctx.author.mention} **rolled {ndice}d{nfaces}:** '
-            f'`({" + ".join(map(str, rolls))}) = {sum(rolls)}`'
-            )
+    msg = f'{bfr}{" + ".join(map(str, rolls))}{aft}{sum(rolls) + modnum}`'
     if len(msg) > 2000:
         await ctx.send(
             'D--> Woah there pardner, that\'s a few too many dice '
             'or a few too large a die. Try again with something smaller.'
             )
-    else:
-        await ctx.send(msg)
+        return
+    embed = dc.Embed(
+        color=dc.Color(0x005682),
+        description=f'`Min: {min(rolls)}; Max: {max(rolls)}; '
+            f'Mean: {sum(rolls) / ndice:0.2f}; 1st Mode: {max(set(rolls), key=rolls.count)}`',
+        )
+    embed.set_author(
+        name='Roll Statistics:',
+        icon_url='https://cdn.discordapp.com/attachments/'
+            '663453347763716110/711985889680818266/unknown.png',
+        )
+    await ctx.send(msg, embed=embed)
 
 @ping.error
 async def roll_error(ctx, error):
