@@ -1007,6 +1007,18 @@ async def daily_error(ctx, error):
         await ctx.send('D--> It seems you have insufficient permission elevations.')
     raise error
     
+@bot.command()
+@commands.has_guild_permissions(manage_roles=True)
+@commands.bot_has_permissions(send_messages=True)
+async def modperms(ctx):
+    perms = dict(iter(ctx.channel.permissions_for(ctx.author))) #me and the boys using cursed if as a prototype
+    listofperms = []
+    for perm in perms:
+        if perms[perm] == True:
+            listofperms.append(perm)
+    await ctx.send(f'{ctx.author}, you have the following perms: {listofperms}')
+    
+    
 #TOGGLE COMMANDS
 @bot.command()
 @commands.bot_has_permissions(add_reactions=True, read_message_history=True)
