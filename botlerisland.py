@@ -1011,7 +1011,7 @@ async def daily_error(ctx, error):
 @commands.has_guild_permissions(manage_roles=True)
 @commands.bot_has_permissions(send_messages=True)
 async def modperms(ctx):
-    perms = dict(iter(ctx.channel.permissions_for(ctx.author))) #me and the boys using cursed if as a prototype
+    perms = dict(iter(ctx.author.guild_permissions)) #me and the boys using cursed if as a prototype
     listofperms = []
     for perm in perms:
         if perms[perm] == True:
