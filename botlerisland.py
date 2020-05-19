@@ -942,17 +942,17 @@ async def roll(ctx, *, args):
             'or a few too large a die. Try again with something smaller.'
             )
         return
-    embed = dc.Embed(
-        color=dc.Color(0x005682),
-        description=f'`Min: {min(rolls)}; Max: {max(rolls)}; '
-            f'Mean: {sum(rolls) / ndice:0.2f}; 1st Mode: {max(set(rolls), key=rolls.count)}`',
-        )
-    embed.set_author(
-        name='Roll Statistics:',
-        icon_url='https://cdn.discordapp.com/attachments/'
-            '663453347763716110/711985889680818266/unknown.png',
-        )
-    await ctx.send(msg, embed=embed)
+    # embed = dc.Embed(
+    #     color=dc.Color(0x005682),
+    #     description=f'`Min: {min(rolls)}; Max: {max(rolls)}; '
+    #         f'Mean: {sum(rolls) / ndice:0.2f}; 1st Mode: {max(set(rolls), key=rolls.count)}`',
+    #     )
+    # embed.set_author(
+    #     name='Roll Statistics:',
+    #     icon_url='https://cdn.discordapp.com/attachments/'
+    #         '663453347763716110/711985889680818266/unknown.png',
+    #     )
+    await ctx.send(msg)#, embed=embed)
 
 @ping.error
 async def roll_error(ctx, error):
@@ -1027,13 +1027,16 @@ async def daily_error(ctx, error):
 @commands.has_guild_permissions(manage_roles=True)
 @commands.bot_has_permissions(send_messages=True)
 async def modperms(ctx):
-    perms = dict(iter(ctx.author.guild_permissions)) #me and the boys using cursed if as a prototype
-    listofperms = []
-    for perm in perms:
-        if perms[perm] == True:
-            listofperms.append(perm)
-    await ctx.send(f'{ctx.author}, you have the following perms: {listofperms}')
-    
+    # me and the boys using cursed if as a prototype
+    permlist = ', '.join(perm for perm, val in ctx.author.guild_permissions if val)
+    embed = dc.Embed(
+        color=ctx.author.color,
+        timestamp=datetime.utcnow(),
+        description=f'```{permlist}```',
+        )
+    embed.set_author(name=f'{ctx.author} has the following guild perms:')
+    embed.set_thumbnail(url=ctx.author.avatar_url)
+    await ctx.send(embed=embed)
     
 #TOGGLE COMMANDS
 @bot.command()
