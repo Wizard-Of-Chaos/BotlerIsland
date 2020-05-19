@@ -780,28 +780,36 @@ async def modhelp(ctx):
         f'**Moderation Command List:**',
         )
     embed.set_author(name='Moderation Help message', icon_url=bot.user.avatar_url)
-    embed.add_field(name='`modhelp`', value='Display this message.', inline=False)
-    if perms.manage_roles:
-        embed.add_field(
-            name='`daily`',
-            value='(Manage Roles only) Show server daily counts.',
-            inline=False
-            )
-        embed.add_field(
-            name='`autoreact`',
-            value='(Manage Roles only) Toggle auto-react feature.',
-            inline=False
-            )
-        embed.add_field(
-            name='`ignoreplebs`',
-            value='(Manage Roles only) Toggle non-mod commands getting ignored in a channel.',
-            inline=False
-            )
-        embed.add_field(
-            name='`channel (ban|unban) <username>`',
-            value='(Manage Roles only) Add or remove a channel mute role.',
-            inline=False
-            )
+    embed.add_field(
+        name='`modhelp`',
+        value='(Manage Roles only) Display this message.',
+        inline=False
+        )
+    embed.add_field(
+        name='`modperms`',
+        value='(Manage Roles only) Show all global guild permissions allowed.',
+        inline=False
+        )
+    embed.add_field(
+        name='`daily`',
+        value='(Manage Roles only) Show server daily counts.',
+        inline=False
+        )
+    embed.add_field(
+        name='`autoreact`',
+        value='(Manage Roles only) Toggle auto-react feature.',
+        inline=False
+        )
+    embed.add_field(
+        name='`ignoreplebs`',
+        value='(Manage Roles only) Toggle non-mod commands getting ignored in a channel.',
+        inline=False
+        )
+    embed.add_field(
+        name='`channel (ban|unban) <username>`',
+        value='(Manage Roles only) Add or remove a channel mute role.',
+        inline=False
+        )
     if perms.ban_members:
         embed.add_field(
             name='`raidban <user1> [<user2> <user3> ...]`',
@@ -811,7 +819,7 @@ async def modhelp(ctx):
     if perms.view_audit_log:
         embed.add_field(
             name='`config (msglog|usrlog|modlog)`',
-            value='(Manage Server only) Sets the appropriate log channel.',
+            value='(View Audit only) Sets the appropriate log channel.',
             inline=False
             )
     if perms.administrator:
@@ -1040,7 +1048,7 @@ async def modperms(ctx):
     await ctx.send(embed=embed)
 
 @modperms.error
-async def daily_error(ctx, error):
+async def modperms_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
         await ctx.send('D--> It seems you have insufficient permission elevations.')
         return
