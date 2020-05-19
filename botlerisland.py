@@ -1021,6 +1021,7 @@ async def daily(ctx):
 async def daily_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
         await ctx.send('D--> It seems you have insufficient permission elevations.')
+        return
     raise error
     
 @bot.command()
@@ -1037,6 +1038,15 @@ async def modperms(ctx):
     embed.set_author(name=f'{ctx.author} has the following guild perms:')
     embed.set_thumbnail(url=ctx.author.avatar_url)
     await ctx.send(embed=embed)
+
+@modperms.error
+async def daily_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send('D--> It seems you have insufficient permission elevations.')
+        return
+    elif isinstance(error, commands.BotMissingPermissions):
+        return
+    raise error
     
 #TOGGLE COMMANDS
 @bot.command()
