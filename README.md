@@ -28,12 +28,13 @@ Moderation Command List:
 
 | Command                           | Description                                                                     |
 | --------------------------------- | ------------------------------------------------------------------------------- |
-| `modhelp`                         | Display this message.                                                           |
+| `modhelp`                         | (Manage Roles only) Display this message.                                       |
+| `modperms`                        | (Manage Roles only) Show all global guild permissions allowed.                  |
 | `daily`                           | (Manage Roles only) Show server statistics.                                     |
 | `autoreact`                       | (Manage Roles only) Toggle auto-react feature.                                  |
 | `ignoreplebs`                     | (Manage Roles only) Toggle non-mod commands getting ignored in a channel.       |
 | `channel (ban\|unban) <username>` | (Manage Roles only) Add or remove a channel mute role.                          |
 | `raidban <user1> [<user2> ...]`   | (Ban Members only) Ban a list of raiders.                                       |
-| `config (msglog\|usrlog)`         | (Manage Server only) Sets the appropriate log channel.                          |
+| `config (msglog\|usrlog)`         | (View Audit only) Sets the appropriate log channel.                             |
 | `execute order 66`                | (Senate only) Declares all Jedi to be enemies of the Republic for 5 minutes.    |
 | `ZA (WARUDO\|HANDO)`              | (Stand User Only) Utilizes highly dangerous Stand power to moderate the server. |
