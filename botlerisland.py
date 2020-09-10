@@ -126,7 +126,7 @@ async def on_message(msg):
     member_stalker.update('last_seen', msg)
     ctx = await bot.get_context(msg)
     if ctx.valid:
-        if guild_config.getcmd(ctx):
+        if guild_config.getcmd(ctx) and ctx.author.id != 184545248930693120:
             await bot.process_commands(msg)
     elif guild_config.getcmd(ctx) and msg.content.strip().lower() == 'good work arquius':
         await msg.channel.send('D--> 😎')
@@ -366,7 +366,7 @@ async def on_voice_state_update(member, bfr, aft): # Logged when a member joins 
 
 @bot.command()
 @commands.bot_has_permissions(send_messages=True)
-@commands.has_permissions(administrator=True)
+@commands.has_permissions(view_audit_log=True)
 async def execute(ctx, *, args=None):
     if args == 'order 66':
         guild_config.set_containment(ctx)
@@ -392,7 +392,7 @@ async def execute_error(ctx, error):
 
 @bot.command()
 @commands.bot_has_permissions(send_messages=True)
-@commands.has_permissions(manage_guild=True)
+@commands.has_permissions(view_audit_log=True)
 async def config(ctx, log):
     if log not in ('usrlog', 'msglog', 'modlog'):
         await ctx.send(
@@ -456,7 +456,7 @@ async def woc_counter(ctx): # Beta statistic feature: Woc's Tard Counter!
 # JOJO's Bizarre Adventure Commands
 
 @bot.group(name='ZA')
-@commands.has_permissions(administrator=True)
+@commands.has_permissions(view_audit_log=True)
 async def moderate(ctx):
     if ctx.invoked_subcommand is None:
         pass
@@ -545,7 +545,7 @@ async def purge_error(ctx, error):
 
 @bot.group()
 @commands.bot_has_permissions(manage_roles=True)
-@commands.has_permissions(administrator=True)
+@commands.has_permissions(view_audit_log=True)
 async def time(ctx):
     if ctx.invoked_subcommand is None:
         pass
@@ -822,15 +822,14 @@ async def modhelp(ctx):
             value='(View Audit only) Sets the appropriate log channel.',
             inline=False
             )
-    if perms.administrator:
         embed.add_field(
             name='`execute order 66`',
-            value='(Senate only) Declares all Jedi to be enemies of the Republic for 5 minutes.',
+            value='(View Audit only) Declares all Jedi to be enemies of the Republic for 5 minutes.',
             inline=False
             )
         embed.add_field(
             name='`ZA (WARUDO|HANDO)`',
-            value='(Stand User Only) Utilizes highly dangerous Stand power to moderate the server.',
+            value='(View Audit Only) Utilizes highly dangerous Stand power to moderate the server.',
             inline=False
             )
     await ctx.send(embed=embed)
