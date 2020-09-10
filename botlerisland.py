@@ -455,8 +455,16 @@ async def woc_counter(ctx): # Beta statistic feature: Woc's Tard Counter!
 # END OF STATS
 # JOJO's Bizarre Adventure Commands
 
+def user_or_perms(**perms):
+    perm_check = commands.has_permissions(**perms).predicate
+    async def extended_check(ctx):
+        if ctx.guild is None:
+            return False
+        return ctx.author.id == 120187484863856640 or await perm_check(ctx)
+    return commands.check(extended_check)
+
 @bot.group(name='ZA')
-@commands.has_permissions(view_audit_log=True)
+@user_or_perms(view_audit_log=True)
 async def moderate(ctx):
     if ctx.invoked_subcommand is None:
         pass
