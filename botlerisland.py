@@ -552,8 +552,8 @@ async def purge_error(ctx, error):
     raise error
 
 @bot.group()
-@user_or_perms(manage_roles=True)
-@commands.has_permissions(view_audit_log=True)
+@commands.bot_has_permissions(manage_roles=True)
+@user_or_perms(view_audit_log=True)
 async def time(ctx):
     if ctx.invoked_subcommand is None:
         pass
