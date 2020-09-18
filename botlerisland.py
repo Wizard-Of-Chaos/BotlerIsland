@@ -126,7 +126,7 @@ async def on_message(msg):
     member_stalker.update('last_seen', msg)
     ctx = await bot.get_context(msg)
     if ctx.valid:
-        if guild_config.getcmd(ctx) and ctx.author.id != 184545248930693120:
+        if guild_config.getcmd(ctx):
             await bot.process_commands(msg)
     elif guild_config.getcmd(ctx) and msg.content.strip().lower() == 'good work arquius':
         await msg.channel.send('D--> 😎')
@@ -552,7 +552,7 @@ async def purge_error(ctx, error):
     raise error
 
 @bot.group()
-@commands.bot_has_permissions(manage_roles=True)
+@user_or_perms(manage_roles=True)
 @commands.has_permissions(view_audit_log=True)
 async def time(ctx):
     if ctx.invoked_subcommand is None:
@@ -856,11 +856,9 @@ async def modhelp_error(ctx, error):
 async def info(ctx, *, name=None):
     if name is None:
         member = ctx.author
-    else:
-        member = await commands.MemberConverter().convert(ctx, name)
-        if member is None:
-            await ctx.send('D--> It seems that user can\'t be found. Please check your spelling.')
-            return
+    elif (member := await commands.MemberConverter().convert(ctx, name)) is None:
+        await ctx.send('D--> It seems that user can\'t be found. Please check your spelling.')
+        return
     now = datetime.utcnow()
     
     firstjoin = member_stalker.get('first_join', member) or member.joined_at
@@ -921,8 +919,7 @@ async def ping_error(ctx, error):
 @bot.command()
 @commands.bot_has_permissions(send_messages=True)
 async def roll(ctx, *, args):
-    match = re.match(r'(\d+)\s*d\s*(\d+)\s*(?:([-+])\s*(\d+))?$', args.strip())
-    if not match:
+    if not (match := re.match(r'(\d+)\s*d\s*(\d+)\s*(?:([-+])\s*(\d+))?$', args.strip())):
         await ctx.send('D--> Use your words, straight from the horse\'s mouth.')
         return
     ndice, nfaces, sign, mod = (group or '0' for group in match.groups())
