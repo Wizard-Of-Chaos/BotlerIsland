@@ -986,7 +986,7 @@ async def latex_error(ctx, error):
 @bot.command()
 @commands.bot_has_permissions(send_messages=True)
 async def linky(ctx):
-    msg = re.sub(r'<@!(\d{18,})>', get_name, guild_config.random_linky())
+    msg = re.sub(r'<@!(\d{18,})>', get_name, guild_config.random_linky(ctx.message.content))
     msg = re.sub(r'(?<!<)(https?://[^\s]+)(?!>)', r'<\1>', msg)
     admin = ctx.guild.get_member(CONST_BAD_ID)
     if admin is None:

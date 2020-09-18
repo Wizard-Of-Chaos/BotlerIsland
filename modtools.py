@@ -122,7 +122,7 @@ class GuildConfig(Singleton):
         with open('spat.txt', 'a', encoding='utf-8') as lfile:
             lfile.write(msg.content.strip() + '\n')
     
-    def random_linky(self):
+    def random_linky(self, msg):
         try:
             with open('spat.txt', 'r', encoding='utf-8') as lfile:
                 lcount = sum(1 for _ in lfile)
