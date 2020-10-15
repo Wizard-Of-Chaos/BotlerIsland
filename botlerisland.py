@@ -7,14 +7,18 @@ from collections import Counter
 import asyncio as aio
 import discord as dc
 from discord.ext import commands, tasks
-from modtools import guild_whitelist, GuildConfig, MemberStalker
+from modtools import guild_whitelist, GuildConfig, MemberStalker, Roleplay
 from statstracker import StatsTracker
 
-bot = commands.Bot(command_prefix='D--> ')
+intents = dc.Intents.all()
+intents.emojis = True
+bot = commands.Bot(command_prefix='D--> ', intents=intents)
 bot.remove_command('help')
 guild_config = GuildConfig(bot, 'config.pkl')
 member_stalker = MemberStalker('members.pkl')
 stats_tracker = StatsTracker('stats.pkl')
+roleplay = Roleplay('roles.pkl')
+
 stats_tracker.locked_msg = (
     'D--> It seems that I am currently in the middle of something. '
     'I STRONGLY suggest that you wait for me to finish.'
@@ -361,6 +365,29 @@ async def on_voice_state_update(member, bfr, aft): # Logged when a member joins 
         embed = dc.Embed(color=dc.Color.blurple(), description=changelog)
         await guild_config.log(guild, 'msglog', embed=embed)
 
+@bot.event
+async def on_raw_reaction_add(payload): #Raw is necessary here because of this weird assed queue of messages CHRIST i hate discord
+    reaction = str(payload.emoji)
+    msg_id = payload.message_id
+    ch_id = payload.channel_id
+    user_id = payload.user_id
+    guild_id = payload.guild_id
+    if user_id == bot.user.id:
+        return 
+    g = bot.get_guild(guild_id)
+    member = g.get_member(user_id)
+    emoji = bot.get_emoji
+    channel = g.get_channel(ch_id)
+    if roleplay.roledata[ch_id][msg_id]:
+        role = g.get_role(roleplay.roledata[ch_id][msg_id][1])
+        if role not in member.roles:
+            await member.add_roles(role)
+        else:
+            await member.remove_roles(role)
+        msg = await channel.fetch_message(msg_id)
+        await msg.remove_reaction(reaction, member)
+
+
 # END OF EVENTS
 # EXECUTE ORDER 66
 
@@ -453,6 +480,56 @@ async def woc_counter(ctx): # Beta statistic feature: Woc's Tard Counter!
             )
 
 # END OF STATS
+#ROLE-BASED AND REACTION COMMANDS
+@bot.group()
+@commands.has_permissions(manage_roles=True)
+async def role(ctx):
+    if ctx.invoked_subcommand is None:
+        await ctx.send(
+            'D--> Usage of the role function: \n'
+            'The syntax is ``D--> role reactadd [channel] [message_id] [emoji] "name of role".`` \n \n'
+            'If done properly, this will lead to me reacting to the given message with the specified emoji. '
+            'Then, when others react to said message, they will gain the specified role if they do not have it, and will have it removed if they do have it.'
+        )
+
+@commands.has_permissions(view_audit_log=True)
+@role.command()
+async def reactadd(ctx, channel : dc.TextChannel, msg_id, emoji : dc.Emoji, role_name):
+    msg = ctx.message #Placeholder because I don't trust Python
+    try:
+        msg = await channel.fetch_message(msg_id)
+    except dc.NotFound:
+        await ctx.send('D--> It seems that I could not find the specified message.')
+        return
+    except dc.Forbidden:
+        await ctx.send('D--> It seems you do not have permission required to get this message.')
+        return
+    except dc.HTTPException:
+        await ctx.send('D--> Something horrible has happened. Try again.')
+        return
+    role = None 
+    react = bot.get_emoji(emoji.id)
+    for guildrole in ctx.guild.roles:
+        if guildrole.name == role_name:
+            role = guildrole
+    if react == None:
+        await ctx.send('D--> It seems that I could not find the requested reaction.')
+        return
+    elif role == None:
+        await ctx.send('D--> It seems I could not find the specified role.')
+        return
+    try:
+        await msg.add_reaction(react)
+    except dc.HTTPException:
+        await ctx.send('D--> I was unable to react to the specified message. Please try again.')
+    await ctx.send(f'D--> Success. Reacting to this emoji will grant you the {role.name} role.')
+    roleplay.add(channel, msg, emoji, role)
+
+@bot.command()
+async def find_emoji(ctx, emoji : dc.Emoji):
+    await ctx.send(f"D--> This emoji's name is {emoji.name} and its ID is {emoji.id}.")
+
+#END OF REACTION COMMANDS
 # JOJO's Bizarre Adventure Commands
 
 def user_or_perms(**perms):
@@ -1103,3 +1180,4 @@ if __name__ == '__main__':
     finally:
         guild_config.save()
         member_stalker.save()
+        roleplay.save()
