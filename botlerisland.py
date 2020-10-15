@@ -9,6 +9,9 @@ import discord as dc
 from discord.ext import commands, tasks
 from modtools import guild_whitelist, GuildConfig, MemberStalker, Roleplay
 from statstracker import StatsTracker
+import aiohttp
+import json
+import io 
 
 intents = dc.Intents.all()
 intents.emojis = True
@@ -1052,7 +1055,17 @@ async def roll_error(ctx, error):
 @bot.command()
 @commands.bot_has_permissions(send_messages=True)
 async def latex(ctx, latex):
-    await ctx.send('D--> Coming soon.')
+    preamble=r"\documentclass{standalone}\usepackage{color}\color{white}\begin{document}\begin{math}"
+    postamble=r"\end{math}\end{document}"
+    async with aiohttp.ClientSession() as session:
+        resp = await session.post("https://rtex.probablyaweb.site/api/v2",data={"format":"png","code":preamble+latex+postamble})
+        resp = await resp.text() # Why is this a coroutine? What did I just wait for?
+        resp = json.loads(resp)
+        if (resp["status"]!="success"):
+            await ctx.send('D--> Your latex code is beneighth contempt. Try again.')
+            return
+        image = await session.get("https://rtex.probablyaweb.site/api/v2/" + resp["filename"])
+        await ctx.send(file=dc.File(io.BytesIO(await image.read()), 'latex.png')) #Wrap it up as a file-like object to be easily given to Discord
 
 @latex.error
 async def latex_error(ctx, error):
