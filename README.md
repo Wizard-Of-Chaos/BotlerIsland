@@ -21,20 +21,23 @@ Command List:
 | `fle%`                            | Provides you with STRONG eye candy.                                             |
 | `roll <n>d<f>[(+\|-)<m>]`         | Try your luck! Roll n f-faced dice, and maybe add a modifier m!                 |
 | `linky`                           | :drewkaS:                                                                       |
-
+| `latex <"latex command">          | Returns a picture of your latex function. Must be in quotes.Disabled by default.|
 ----------------------------------------------------------------------------------------------------------------------
 Moderation Command List:
-----------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------
 
-| Command                           | Description                                                                     |
-| --------------------------------- | ------------------------------------------------------------------------------- |
-| `modhelp`                         | (Manage Roles only) Display this message.                                       |
-| `modperms`                        | (Manage Roles only) Show all global guild permissions allowed.                  |
-| `daily`                           | (Manage Roles only) Show server statistics.                                     |
-| `autoreact`                       | (Manage Roles only) Toggle auto-react feature.                                  |
-| `ignoreplebs`                     | (Manage Roles only) Toggle non-mod commands getting ignored in a channel.       |
-| `channel (ban\|unban) <username>` | (Manage Roles only) Add or remove a channel mute role.                          |
-| `raidban <user1> [<user2> ...]`   | (Ban Members only) Ban a list of raiders.                                       |
-| `config (msglog\|usrlog)`         | (View Audit only) Sets the appropriate log channel.                             |
-| `execute order 66`                | (Senate only) Declares all Jedi to be enemies of the Republic for 5 minutes.    |
-| `ZA (WARUDO\|HANDO)`              | (Stand User Only) Utilizes highly dangerous Stand power to moderate the server. |
+| Command                                                | Description                                                                     |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| `modhelp`                                              | (Manage Roles only) Display this message.                                       |
+| `modperms`                                             | (Manage Roles only) Show all global guild permissions allowed.                  |
+| `daily`                                                | (Manage Roles only) Show server statistics.                                     |
+| `autoreact`                                            | (Manage Roles only) Toggle auto-react feature.                                  |
+| `ignoreplebs`                                          | (Manage Roles only) Toggle non-mod commands getting ignored in a channel.       |
+| `enablelatex`                                          | (Manage Roles only) Toggle latex functions being allowed.                       |             
+| `channel (ban\|unban) <username>`                      | (Manage Roles only) Add or remove a channel mute role.                          |
+| `role`                                                 | (Manage Roles only) Detailed info on the how-to of reactadd roles.              |
+| `role reactadd <channel> <msgid> <emoji> <"role name"> | (Manage Roles only) Reactions to that message will grant the given role.        |
+| `raidban <user1> [<user2> ...]`                        | (Ban Members only) Ban a list of raiders.                                       |
+| `config (msglog\|usrlog)`                              | (View Audit only) Sets the appropriate log channel.                             |
+| `execute order 66`                                     | (Senate only) Declares all Jedi to be enemies of the Republic for 5 minutes.    |
+| `ZA (WARUDO\|HANDO)`                                   | (Stand User Only) Utilizes highly dangerous Stand power to moderate the server. |

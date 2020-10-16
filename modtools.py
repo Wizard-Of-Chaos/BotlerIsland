@@ -13,7 +13,7 @@ guild_whitelist = (152981670507577344, 663452978237407262)
 def callback(): # Lambdas can't be pickled, but named functions can.
     return {
     'usrlog': None, 'msglog': None, 'modlog': None,
-    'autoreact': set(), 'star_wars': {}, 'ignoreplebs': set(),
+    'autoreact': set(), 'star_wars': {}, 'ignoreplebs': set(), 'enablelatex': set(),
     }
     
 
@@ -70,6 +70,12 @@ class GuildConfig(Singleton):
             perms.administrator or perms.view_audit_log or perms.manage_guild or perms.manage_roles
             or ctx.channel.id not in self.mod_channels[ctx.guild.id]['ignoreplebs']
             )
+    def getltx(self, ctx):
+        perms = ctx.author.guild_permissions
+        return (
+            perms.administrator or perms.view_audit_log or perms.manage_guild or perms.manage_roles
+            or ctx.channel.id in self.mod_channels[ctx.guild.id]['enablelatex']
+            )
 
     def setlog(self, ctx, log):
         if log not in {'usrlog', 'msglog', 'modlog'}:
@@ -89,6 +95,16 @@ class GuildConfig(Singleton):
 
     def toggle_cmd(self, ctx):
         config = self.mod_channels[ctx.guild.id]['ignoreplebs']
+        channel_id = ctx.channel.id
+        if channel_id in config:
+            config.remove(channel_id)
+            return False
+        else:
+            config.add(channel_id)
+            return True
+            
+    def toggle_latex(self, ctx):
+        config = self.mod_channels[ctx.guild.id]['enablelatex']
         channel_id = ctx.channel.id
         if channel_id in config:
             config.remove(channel_id)

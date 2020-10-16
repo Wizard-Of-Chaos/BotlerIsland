@@ -492,10 +492,10 @@ async def role(ctx):
             'D--> Usage of the role function: \n'
             'The syntax is: \n ``D--> role reactadd [channel] [message_id] [emoji] "name of role"`` \n \n'
             'If done properly, this will lead to me reacting to the given message with the specified emoji. '
-            'Then, when others react to said message, they will gain the specified role if they do not have it, and will have it removed if they do have it.'
+            'Then, when others react to said message, they will gain the specified role if they do not have it, and will have it removed if they do have it. '
         )
 
-@commands.has_permissions(view_audit_log=True)
+@commands.has_permissions(manage_roles=True)
 @role.command()
 async def reactadd(ctx, channel : dc.TextChannel, msg_id, emoji : dc.Emoji, role_name):
     msg = ctx.message #Placeholder because I don't trust Python
@@ -528,9 +528,6 @@ async def reactadd(ctx, channel : dc.TextChannel, msg_id, emoji : dc.Emoji, role
     await ctx.send(f'D--> Success. Reacting to this emoji will grant you the {role.name} role.')
     roleplay.add(channel, msg, emoji, role)
 
-@bot.command()
-async def find_emoji(ctx, emoji : dc.Emoji):
-    await ctx.send(f"D--> This emoji's name is {emoji.name} and its ID is {emoji.id}.")
 
 #END OF REACTION COMMANDS
 # JOJO's Bizarre Adventure Commands
@@ -844,6 +841,11 @@ async def _help(ctx):
         value='Try your luck! Roll n f-faced dice, and maybe add a modifier m!',
         inline=False
         )
+    embed.add_field(
+        name='`latex <"latex function">`',
+        value='Prints out your latex function in a pretty little image.',
+        inline=False
+    )
     embed.add_field(name='`linky`', value=':drewkas:', inline=False)
     await ctx.send(embed=embed)
 
@@ -894,8 +896,23 @@ async def modhelp(ctx):
         inline=False
         )
     embed.add_field(
+        name='`enablelatex`',
+        value='(Manage Roles only) Toggles whether or not latex commands can be used.',
+        inline=False
+    )
+    embed.add_field(
         name='`channel (ban|unban) <username>`',
         value='(Manage Roles only) Add or remove a channel mute role.',
+        inline=False
+        )
+    embed.add_field(
+        name='`role`',
+        value='(Manage Roles only) Detailed info on the how-to of reactadd.',
+        inline=False
+    )
+    embed.add_field(
+        name='`D--> role reactadd <channel> <message_id> <emoji> "name of role"`',
+        value='(Manage Roles only) Reacts to a given message, then grants the role specified when someone reacts to that message. Role name needs to be in quotes if it\'s multiple words.',
         inline=False
         )
     if perms.ban_members:
@@ -1055,6 +1072,8 @@ async def roll_error(ctx, error):
 @bot.command()
 @commands.bot_has_permissions(send_messages=True)
 async def latex(ctx, latex):
+    if not guild_config.getltx(ctx):
+        return
     preamble=r"\documentclass{standalone}\usepackage{color}\color{white}\begin{document}\begin{math}"
     postamble=r"\end{math}\end{document}"
     async with aiohttp.ClientSession() as session:
@@ -1181,6 +1200,21 @@ async def ignoreplebs(ctx):
 async def ignoreplebs_error(ctx, error):
     if isinstance(error, MissingPermissions):
         await ctx.send('D--> Neigh, plebian.')
+        return
+    raise error
+    
+@bot.command()
+@commands.has_permissions(manage_roles=True)
+async def enablelatex(ctx):
+    if guild_config.toggle_latex(ctx):
+        await ctx.send('D--> Latex functions have been enabled.')
+    else:
+        await ctx.send('D--> Latex functions have been disabled.')
+        
+@ignoreplebs.error
+async def enablelatex_error(ctx, error):
+    if isinstance(error, MissingPermissions):
+        await ctx.send('D--> Neigh.')
         return
     raise error
 #END OF TOGGLE COMMANDS
