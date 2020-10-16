@@ -15,7 +15,8 @@ def callback(): # Lambdas can't be pickled, but named functions can.
     'usrlog': None, 'msglog': None, 'modlog': None,
     'autoreact': set(), 'star_wars': {}, 'ignoreplebs': set(), 'enablelatex': set(),
     }
-    
+def dictgrabber():
+    return defaultdict(dict)
 
 class Singleton(object):
     _self_instance_ref = None
@@ -265,7 +266,7 @@ class Roleplay(Singleton):
             with open(self.fname, 'rb') as rolefile:
                 self.roledata = pickle.load(rolefile)
         except(OSError, EOFError):
-            self.roledata = defaultdict(defaultdict(dict))
+            self.roledata = defaultdict(dictgrabber)
         self.save()
         
     def save(self):
@@ -273,7 +274,7 @@ class Roleplay(Singleton):
             pickle.dump(self.roledata, rolefile)
             
     def add(self, channel, msg, react, role):
-        self.roledata[channel.id] = { msg.id : (react.id, role.id) }
+        self.roledata[channel.id][msg.id][react.id] = role.id 
     
     def remove(self, channel, msg, react, role):
         self.roledata[channel.id][msg.id].pop(react.id)

@@ -379,10 +379,13 @@ async def on_raw_reaction_add(payload): #Raw is necessary here because of this w
         return 
     g = bot.get_guild(guild_id)
     member = g.get_member(user_id)
-    emoji = bot.get_emoji
     channel = g.get_channel(ch_id)
-    if roleplay.roledata[ch_id][msg_id]:
-        role = g.get_role(roleplay.roledata[ch_id][msg_id][1])
+    if roleplay.roledata[ch_id][msg_id]: #Checks if the message is in the list
+        role = None
+        if roleplay.roledata[ch_id][msg_id][payload.emoji.id]:
+            role = g.get_role(roleplay.roledata[ch_id][msg_id][payload.emoji.id])
+        if role == None:
+            return
         if role not in member.roles:
             await member.add_roles(role)
         else:
