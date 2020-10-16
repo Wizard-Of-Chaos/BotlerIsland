@@ -490,7 +490,7 @@ async def role(ctx):
     if ctx.invoked_subcommand is None:
         await ctx.send(
             'D--> Usage of the role function: \n'
-            'The syntax is ``D--> role reactadd [channel] [message_id] [emoji] "name of role".`` \n \n'
+            'The syntax is: \n ``D--> role reactadd [channel] [message_id] [emoji] "name of role"`` \n \n'
             'If done properly, this will lead to me reacting to the given message with the specified emoji. '
             'Then, when others react to said message, they will gain the specified role if they do not have it, and will have it removed if they do have it.'
         )
