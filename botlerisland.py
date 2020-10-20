@@ -1,17 +1,19 @@
 #!/usr/bin/env python
 # HSDBot code by Wizard of Chaos#2459 and virtuNat#7998
+import io
 import re
+import json
 from datetime import datetime, timedelta
 from random import randint
 from collections import Counter
+
+import aiohttp
 import asyncio as aio
+
 import discord as dc
 from discord.ext import commands, tasks
 from modtools import guild_whitelist, GuildConfig, MemberStalker, Roleplay
 from statstracker import StatsTracker
-import aiohttp
-import json
-import io 
 
 intents = dc.Intents.all()
 intents.emojis = True
@@ -487,6 +489,7 @@ async def woc_counter(ctx): # Beta statistic feature: Woc's Tard Counter!
 
 # END OF STATS
 #ROLE-BASED AND REACTION COMMANDS
+
 @bot.group()
 @commands.has_permissions(manage_roles=True)
 async def role(ctx):
@@ -729,7 +732,7 @@ async def unban(ctx, *, member: dc.Member):
                 embed.add_field(name='**Role Revoked:**', value=f'`{role}`')
                 embed.add_field(name='**User ID:**', value=member.id)
                 embed.set_author(
-                    name=f'@{ctx.author} Issued Channel Unban:',
+                    name=f'@{ctx.author} Undid Channel Ban:',
                     icon_url=ctx.author.avatar_url,
                     )
                 await guild_config.log(ctx.guild, 'modlog', embed=embed)
@@ -758,7 +761,7 @@ async def raidban(ctx, *args):
             description=f'Raiders demolished in **#{ctx.channel}**:\n{banned}'
             )
         embed.set_author(
-            name=f'@{ctx.author} Issued Raid Ban(s):',
+            name=f'@{ctx.author} Issued Server Ban(s) and Purged these users:',
             icon_url=ctx.author.avatar_url,
             )
         await guild_config.log(ctx.guild, 'modlog', embed=embed)
@@ -1077,17 +1080,17 @@ async def roll_error(ctx, error):
 async def latex(ctx, latex):
     if not guild_config.getltx(ctx):
         return
-    preamble=r"\documentclass{standalone}\usepackage{color}\color{white}\begin{document}\begin{math}"
-    postamble=r"\end{math}\end{document}"
+    preamble=r'\documentclass{standalone}\usepackage{color}\usepackage{amsmath}\color{white}\begin{document}\begin{math}\displaystyle'
+    postamble=r'\end{math}\end{document}'
     async with aiohttp.ClientSession() as session:
-        resp = await session.post("https://rtex.probablyaweb.site/api/v2",data={"format":"png","code":preamble+latex+postamble})
-        resp = await resp.text() # Why is this a coroutine? What did I just wait for?
+        resp = await session.post('https://rtex.probablyaweb.site/api/v2',data={'format':'png','code':preamble+latex+postamble})
+        resp = await resp.text() # Awaiting loading of the raw text data and unicode parsing
         resp = json.loads(resp)
-        if (resp["status"]!="success"):
+        if (resp['status'] != 'success'):
             await ctx.send('D--> Your latex code is beneighth contempt. Try again.')
             return
-        image = await session.get("https://rtex.probablyaweb.site/api/v2/" + resp["filename"])
-        await ctx.send(file=dc.File(io.BytesIO(await image.read()), 'latex.png')) #Wrap it up as a file-like object to be easily given to Discord
+        image = await session.get('https://rtex.probablyaweb.site/api/v2/' + resp['filename'])
+        await ctx.send(file=dc.File(io.BytesIO(await image.read()), 'latex.png')) # Wrap it up as a discord File object to post directly
 
 @latex.error
 async def latex_error(ctx, error):
@@ -1173,6 +1176,7 @@ async def modperms_error(ctx, error):
     raise error
     
 #TOGGLE COMMANDS
+
 @bot.command()
 @commands.bot_has_permissions(add_reactions=True, read_message_history=True)
 @commands.has_guild_permissions(manage_roles=True)
@@ -1192,6 +1196,21 @@ async def autoreact_error(ctx, error):
     raise error
 
 @bot.command()
+@commands.has_permissions(manage_roles=True)
+async def enablelatex(ctx):
+    if guild_config.toggle_latex(ctx):
+        await ctx.send('D--> Latex functions have been enabled.')
+    else:
+        await ctx.send('D--> Latex functions have been disabled.')
+        
+@ignoreplebs.error
+async def enablelatex_error(ctx, error):
+    if isinstance(error, MissingPermissions):
+        await ctx.send('D--> Neigh.')
+        return
+    raise error
+
+@bot.command()
 @commands.has_guild_permissions(manage_roles=True)
 async def ignoreplebs(ctx):
     if guild_config.toggle_cmd(ctx):
@@ -1206,20 +1225,6 @@ async def ignoreplebs_error(ctx, error):
         return
     raise error
     
-@bot.command()
-@commands.has_permissions(manage_roles=True)
-async def enablelatex(ctx):
-    if guild_config.toggle_latex(ctx):
-        await ctx.send('D--> Latex functions have been enabled.')
-    else:
-        await ctx.send('D--> Latex functions have been disabled.')
-        
-@ignoreplebs.error
-async def enablelatex_error(ctx, error):
-    if isinstance(error, MissingPermissions):
-        await ctx.send('D--> Neigh.')
-        return
-    raise error
 #END OF TOGGLE COMMANDS
 
 if __name__ == '__main__':

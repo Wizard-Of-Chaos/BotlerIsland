@@ -15,8 +15,6 @@ def callback(): # Lambdas can't be pickled, but named functions can.
     'usrlog': None, 'msglog': None, 'modlog': None,
     'autoreact': set(), 'star_wars': {}, 'ignoreplebs': set(), 'enablelatex': set(),
     }
-def dictgrabber():
-    return defaultdict(dict)
 
 class Singleton(object):
     _self_instance_ref = None
@@ -255,6 +253,10 @@ class MemberStalker(Singleton):
             *map(member.guild.get_role, self.member_data[member.id][member.guild.id]['last_roles']),
             reason='Restore last roles'
             )
+
+
+def dictgrabber():
+    return defaultdict(dict)
 
 class Roleplay(Singleton):
     def __init__(self, fname):
