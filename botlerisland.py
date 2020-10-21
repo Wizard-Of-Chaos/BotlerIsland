@@ -747,6 +747,7 @@ async def resumes(ctx):
 
 # ALRIGHT HUNGOVER WIZARD OF CHAOS CODE IN THE HIZ-OUSE
 # WE GONNA WRITE SOME MOTHERFUCKING BAN COMMANDS; INITIALIZE THAT SHIT
+
 @bot.group()
 @commands.has_guild_permissions(manage_roles=True)
 async def channel(ctx):
