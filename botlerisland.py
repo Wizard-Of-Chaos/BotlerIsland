@@ -16,7 +16,6 @@ from modtools import guild_whitelist, GuildConfig, MemberStalker, Roleplay
 from statstracker import StatsTracker
 
 intents = dc.Intents.all()
-intents.emojis = True
 bot = commands.Bot(command_prefix='D--> ', intents=intents)
 bot.remove_command('help')
 guild_config = GuildConfig(bot, 'config.pkl')
@@ -67,6 +66,9 @@ async def grab_avatar(user):
     async for msg in avy_channel.history(limit=16):
         if msg.content.split()[-1] == msg_id:
             return msg.attachments[0].url
+
+async def grab_attachments(msg):
+    pass
 
 #END OF FUNCTIONS
 #TASKS
@@ -286,6 +288,43 @@ async def on_member_remove(member): # Log left/kicked/banned members
         inline=False)
     embed.add_field(name='**User ID:**', value=f'`{member.id}`')
     await guild_config.log(guild, 'usrlog', embed=embed)
+
+@bot.event
+async def on_member_ban(guild, user):
+    if not guild_config.getlog(guild, 'modlog'):
+        return
+    embed = dc.Embed(
+        color=dc.Color.red(),
+        timestamp=datetime.utcnow(),
+        description=f':hammer: **{member}** has been full banned in **{guild}**!\n'
+        f'The guild now has {guild.member_count} members!\n{lastseenmsg}'
+        )
+    embed.set_author(name='Good riddance.')
+    embed.set_thumbnail(url=member.avatar_url)
+    embed.add_field(
+        name='**Roles Snagged:**',
+        value=(', '.join(
+                f'`{guild.get_role(role).name}`'
+                for role in member_stalker.get('last_roles', member)
+                )
+            or None),
+        inline=False)
+    embed.add_field(name='**User ID:**', value=f'`{member.id}`')
+    await guild_config.log(guild, 'modlog', embed=embed)
+
+@bot.event
+async def on_member_unban(guild, user):
+    if not guild_config.getlog(guild, 'modlog'):
+        return
+    embed = dc.Embed(
+        color=dc.Color.dark_teal(),
+        timestamp=datetime.utcnow(),
+        description=f':hammer: **{member}** has been unbanned from **{guild}**!'
+        )
+    embed.set_author(name='Parole has been granted.')
+    embed.set_thumbnail(url=member.avatar_url)
+    embed.add_field(name='**User ID:**', value=f'`{member.id}`')
+    await guild_config.log(guild, 'modlog', embed=embed)
 
 @bot.event
 async def on_member_update(bfr, aft): # Log role and nickname changes
