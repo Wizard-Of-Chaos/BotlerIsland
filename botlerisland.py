@@ -523,8 +523,8 @@ async def add(ctx, role_name):
 async def remove(ctx, role_name):
     pass
 
-@commands.has_permissions(manage_roles=True)
 @role.command()
+@commands.has_permissions(manage_roles=True)
 async def addreact(ctx, channel: dc.TextChannel, msg_id, emoji: dc.Emoji, role_name):
     try:
         msg = await channel.fetch_message(msg_id)
@@ -560,8 +560,8 @@ async def addreact_error(ctx, error):
         return
     raise error
 
-@commands.has_permissions(manage_roles=True)
 @role.command()
+@commands.has_permissions(manage_roles=True)
 async def addcategory(ctx, category, *roles):
     pass
 
