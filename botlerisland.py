@@ -371,30 +371,33 @@ async def on_voice_state_update(member, bfr, aft): # Logged when a member joins 
         await guild_config.log(guild, 'msglog', embed=embed)
 
 @bot.event
-async def on_raw_reaction_add(payload): #Raw is necessary here because of this weird assed queue of messages CHRIST i hate discord
-    reaction = str(payload.emoji)
-    msg_id = payload.message_id
-    ch_id = payload.channel_id
-    user_id = payload.user_id
-    guild_id = payload.guild_id
-    if user_id == bot.user.id:
+async def on_raw_reaction_add(payload):
+    # Not on_reaction_add because of this weird assed queue of messages CHRIST i hate discord
+    # Because discord can't save every message in RAM, we have to deal with this bs
+    guild = bot.get_guild(payload.guild_id)
+    if guild is None:
+        return
+    member = guild.get_member(payload.user_id)
+    if member.id == bot.user.id:
         return 
-    g = bot.get_guild(guild_id)
-    member = g.get_member(user_id)
-    channel = g.get_channel(ch_id)
-    if roleplay.roledata[ch_id][msg_id]: #Checks if the message is in the list
-        role = None
-        if roleplay.roledata[ch_id][msg_id][payload.emoji.id]:
-            role = g.get_role(roleplay.roledata[ch_id][msg_id][payload.emoji.id])
-        if role == None:
-            return
+    react = payload.emoji
+    chn_id = payload.channel_id
+    msg_id = payload.message_id
+    # Checks if the message is in the dict
+    if roleplay.roledata[chn_id][msg_id]:
+        # Checks if the react is in the message
+        if roleplay.roledata[chn_id][msg_id][react.id]:
+            role = guild.get_role(roleplay.roledata[chn_id][msg_id][react.id])
+        else:
+            # If react was not originally logged into message from outside this bot, must be an error.
+            await msg.remove_reaction(str(react), member)
+        # Toggle role addition/removal.
         if role not in member.roles:
             await member.add_roles(role)
         else:
             await member.remove_roles(role)
-        msg = await channel.fetch_message(msg_id)
-        await msg.remove_reaction(reaction, member)
-
+        msg = await guild.get_channel(chn_id).fetch_message(msg_id)
+        await msg.remove_reaction(str(react), member)
 
 # END OF EVENTS
 # EXECUTE ORDER 66
@@ -488,23 +491,41 @@ async def woc_counter(ctx): # Beta statistic feature: Woc's Tard Counter!
             )
 
 # END OF STATS
-#ROLE-BASED AND REACTION COMMANDS
+# ROLE-BASED AND REACTION COMMANDS
 
 @bot.group()
-@commands.has_permissions(manage_roles=True)
 async def role(ctx):
     if ctx.invoked_subcommand is None:
-        await ctx.send(
-            'D--> Usage of the role function: \n'
-            'The syntax is: \n ``D--> role reactadd [channel] [message_id] [emoji] "name of role"`` \n \n'
-            'If done properly, this will lead to me reacting to the given message with the specified emoji. '
-            'Then, when others react to said message, they will gain the specified role if they do not have it, and will have it removed if they do have it. '
-        )
+        msg = (
+            'D--> Usage of the role function: `role (list|add|remove{}) [...]`\n\n'
+            '`role list`: List all valid roles under their categories.\n'
+            '`role add <role_name>`: Adds a specified role if valid.\n'
+            '`role remove <role_name>`: Removes a specified role if valid.\n'
+            '{}'
+            )
+        if ctx.author.guild_permissions.manage_roles:
+            await ctx.send(msg.format('|addreact|addcategory', (
+                '`role addreact <channel_id> <message_id> <emoji> <role_name>`: Add a role-bound reaction to a message to toggle a role.\n'
+                '`role addcateogry <category> [<role_name1> <role_name2> ...]`: Add roles to a category.\n'
+                )))
+        else:
+            await ctx.send(msg.format('', ''))
+
+@role.command()
+async def list(ctx, category):
+    pass
+
+@role.command()
+async def add(ctx, role_name):
+    pass
+
+@role.command()
+async def remove(ctx, role_name):
+    pass
 
 @commands.has_permissions(manage_roles=True)
 @role.command()
-async def reactadd(ctx, channel : dc.TextChannel, msg_id, emoji : dc.Emoji, role_name):
-    msg = ctx.message #Placeholder because I don't trust Python
+async def addreact(ctx, channel: dc.TextChannel, msg_id, emoji: dc.Emoji, role_name):
     try:
         msg = await channel.fetch_message(msg_id)
     except dc.NotFound:
@@ -514,28 +535,44 @@ async def reactadd(ctx, channel : dc.TextChannel, msg_id, emoji : dc.Emoji, role
         await ctx.send('D--> It seems you do not have permission required to get this message.')
         return
     except dc.HTTPException:
-        await ctx.send('D--> Something horrible has happened. Try again.')
+        await ctx.send('D--> We could not have predicted this tomfoolery. Try again.')
         return
-    role = None 
-    react = bot.get_emoji(emoji.id)
-    for guildrole in ctx.guild.roles:
-        if guildrole.name == role_name:
-            role = guildrole
-    if react == None:
+    if not bot.get_emoji(emoji.id):
         await ctx.send('D--> It seems that I could not find the requested reaction.')
         return
-    elif role == None:
-        await ctx.send('D--> It seems I could not find the specified role.')
-        return
     try:
-        await msg.add_reaction(react)
+        await msg.add_reaction(emoji)
     except dc.HTTPException:
         await ctx.send('D--> I was unable to react to the specified message. Please try again.')
-    await ctx.send(f'D--> Success. Reacting to this emoji will grant you the {role.name} role.')
+        return
+    try:
+        role = next(r for r in ctx.guild.roles if r.name == role_name)
+    except StopIteration:
+        await ctx.send('D--> It seems I could not find the specified role.')
+        return
     roleplay.add(channel, msg, emoji, role)
+    await ctx.send(f'D--> Success. Reacting to this emoji will grant you the {role.name} role.')
 
+@addreact.error
+async def addreact_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send('D--> It seems you do not have permission to setup reacts.')
+        return
+    raise error
 
-#END OF REACTION COMMANDS
+@commands.has_permissions(manage_roles=True)
+@role.command()
+async def addcategory(ctx, category, *roles):
+    pass
+
+@addcategory.error
+async def addcategory_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send('D--> It seems you do not have permission to modify categories.')
+        return
+    raise error
+
+# END OF REACTION COMMANDS
 # JOJO's Bizarre Adventure Commands
 
 def user_or_perms(**perms):
@@ -823,7 +860,6 @@ async def tag_error(ctx, error):
 @bot.command(name='help')
 @commands.bot_has_permissions(send_messages=True)
 async def _help(ctx):
-    perms = ctx.author.guild_permissions
     embed = dc.Embed(
         color=ctx.author.color,
         timestamp=ctx.message.created_at,
@@ -840,6 +876,7 @@ async def _help(ctx):
         value='Grabs user information. Leave user field empty to get your own info.',
         inline=False
         )
+    embed.add_field(name='`role`', value='Provides help for the role command group.', inline=False)
     embed.add_field(name='`ping`', value='Pings the user.', inline=False)
     embed.add_field(name='`fle%`', value='Provides you with STRONG eye candy.', inline=False)
     embed.add_field(
@@ -848,11 +885,11 @@ async def _help(ctx):
         inline=False
         )
     embed.add_field(
-        name='`latex <"latex function">`',
-        value='Prints out your latex function in a pretty little image.',
+        name='`latex "<latex_code>"`',
+        value='Presents a pretty little image for your latex code.',
         inline=False
     )
-    embed.add_field(name='`linky`', value=':drewkas:', inline=False)
+    embed.add_field(name='`linky`', value='<:drewkas:684981372678570023>', inline=False)
     await ctx.send(embed=embed)
 
 @_help.error
@@ -887,8 +924,13 @@ async def modhelp(ctx):
         inline=False
         )
     embed.add_field(
+        name='`role`',
+        value='(Manage Roles only) Provides mod help for the role command group.',
+        inline=False
+    )
+    embed.add_field(
         name='`daily`',
-        value='(Manage Roles only) Show server daily counts.',
+        value='(Manage Roles only) Force server daily counts.',
         inline=False
         )
     embed.add_field(
@@ -902,23 +944,13 @@ async def modhelp(ctx):
         inline=False
         )
     embed.add_field(
-        name='`enablelatex`',
+        name='`togglelatex`',
         value='(Manage Roles only) Toggles whether or not latex commands can be used.',
         inline=False
     )
     embed.add_field(
         name='`channel (ban|unban) <username>`',
         value='(Manage Roles only) Add or remove a channel mute role.',
-        inline=False
-        )
-    embed.add_field(
-        name='`role`',
-        value='(Manage Roles only) Detailed info on the how-to of reactadd.',
-        inline=False
-    )
-    embed.add_field(
-        name='`D--> role reactadd <channel> <message_id> <emoji> "name of role"`',
-        value='(Manage Roles only) Reacts to a given message, then grants the role specified when someone reacts to that message. Role name needs to be in quotes if it\'s multiple words.',
         inline=False
         )
     if perms.ban_members:
@@ -1197,14 +1229,14 @@ async def autoreact_error(ctx, error):
 
 @bot.command()
 @commands.has_permissions(manage_roles=True)
-async def enablelatex(ctx):
+async def togglelatex(ctx):
     if guild_config.toggle_latex(ctx):
         await ctx.send('D--> Latex functions have been enabled.')
     else:
         await ctx.send('D--> Latex functions have been disabled.')
         
-@ignoreplebs.error
-async def enablelatex_error(ctx, error):
+@togglelatex.error
+async def togglelatex_error(ctx, error):
     if isinstance(error, MissingPermissions):
         await ctx.send('D--> Neigh.')
         return

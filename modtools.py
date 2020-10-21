@@ -28,7 +28,7 @@ class GuildConfig(Singleton):
     def __init__(self, bot, fname):
         StarWarsPunisher.bot = bot
         self.bot = bot
-        self.fname = fname
+        self.fname = os.path.join('data', fname)
         self.punishers = {}
         self.load()
 
@@ -224,7 +224,7 @@ def member_callback():
 
 class MemberStalker(Singleton):
     def __init__(self, fname):
-        self.fname = fname
+        self.fname = os.path.join('data', fname)
         self.load()
 
     def load(self):
@@ -260,7 +260,7 @@ def dictgrabber():
 
 class Roleplay(Singleton):
     def __init__(self, fname):
-        self.fname = fname
+        self.fname = os.path.join('data', fname)
         self.load()
 
     def load(self):
