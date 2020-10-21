@@ -290,14 +290,14 @@ async def on_member_remove(member): # Log left/kicked/banned members
     await guild_config.log(guild, 'usrlog', embed=embed)
 
 @bot.event
-async def on_member_ban(guild, user):
+async def on_member_ban(guild, member):
     if not guild_config.getlog(guild, 'modlog'):
         return
     embed = dc.Embed(
         color=dc.Color.red(),
         timestamp=datetime.utcnow(),
         description=f':hammer: **{member}** has been full banned in **{guild}**!\n'
-        f'The guild now has {guild.member_count} members!\n{lastseenmsg}'
+        f'The guild now has {guild.member_count} members!\n'
         )
     embed.set_author(name='Good riddance.')
     embed.set_thumbnail(url=member.avatar_url)
@@ -313,7 +313,7 @@ async def on_member_ban(guild, user):
     await guild_config.log(guild, 'modlog', embed=embed)
 
 @bot.event
-async def on_member_unban(guild, user):
+async def on_member_unban(guild, member):
     if not guild_config.getlog(guild, 'modlog'):
         return
     embed = dc.Embed(
@@ -824,29 +824,15 @@ async def unban_error(ctx, error):
 @commands.bot_has_guild_permissions(ban_members=True)
 @commands.has_guild_permissions(ban_members=True)
 async def raidban(ctx, *args):
-    banned = []
     for arg in args:
         member = await commands.UserConverter().convert(ctx, arg)
-        await ctx.guild.ban(member, reason='Raid banned', delete_message_days=1)
-        banned.append(f'`{member.id}`')
-    banned = ',\n'.join(banned)
-    if guild_config.getlog(ctx.guild, 'modlog'):
-        embed = dc.Embed(
-            color=ctx.author.color,
-            timestamp=ctx.message.created_at,
-            description=f'Raiders demolished in **#{ctx.channel}**:\n{banned}'
-            )
-        embed.set_author(
-            name=f'@{ctx.author} Issued Server Ban(s) and Purged these users:',
-            icon_url=ctx.author.avatar_url,
-            )
-        await guild_config.log(ctx.guild, 'modlog', embed=embed)
+        await ctx.guild.ban(member, reason='Banned by anti-raid command.', delete_message_days=1)
 
 @raidban.error
 async def raidban_error(ctx, error):
     if isinstance(error, commands.BadArgument):
         channel = await ctx.author.create_dm()
-        await channel.send(f'D--> {error.args[0]}.')
+        await channel.send(f'D--> Could not find {error.args[0]}.')
 
 # END OF BANS
 # "TAG" COMMANDS
