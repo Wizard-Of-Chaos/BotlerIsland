@@ -586,11 +586,6 @@ async def addreact(ctx, channel: dc.TextChannel, msg_id, emoji: dc.Emoji, role: 
     except dc.HTTPException:
         await ctx.send('D--> I was unable to react to the specified message. Please try again.')
         return
-    try:
-        role = next(r for r in ctx.guild.roles if r.name == role_name)
-    except StopIteration:
-        await ctx.send('D--> It seems I could not find the specified role.')
-        return
     roleplay.add(channel, msg, emoji, role)
     await ctx.send(f'D--> Success. Reacting to this emoji will grant you the {role.name} role.')
 
@@ -630,7 +625,6 @@ async def forcegrant(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str],
             )
     except StopIteration:
         await ctx.send('D--> It seems I could not find a matching reaction in that message.')
-    role = ctx.guild.get_role(role_id)
     members = [m async for m in react.users() if m.id != bot.user.id]
     for member in members:
         try:
