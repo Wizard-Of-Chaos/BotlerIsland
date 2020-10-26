@@ -544,9 +544,10 @@ async def role(ctx):
             '{}'
             )
         if ctx.author.guild_permissions.manage_roles:
-            await ctx.send(msg.format('|addreact|addcategory', (
-                '`role addreact <channel_id> <message_id> <emoji> <role_name>`: Add a role-bound reaction to a message to toggle a role.\n'
+            await ctx.send(msg.format('|addreact|addcategory|forcegrant', (
+                '`role addreact <channel_id> <message_id> <emoji> <role>`: Add a role-bound reaction to a message to toggle a role.\n'
                 '`role addcateogry <category> [<role_name1> <role_name2> ...]`: Add roles to a category.\n'
+                '`role forcegrant <message_link> <emoji> <role>`: Add roles to a category.\n'
                 )))
         else:
             await ctx.send(msg.format('', ''))
@@ -565,7 +566,7 @@ async def remove(ctx, role_name):
 
 @role.command()
 @commands.has_permissions(manage_roles=True)
-async def addreact(ctx, channel: dc.TextChannel, msg_id, emoji: dc.Emoji, role_name):
+async def addreact(ctx, channel: dc.TextChannel, msg_id, emoji: dc.Emoji, role: dc.Role):
     try:
         msg = await channel.fetch_message(msg_id)
     except dc.NotFound:
@@ -598,6 +599,9 @@ async def addreact_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
         await ctx.send('D--> It seems you do not have permission to setup reacts.')
         return
+    elif isinstance(error, commands.RoleNotFound):
+        await ctx.send(f'D--> It seems I could not find the {error.args[0]} role.')
+        return
     raise error
 
 @role.command()
@@ -614,7 +618,7 @@ async def addcategory_error(ctx, error):
 
 @role.command()
 @commands.has_permissions(manage_roles=True)
-async def forcegrant(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str], role_id: int):
+async def forcegrant(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str], role: dc.Role):
     # Force all who reacted with the specified emoji in the given message link to be granted a role.
     *_, chn_id, msg_id = msglink.split('/')
     msg = await ctx.guild.get_channel(int(chn_id)).fetch_message(int(msg_id))
@@ -636,6 +640,16 @@ async def forcegrant(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str],
         else:
             await msg.remove_reaction(str(emoji), member)
     await ctx.send('D--> Roles have been granted.')
+
+@forcegrant.error
+async def forcegrant_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send('D--> It seems you do not have permission to force role grants.')
+        return
+    elif isinstance(error, commands.RoleNotFound):
+        await ctx.send(f'D--> It seems I could not find the {error.args[0]} role.')
+        return
+    raise error
 
 # END OF REACTION COMMANDS
 # JOJO's Bizarre Adventure Commands
@@ -853,6 +867,7 @@ async def unban_error(ctx, error):
 async def raidban(ctx, *args):
     for arg in args:
         member = await commands.UserConverter().convert(ctx, arg)
+        await guild_config.log(ctx.guild, 'modlog', f'{ctx.author} used raidban command.')
         await ctx.guild.ban(member, reason='Banned by anti-raid command.', delete_message_days=1)
 
 @raidban.error
