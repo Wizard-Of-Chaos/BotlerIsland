@@ -276,7 +276,8 @@ class Roleplay(Singleton):
             pickle.dump(self.roledata, rolefile)
             
     def add(self, channel, msg, react, role):
-        self.roledata[channel.id][msg.id][react.id] = role.id 
+        self.roledata[channel.id][msg.id][react.id] = role.id
+        self.save()
     
     def remove(self, channel, msg, react, role):
         self.roledata[channel.id][msg.id].pop(react.id)
