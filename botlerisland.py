@@ -6,6 +6,7 @@ import json
 from datetime import datetime, timedelta
 from random import randint
 from collections import Counter
+from typing import Union
 
 import aiohttp
 import asyncio as aio
@@ -610,6 +611,31 @@ async def addcategory_error(ctx, error):
         await ctx.send('D--> It seems you do not have permission to modify categories.')
         return
     raise error
+
+@role.command()
+@commands.has_permissions(manage_roles=True)
+async def forcegrant(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str], role_id: int):
+    # Force all who reacted with the specified emoji in the given message link to be granted a role.
+    *_, chn_id, msg_id = msglink.split('/')
+    msg = await ctx.guild.get_channel(int(chn_id)).fetch_message(int(msg_id))
+    try:
+        react = next(
+            r for r in msg.reactions
+            if type(emoji) is str and r.emoji == emoji
+            or r.emoji.id == emoji.id
+            )
+    except StopIteration:
+        await ctx.send('D--> It seems I could not find a matching reaction in that message.')
+    role = ctx.guild.get_role(role_id)
+    members = [m async for m in react.users() if m.id != bot.user.id]
+    for member in members:
+        try:
+            await member.add_roles(role)
+        except HTTPException:
+            await ctx.send(f'D--> Could not add {role.name} to {member.name}#{member.discrim}.')
+        else:
+            await msg.remove_reaction(str(emoji), member)
+    await ctx.send('D--> Roles have been granted.')
 
 # END OF REACTION COMMANDS
 # JOJO's Bizarre Adventure Commands
@@ -1232,8 +1258,9 @@ async def modperms_error(ctx, error):
     elif isinstance(error, commands.BotMissingPermissions):
         return
     raise error
-    
-#TOGGLE COMMANDS
+
+# END OF MISC COMMANDS
+# TOGGLE COMMANDS
 
 @bot.command()
 @commands.bot_has_permissions(add_reactions=True, read_message_history=True)
