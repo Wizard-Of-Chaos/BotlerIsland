@@ -1,3 +1,4 @@
+import os
 from collections import Counter, defaultdict
 import pickle
 import discord as dc
@@ -11,7 +12,7 @@ class StatsTracker(object):
     stat_funcs = {'woc_counter'}
 
     def __init__(self, fname):
-        self.fname = fname
+        self.fname = os.path.join('data', fname)
         self.locked = False
         self.locked_msg = 'Stat cruncher is currently busy.'
         self.load()

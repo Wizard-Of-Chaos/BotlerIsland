@@ -15,8 +15,6 @@ def callback(): # Lambdas can't be pickled, but named functions can.
     'usrlog': None, 'msglog': None, 'modlog': None,
     'autoreact': set(), 'star_wars': {}, 'ignoreplebs': set(), 'enablelatex': set(),
     }
-def dictgrabber():
-    return defaultdict(dict)
 
 class Singleton(object):
     _self_instance_ref = None
@@ -30,7 +28,7 @@ class GuildConfig(Singleton):
     def __init__(self, bot, fname):
         StarWarsPunisher.bot = bot
         self.bot = bot
-        self.fname = fname
+        self.fname = os.path.join('data', fname)
         self.punishers = {}
         self.load()
 
@@ -226,7 +224,7 @@ def member_callback():
 
 class MemberStalker(Singleton):
     def __init__(self, fname):
-        self.fname = fname
+        self.fname = os.path.join('data', fname)
         self.load()
 
     def load(self):
@@ -256,9 +254,13 @@ class MemberStalker(Singleton):
             reason='Restore last roles'
             )
 
+
+def dictgrabber():
+    return defaultdict(dict)
+
 class Roleplay(Singleton):
     def __init__(self, fname):
-        self.fname = fname
+        self.fname = os.path.join('data', fname)
         self.load()
 
     def load(self):
