@@ -8,7 +8,7 @@ import pickle
 import discord as dc
 from discord.ext import tasks, commands
 
-guild_whitelist = (152981670507577344, 663452978237407262)
+guild_whitelist = (152981670507577344, 663452978237407262, 402880303065989121, 431698070510501891)
 
 def callback(): # Lambdas can't be pickled, but named functions can.
     return {
