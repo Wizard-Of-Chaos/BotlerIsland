@@ -641,7 +641,7 @@ async def forcegrant_error(ctx, error):
         await ctx.send('D--> It seems you do not have permission to force role grants.')
         return
     elif isinstance(error, commands.RoleNotFound):
-        await ctx.send(f'D--> It seems I could not find the {error.args[0]} role.')
+        await ctx.send(f'D--> It seems that the role could not be found.')
         return
     raise error
 
