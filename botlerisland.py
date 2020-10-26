@@ -534,6 +534,7 @@ async def woc_counter(ctx): # Beta statistic feature: Woc's Tard Counter!
 # ROLE-BASED AND REACTION COMMANDS
 
 @bot.group()
+@commands.bot_has_permissions(send_messages=True)
 async def role(ctx):
     if ctx.invoked_subcommand is None:
         msg = (
@@ -552,6 +553,11 @@ async def role(ctx):
         else:
             await ctx.send(msg.format('', ''))
 
+@role.error
+async def role_error(ctx, error):
+    if isinstance(error, commands.BotMissingPermissions):
+        return
+
 @role.command()
 async def list(ctx, category):
     pass
@@ -565,6 +571,7 @@ async def remove(ctx, role_name):
     pass
 
 @role.command()
+@commands.bot_has_permissions(add_reactions=True, read_message_history=True)
 @commands.has_permissions(manage_roles=True)
 async def addreact(ctx, channel: dc.TextChannel, msg_id, emoji: dc.Emoji, role: dc.Role):
     try:
@@ -591,11 +598,13 @@ async def addreact(ctx, channel: dc.TextChannel, msg_id, emoji: dc.Emoji, role: 
 
 @addreact.error
 async def addreact_error(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
+    if isinstance(error, commands.BotMissingPermissions):
+        return
+    elif isinstance(error, commands.MissingPermissions):
         await ctx.send('D--> It seems you do not have permission to setup reacts.')
         return
     elif isinstance(error, commands.RoleNotFound):
-        await ctx.send(f'D--> It seems I could not find the {error.args[0]} role.')
+        await ctx.send('D--> It seems that the role could not be found.')
         return
     raise error
 
@@ -612,6 +621,7 @@ async def addcategory_error(ctx, error):
     raise error
 
 @role.command()
+@commands.bot_has_permissions(add_reactions=True, read_message_history=True)
 @commands.has_permissions(manage_roles=True)
 async def forcegrant(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str], role: dc.Role):
     # Force all who reacted with the specified emoji in the given message link to be granted a role.
@@ -625,6 +635,7 @@ async def forcegrant(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str],
             )
     except StopIteration:
         await ctx.send('D--> It seems I could not find a matching reaction in that message.')
+        return
     members = [m async for m in react.users() if m.id != bot.user.id]
     for member in members:
         try:
@@ -637,11 +648,13 @@ async def forcegrant(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str],
 
 @forcegrant.error
 async def forcegrant_error(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
+    if isinstance(error, commands.BotMissingPermissions):
+        return
+    elif isinstance(error, commands.MissingPermissions):
         await ctx.send('D--> It seems you do not have permission to force role grants.')
         return
     elif isinstance(error, commands.RoleNotFound):
-        await ctx.send(f'D--> It seems that the role could not be found.')
+        await ctx.send('D--> It seems that the role could not be found.')
         return
     raise error
 
