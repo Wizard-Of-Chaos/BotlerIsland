@@ -1229,17 +1229,17 @@ async def roll(ctx, *, args):
             'or a few too large a die. Try again with something smaller.'
             )
         return
-    # embed = dc.Embed(
-    #     color=dc.Color(0x005682),
-    #     description=f'`Min: {min(rolls)}; Max: {max(rolls)}; '
-    #         f'Mean: {sum(rolls) / ndice:0.2f}; 1st Mode: {max(set(rolls), key=rolls.count)}`',
-    #     )
-    # embed.set_author(
-    #     name='Roll Statistics:',
-    #     icon_url='https://cdn.discordapp.com/attachments/'
-    #         '663453347763716110/711985889680818266/unknown.png',
-    #     )
-    await ctx.send(msg)#, embed=embed)
+    embed = dc.Embed(
+        color=dc.Color(0x005682),
+        description=f'`Min: {min(rolls)}; Max: {max(rolls)}; '
+            f'Mean: {sum(rolls) / ndice:0.2f}; 1st Mode: {max(set(rolls), key=rolls.count)}`',
+        )
+    embed.set_author(
+        name='Roll Statistics:',
+        icon_url='https://cdn.discordapp.com/attachments/'
+            '663453347763716110/711985889680818266/unknown.png',
+        )
+    await ctx.send(msg, embed=embed)
 
 @ping.error
 async def roll_error(ctx, error):
@@ -1252,7 +1252,7 @@ async def roll_error(ctx, error):
 async def latex(ctx, latex):
     if not guild_config.getltx(ctx):
         return
-    preamble=r'\documentclass{standalone}\usepackage{color}\usepackage{amsmath}\color{white}\begin{document}\begin{math}\displaystyle'
+    preamble=r'\documentclass{standalone}\usepackage{color}\usepackage{amsmath}\color{white}\begin{document}\begin{math}\displaystyle '
     postamble=r'\end{math}\end{document}'
     async with aiohttp.ClientSession() as session:
         resp = await session.post('https://rtex.probablyaweb.site/api/v2',data={'format':'png','code':preamble+latex+postamble})
@@ -1262,7 +1262,8 @@ async def latex(ctx, latex):
             await ctx.send('D--> Your latex code is beneighth contempt. Try again.')
             return
         image = await session.get('https://rtex.probablyaweb.site/api/v2/' + resp['filename'])
-        await ctx.send(file=dc.File(io.BytesIO(await image.read()), 'latex.png')) # Wrap it up as a discord File object to post directly
+        render = dc.File(io.BytesIO(await image.read()), 'latex.png') # Wrap it up as a discord File object to post directly
+        await ctx.send(file=render) 
 
 @latex.error
 async def latex_error(ctx, error):
