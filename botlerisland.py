@@ -548,7 +548,7 @@ async def role(ctx):
             await ctx.send(msg.format('|addreact|addcategory|forcegrant', (
                 '`role addreact <channel_id> <message_id> <emoji> <role>`: Add a role-bound reaction to a message to toggle a role.\n'
                 '`role addcateogry <category> [<role_name1> <role_name2> ...]`: Add roles to a category.\n'
-                '`role forcegrant <message_link> <emoji> <role>`: Add roles to a category.\n'
+                '`role forcegrant <message_link> <emoji> <role>`: Add roles from a message manually.\n'
                 )))
         else:
             await ctx.send(msg.format('', ''))
