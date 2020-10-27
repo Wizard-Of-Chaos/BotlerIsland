@@ -545,10 +545,12 @@ async def role(ctx):
             '{}'
             )
         if ctx.author.guild_permissions.manage_roles:
-            await ctx.send(msg.format('|addreact|addcategory|forcegrant', (
-                '`role addreact <channel_id> <message_id> <emoji> <role>`: Add a role-bound reaction to a message to toggle a role.\n'
-                '`role addcateogry <category> [<role_name1> <role_name2> ...]`: Add roles to a category.\n'
+            await ctx.send(msg.format('|forcegrant|addreact|removereact|addcategory|removecategory', (
                 '`role forcegrant <message_link> <emoji> <role>`: Add roles from a message manually.\n'
+                '`role addreact <message_link> <emoji> <role>`: Add a role-bound reaction to a message to toggle a role.\n'
+                '`role removereact <message_link> <emoji>: Remove the reaction.\n'
+                '`role addcateogry <category> [<role_name1> <role_name2> ...]`: Add roles to a category.\n'
+                '`role removecateogry <category>`: Delete a category related role data.\n'
                 )))
         else:
             await ctx.send(msg.format('', ''))
@@ -573,9 +575,11 @@ async def remove(ctx, role_name):
 @role.command()
 @commands.bot_has_permissions(add_reactions=True, read_message_history=True)
 @commands.has_permissions(manage_roles=True)
-async def addreact(ctx, channel: dc.TextChannel, msg_id, emoji: dc.Emoji, role: dc.Role):
+async def forcegrant(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str], role: dc.Role):
+    # Force all who reacted with the specified emoji in the given message link to be granted a role.
+    *_, chn_id, msg_id = msglink.split('/')
     try:
-        msg = await channel.fetch_message(msg_id)
+        msg = await ctx.guild.get_channel(int(chn_id)).fetch_message(int(msg_id))
     except dc.NotFound:
         await ctx.send('D--> It seems that I could not find the specified message.')
         return
@@ -585,48 +589,6 @@ async def addreact(ctx, channel: dc.TextChannel, msg_id, emoji: dc.Emoji, role: 
     except dc.HTTPException:
         await ctx.send('D--> We could not have predicted this tomfoolery. Try again.')
         return
-    if not bot.get_emoji(emoji.id):
-        await ctx.send('D--> It seems that I could not find the requested reaction.')
-        return
-    try:
-        await msg.add_reaction(emoji)
-    except dc.HTTPException:
-        await ctx.send('D--> I was unable to react to the specified message. Please try again.')
-        return
-    roleplay.add(channel, msg, emoji, role)
-    await ctx.send(f'D--> Success. Reacting to this emoji will grant you the {role.name} role.')
-
-@addreact.error
-async def addreact_error(ctx, error):
-    if isinstance(error, commands.BotMissingPermissions):
-        return
-    elif isinstance(error, commands.MissingPermissions):
-        await ctx.send('D--> It seems you do not have permission to setup reacts.')
-        return
-    elif isinstance(error, commands.RoleNotFound):
-        await ctx.send('D--> It seems that the role could not be found.')
-        return
-    raise error
-
-@role.command()
-@commands.has_permissions(manage_roles=True)
-async def addcategory(ctx, category, *roles):
-    pass
-
-@addcategory.error
-async def addcategory_error(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send('D--> It seems you do not have permission to modify categories.')
-        return
-    raise error
-
-@role.command()
-@commands.bot_has_permissions(add_reactions=True, read_message_history=True)
-@commands.has_permissions(manage_roles=True)
-async def forcegrant(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str], role: dc.Role):
-    # Force all who reacted with the specified emoji in the given message link to be granted a role.
-    *_, chn_id, msg_id = msglink.split('/')
-    msg = await ctx.guild.get_channel(int(chn_id)).fetch_message(int(msg_id))
     try:
         react = next(
             r for r in msg.reactions
@@ -655,6 +617,82 @@ async def forcegrant_error(ctx, error):
         return
     elif isinstance(error, commands.RoleNotFound):
         await ctx.send('D--> It seems that the role could not be found.')
+        return
+    raise error
+
+@role.command()
+@commands.bot_has_permissions(add_reactions=True, read_message_history=True)
+@commands.has_permissions(manage_roles=True)
+async def addreact(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str], role: dc.Role):
+    # Force all who reacted with the specified emoji in the given message link to be granted a role.
+    *_, chn_id, msg_id = msglink.split('/')
+    try:
+        msg = await ctx.guild.get_channel(int(chn_id)).fetch_message(int(msg_id))
+    except dc.NotFound:
+        await ctx.send('D--> It seems that I could not find the specified message.')
+        return
+    except dc.Forbidden:
+        await ctx.send('D--> It seems you do not have permission required to get this message.')
+        return
+    except dc.HTTPException:
+        await ctx.send('D--> We could not have predicted this tomfoolery. Try again.')
+        return
+    try:
+        await msg.add_reaction(emoji)
+    except dc.HTTPException:
+        await ctx.send('D--> I was unable to react to the specified message. Please try again.')
+        return
+    roleplay.add(channel, msg, emoji, role)
+    await ctx.send(f'D--> Success. Reacting to this emoji will grant you the {role.name} role.')
+
+@addreact.error
+async def addreact_error(ctx, error):
+    if isinstance(error, commands.BotMissingPermissions):
+        return
+    elif isinstance(error, commands.MissingPermissions):
+        await ctx.send('D--> It seems you do not have permission to setup reacts.')
+        return
+    elif isinstance(error, commands.RoleNotFound):
+        await ctx.send('D--> It seems that the role could not be found.')
+        return
+    raise error
+
+@role.command()
+@commands.bot_has_permissions(add_reactions=True, read_message_history=True)
+@commands.has_permissions(manage_roles=True)
+async def removereact(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str]):
+    pass
+
+@removereact.error
+async def removereact_error(ctx, error):
+    if isinstance(error, commands.BotMissingPermissions):
+        return
+    elif isinstance(error, commands.MissingPermissions):
+        await ctx.send('D--> It seems you do not have permission to setup reacts.')
+        return
+    raise error
+
+@role.command()
+@commands.has_permissions(manage_roles=True)
+async def addcategory(ctx, category, *roles):
+    pass
+
+@addcategory.error
+async def addcategory_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send('D--> It seems you do not have permission to modify categories.')
+        return
+    raise error
+
+@role.command()
+@commands.has_permissions(manage_roles=True)
+async def removecategory(ctx, category):
+    pass
+
+@removecategory.error
+async def removecategory_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send('D--> It seems you do not have permission to modify categories.')
         return
     raise error
 
