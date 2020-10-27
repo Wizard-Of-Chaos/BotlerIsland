@@ -8,7 +8,7 @@ import pickle
 import discord as dc
 from discord.ext import tasks, commands
 
-guild_whitelist = (152981670507577344, 663452978237407262)
+guild_whitelist = (152981670507577344, 663452978237407262, 402880303065989121, 431698070510501891)
 
 def callback(): # Lambdas can't be pickled, but named functions can.
     return {
@@ -276,7 +276,8 @@ class Roleplay(Singleton):
             pickle.dump(self.roledata, rolefile)
             
     def add(self, channel, msg, react, role):
-        self.roledata[channel.id][msg.id][react.id] = role.id 
+        self.roledata[channel.id][msg.id][react.id] = role.id
+        self.save()
     
     def remove(self, channel, msg, react, role):
         self.roledata[channel.id][msg.id].pop(react.id)
