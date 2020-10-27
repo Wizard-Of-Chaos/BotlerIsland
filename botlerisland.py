@@ -541,16 +541,16 @@ async def role(ctx):
             'D--> Usage of the role function: `role (subcommand) [args...]`\n\n'
             '`role list`: List all valid roles under their categories.\n'
             '`role add <role_name>`: Adds a specified role if valid.\n'
-            '`role remove <role_name>`: Removes a specified role if valid.\n'
+            '`role del <role_name>`: Removes a specified role if valid.\n'
             '{}'
             )
         if ctx.author.guild_permissions.manage_roles:
             await ctx.send(msg.format((
                 '`role forcegrant <message_link> <emoji> <role>`: Add roles from a message manually.\n'
                 '`role addreact <message_link> <emoji> <role>`: Add a role-bound reaction to a message to toggle a role.\n'
-                '`role removereact <message_link> <emoji>: Remove the reaction.\n'
-                '`role addcateogry <category> [<role_name1> <role_name2> ...]`: Add roles to a category.\n'
-                '`role removecateogry <category>`: Delete a category related role data.\n'
+                '`role delreact <message_link> <emoji>: Delete a role-bound reaction and associated data.\n'
+                '`role addcategory <category> [<role_name1> <role_name2> ...]`: Add roles to a category.\n'
+                '`role delcategory <category>`: Delete a category and related role data.\n'
                 )))
         else:
             await ctx.send(msg.format('', ''))
@@ -560,22 +560,37 @@ async def role_error(ctx, error):
     if isinstance(error, commands.BotMissingPermissions):
         return
 
-@role.command()
-async def list(ctx, category):
+@role.command(name='list')
+@commands.bot_has_permissions(send_messages=True)
+async def role_list(ctx, category):
     pass
 
-@role.command()
-async def add(ctx, role_name):
+@role_list.error
+async def role_list_error(ctx, error):
+    raise error
+
+@role.command(name='add')
+@commands.bot_has_permissions(send_messages=True)
+async def role_add(ctx, role: dc.Role):
     pass
 
-@role.command()
-async def remove(ctx, role_name):
+@role_add.error
+async def role_add_error(ctx, error):
+    raise error
+
+@role.command(name='del')
+@commands.bot_has_permissions(send_messages=True)
+async def role_del(ctx, role: dc.Role):
     pass
 
-@role.command()
-@commands.bot_has_permissions(add_reactions=True, read_message_history=True)
+@role_del.error
+async def role_del_error(ctx, error):
+    raise error
+
+@role.command(name='forcegrant')
+@commands.bot_has_permissions(send_messages=True, add_reactions=True, read_message_history=True)
 @commands.has_permissions(manage_roles=True)
-async def forcegrant(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str], role: dc.Role):
+async def role_forcegrant(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str], role: dc.Role):
     # Force all who reacted with the specified emoji in the given message link to be granted a role.
     *_, chn_id, msg_id = msglink.split('/')
     try:
@@ -608,8 +623,8 @@ async def forcegrant(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str],
             await msg.remove_reaction(str(emoji), member)
     await ctx.send('D--> Roles have been granted.')
 
-@forcegrant.error
-async def forcegrant_error(ctx, error):
+@role_forcegrant.error
+async def role_forcegrant_error(ctx, error):
     if isinstance(error, commands.BotMissingPermissions):
         return
     elif isinstance(error, commands.MissingPermissions):
@@ -620,10 +635,10 @@ async def forcegrant_error(ctx, error):
         return
     raise error
 
-@role.command()
-@commands.bot_has_permissions(add_reactions=True, read_message_history=True)
+@role.command(name='addreact')
+@commands.bot_has_permissions(send_messages=True, add_reactions=True, read_message_history=True)
 @commands.has_permissions(manage_roles=True)
-async def addreact(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str], role: dc.Role):
+async def role_addreact(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str], role: dc.Role):
     # Force all who reacted with the specified emoji in the given message link to be granted a role.
     *_, chn_id, msg_id = msglink.split('/')
     try:
@@ -645,52 +660,52 @@ async def addreact(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str], r
     roleplay.add(channel, msg, emoji, role)
     await ctx.send(f'D--> Success. Reacting to this emoji will grant you the {role.name} role.')
 
-@addreact.error
-async def addreact_error(ctx, error):
+@role_addreact.error
+async def role_addreact_error(ctx, error):
     if isinstance(error, commands.BotMissingPermissions):
         return
     elif isinstance(error, commands.MissingPermissions):
-        await ctx.send('D--> It seems you do not have permission to setup reacts.')
+        await ctx.send('D--> It seems you do not have permission to setup role reacts.')
         return
     elif isinstance(error, commands.RoleNotFound):
         await ctx.send('D--> It seems that the role could not be found.')
         return
     raise error
 
-@role.command()
+@role.command(name='delreact')
 @commands.bot_has_permissions(add_reactions=True, read_message_history=True)
 @commands.has_permissions(manage_roles=True)
-async def removereact(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str]):
+async def role_delreact(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str]):
     pass
 
-@removereact.error
-async def removereact_error(ctx, error):
+@role_delreact.error
+async def role_delreact_error(ctx, error):
     if isinstance(error, commands.BotMissingPermissions):
         return
     elif isinstance(error, commands.MissingPermissions):
-        await ctx.send('D--> It seems you do not have permission to setup reacts.')
+        await ctx.send('D--> It seems you do not have permission to setup role reacts.')
         return
     raise error
 
-@role.command()
+@role.command('addcategory')
 @commands.has_permissions(manage_roles=True)
-async def addcategory(ctx, category, *roles):
+async def role_addcategory(ctx, category, *roles):
     pass
 
-@addcategory.error
-async def addcategory_error(ctx, error):
+@role_addcategory.error
+async def role_addcategory_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
         await ctx.send('D--> It seems you do not have permission to modify categories.')
         return
     raise error
 
-@role.command()
+@role.command('delcategory')
 @commands.has_permissions(manage_roles=True)
-async def removecategory(ctx, category):
+async def role_delcategory(ctx, category):
     pass
 
-@removecategory.error
-async def removecategory_error(ctx, error):
+@role_delcategory.error
+async def role_delcategory_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
         await ctx.send('D--> It seems you do not have permission to modify categories.')
         return
@@ -851,8 +866,8 @@ async def channel_error(ctx, error):
         return
     raise error
 
-@channel.command()
-async def ban(ctx, member: dc.Member, *, duration=None):
+@channel.command(name='ban')
+async def channel_ban(ctx, member: dc.Member, *, duration=None):
     if not member: # WE'RE GRABBING A MEMBER WE GIVE NO SHITS
         return
     # WE'RE GONNA FIND THE FIRST FUCKING ROLE THAT HAS NO PERMS IN THIS CHANNEL
@@ -878,14 +893,14 @@ async def ban(ctx, member: dc.Member, *, duration=None):
             return
             # BOOM! SUUUUUUUUCK - IT!
 
-@ban.error
-async def ban_error(ctx, error):
+@channel_ban.error
+async def channel_ban_error(ctx, error):
     if isinstance(error, commands.BadArgument):
         channel = await ctx.author.create_dm()
         await channel.send(f'D--> {error.args[0]}.')
 
-@channel.command()
-async def unban(ctx, *, member: dc.Member):
+@channel.command(name='unban')
+async def channel_unban(ctx, *, member: dc.Member):
     if not member:
         return
     for role in member.roles:
@@ -906,11 +921,12 @@ async def unban(ctx, *, member: dc.Member):
                 await guild_config.log(ctx.guild, 'modlog', embed=embed)
                 return
 
-@unban.error
-async def unban_error(ctx, error):
+@channel_unban.error
+async def channel_unban_error(ctx, error):
     if isinstance(error, commands.BadArgument):
         channel = await ctx.author.create_dm()
         await channel.send(f'D--> {error.args[0]}.')
+    raise error
 
 @bot.command()
 @commands.bot_has_guild_permissions(ban_members=True)
@@ -926,6 +942,7 @@ async def raidban_error(ctx, error):
     if isinstance(error, commands.BadArgument):
         channel = await ctx.author.create_dm()
         await channel.send(f'D--> {error.args[0]}.')
+    raise error
 
 # END OF BANS
 # "TAG" COMMANDS
@@ -977,7 +994,7 @@ async def tag_error(ctx, error):
         
 @bot.command(name='help')
 @commands.bot_has_permissions(send_messages=True)
-async def _help(ctx):
+async def userhelp(ctx):
     embed = dc.Embed(
         color=ctx.author.color,
         timestamp=ctx.message.created_at,
@@ -1010,8 +1027,8 @@ async def _help(ctx):
     embed.add_field(name='`linky`', value='<:drewkas:684981372678570023>', inline=False)
     await ctx.send(embed=embed)
 
-@_help.error
-async def help_error(ctx, error):
+@userhelp.error
+async def userhelp_error(ctx, error):
     if isinstance(error, commands.BotMissingPermissions):
         return
     raise error
@@ -1248,9 +1265,9 @@ async def latex_error(ctx, error):
         return
     raise error
 
-@bot.command()
+@bot.command(name='linky')
 @commands.bot_has_permissions(send_messages=True)
-async def linky(ctx):
+async def magic8ball(ctx):
     msg = re.sub(r'<@!(\d{18,})>', get_name, guild_config.random_linky(ctx.message.content))
     msg = re.sub(r'(?<!<)(https?://[^\s]+)(?!>)', r'<\1>', msg)
     admin = ctx.guild.get_member(CONST_BAD_ID)
@@ -1263,8 +1280,8 @@ async def linky(ctx):
     embed.set_author(name=f'{admin.name} says:', icon_url=admin.avatar_url)
     await ctx.send(embed=embed)
 
-@linky.error
-async def linky_error(ctx, error):
+@magic8ball.error
+async def magic8ball_error(ctx, error):
     if isinstance(error, commands.BotMissingPermissions):
         return
     raise error
