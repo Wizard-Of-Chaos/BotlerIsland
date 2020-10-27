@@ -33,9 +33,8 @@ daily_msg = {guild_id: Counter() for guild_id in guild_whitelist}
 daily_usr = {guild_id: Counter({'join': 0, 'leave': 0}) for guild_id in guild_whitelist}
 
 image_exts = ('png', 'gif', 'jpg', 'jpeg', 'jpe', 'jfif')
-CONST_BAD_ID = 148346796186271744 # You-know-who
-CONST_MOTHER = 257144766901256192
-CONST_FATHER = 125433170047795200
+CONST_ADMINS = (120187484863856640, 148346796186271744) # Mac, Dirt
+CONST_AUTHOR = (125433170047795200, 257144766901256192) # 9, WoC
 
 #FUNCTIONS
 
@@ -71,12 +70,23 @@ async def grab_avatar(user):
 async def grab_attachments(msg):
     pass
 
+def user_or_perms(user_id, **perms):
+    perm_check = commands.has_permissions(**perms).predicate
+    async def extended_check(ctx):
+        if ctx.guild is None:
+            return False
+        try:
+            return ctx.author.id in user_id
+        except TypeError:
+            return ctx.author.id == user_id or await perm_check(ctx)
+    return commands.check(extended_check)
+
 #END OF FUNCTIONS
 #TASKS
 
 @tasks.loop(hours=24)
 async def post_dailies():
-    for guild_id, admin_id in zip(guild_whitelist, (CONST_BAD_ID, CONST_MOTHER)):
+    for guild_id, admin_id in zip(guild_whitelist, (CONST_ADMINS[1], CONST_AUTHOR[0])):
         guild = bot.get_guild(guild_id)
         if guild is None or guild.get_member(bot.user.id) is None:
             continue
@@ -101,7 +111,11 @@ async def post_dailies():
             )
         daily_msg[guild_id].clear()
         daily_usr[guild_id].clear()
-        await guild_config.log(guild, 'modlog', admin.mention, embed=embed)
+        await guild_config.log(
+            guild, 'modlog',
+            admin.mention if admin_id == CONST_ADMINS[1] else f'{admin.name}#{admin.discrim}',
+            embed=embed,
+            )
 
 @post_dailies.before_loop
 async def start_timer():
@@ -163,7 +177,7 @@ async def on_message(msg):
             f'{dt.seconds//60%60} minutes and {dt.seconds%60} seconds.'
             )
         await ctx.send(embed=embed)
-    elif ctx.author.id == CONST_BAD_ID:
+    elif ctx.author.id == CONST_ADMINS[1]:
         if ctx.channel.id == guild_config.getlog(msg.guild, 'modlog'):
             return 
         guild_config.log_linky(msg)
@@ -519,7 +533,7 @@ async def stats_error(ctx, error):
         
 @stats.command()
 async def woc_counter(ctx): # Beta statistic feature: Woc's Tard Counter!
-    if ctx.author.id == CONST_BAD_ID:
+    if ctx.author.id == CONST_ADMINS[1]:
         await ctx.send(
             'D--> Are you sure you want to know that, Master Linky? '
             'Regardless of your answer, I shall tell you, though I STRONGLY suggest you wait.'
@@ -714,16 +728,8 @@ async def role_delcategory_error(ctx, error):
 # END OF REACTION COMMANDS
 # JOJO's Bizarre Adventure Commands
 
-def user_or_perms(**perms):
-    perm_check = commands.has_permissions(**perms).predicate
-    async def extended_check(ctx):
-        if ctx.guild is None:
-            return False
-        return ctx.author.id == 120187484863856640 or await perm_check(ctx)
-    return commands.check(extended_check)
-
 @bot.group(name='ZA')
-@user_or_perms(view_audit_log=True)
+@user_or_perms(CONST_ADMINS[0], view_audit_log=True)
 async def moderate(ctx):
     if ctx.invoked_subcommand is None:
         pass
@@ -812,7 +818,7 @@ async def purge_error(ctx, error):
 
 @bot.group()
 @commands.bot_has_permissions(manage_roles=True)
-@user_or_perms(view_audit_log=True)
+@user_or_perms(CONST_ADMINS[0], view_audit_log=True)
 async def time(ctx):
     if ctx.invoked_subcommand is None:
         pass
@@ -930,7 +936,7 @@ async def channel_unban_error(ctx, error):
 
 @bot.command()
 @commands.bot_has_guild_permissions(ban_members=True)
-@commands.has_guild_permissions(ban_members=True)
+@user_or_perms(CONST_ADMINS+CONST_AUTHOR, ban_members=True)
 async def raidban(ctx, *args):
     for arg in args:
         member = await commands.UserConverter().convert(ctx, arg)
@@ -1213,7 +1219,7 @@ async def roll(ctx, *, args):
             )
         return
     # Do the rolls
-    if ndice == nfaces == 8 and ctx.author.id == CONST_FATHER:
+    if ndice == nfaces == 8 and ctx.author.id == CONST_AUTHOR[0]:
         rolls = [8] * 8
     else:
         rolls = [randint(1, nfaces) for _ in range(ndice)]
@@ -1270,9 +1276,9 @@ async def latex_error(ctx, error):
 async def magic8ball(ctx):
     msg = re.sub(r'<@!(\d{18,})>', get_name, guild_config.random_linky(ctx.message.content))
     msg = re.sub(r'(?<!<)(https?://[^\s]+)(?!>)', r'<\1>', msg)
-    admin = ctx.guild.get_member(CONST_BAD_ID)
+    admin = ctx.guild.get_member(CONST_ADMINS[1])
     if admin is None:
-        admin = ctx.guild.get_member(CONST_FATHER)
+        admin = ctx.guild.get_member(CONST_AUTHOR[0])
     embed = dc.Embed(
         color=admin.color,
         description=msg,
