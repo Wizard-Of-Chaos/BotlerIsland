@@ -538,14 +538,14 @@ async def woc_counter(ctx): # Beta statistic feature: Woc's Tard Counter!
 async def role(ctx):
     if ctx.invoked_subcommand is None:
         msg = (
-            'D--> Usage of the role function: `role (list|add|remove{}) [...]`\n\n'
+            'D--> Usage of the role function: `role (subcommand) [args...]`\n\n'
             '`role list`: List all valid roles under their categories.\n'
             '`role add <role_name>`: Adds a specified role if valid.\n'
             '`role remove <role_name>`: Removes a specified role if valid.\n'
             '{}'
             )
         if ctx.author.guild_permissions.manage_roles:
-            await ctx.send(msg.format('|forcegrant|addreact|removereact|addcategory|removecategory', (
+            await ctx.send(msg.format((
                 '`role forcegrant <message_link> <emoji> <role>`: Add roles from a message manually.\n'
                 '`role addreact <message_link> <emoji> <role>`: Add a role-bound reaction to a message to toggle a role.\n'
                 '`role removereact <message_link> <emoji>: Remove the reaction.\n'
@@ -837,7 +837,13 @@ async def resumes(ctx):
 @commands.has_guild_permissions(manage_roles=True)
 async def channel(ctx):
     if ctx.invoked_subcommand is None:
-        pass
+        channel = await ctx.author.create_dm()
+        await channel.send(
+            'D--> Usage of the channel function: `channel (ban|unban) <user>`\n\n'
+            '`channel ban <user>`: Apply lowest available channel mute role to user.\n'
+            '`channel unban <user>`: Revoke lowest available channel mute role from user.\n'
+            '<user> can be the user id, mention, or name.'
+            )
 
 @channel.error
 async def channel_error(ctx, error):
@@ -919,7 +925,7 @@ async def raidban(ctx, *args):
 async def raidban_error(ctx, error):
     if isinstance(error, commands.BadArgument):
         channel = await ctx.author.create_dm()
-        await channel.send(f'D--> Could not find {error.args[0]}.')
+        await channel.send(f'D--> {error.args[0]}.')
 
 # END OF BANS
 # "TAG" COMMANDS
@@ -988,7 +994,7 @@ async def _help(ctx):
         value='Grabs user information. Leave user field empty to get your own info.',
         inline=False
         )
-    embed.add_field(name='`role`', value='Provides help for the role command group.', inline=False)
+    embed.add_field(name='`role (subcommand) [args...]`', value='Provides help for the role command group.', inline=False)
     embed.add_field(name='`ping`', value='Pings the user.', inline=False)
     embed.add_field(name='`fle%`', value='Provides you with STRONG eye candy.', inline=False)
     embed.add_field(
@@ -1036,7 +1042,7 @@ async def modhelp(ctx):
         inline=False
         )
     embed.add_field(
-        name='`role`',
+        name='`role (subcommand) [args...]`',
         value='(Manage Roles only) Provides mod help for the role command group.',
         inline=False
     )
@@ -1341,21 +1347,6 @@ async def autoreact_error(ctx, error):
     raise error
 
 @bot.command()
-@commands.has_permissions(manage_roles=True)
-async def togglelatex(ctx):
-    if guild_config.toggle_latex(ctx):
-        await ctx.send('D--> Latex functions have been enabled.')
-    else:
-        await ctx.send('D--> Latex functions have been disabled.')
-        
-@togglelatex.error
-async def togglelatex_error(ctx, error):
-    if isinstance(error, MissingPermissions):
-        await ctx.send('D--> Neigh.')
-        return
-    raise error
-
-@bot.command()
 @commands.has_guild_permissions(manage_roles=True)
 async def ignoreplebs(ctx):
     if guild_config.toggle_cmd(ctx):
@@ -1367,6 +1358,21 @@ async def ignoreplebs(ctx):
 async def ignoreplebs_error(ctx, error):
     if isinstance(error, MissingPermissions):
         await ctx.send('D--> Neigh, plebian.')
+        return
+    raise error
+
+@bot.command()
+@commands.has_permissions(manage_roles=True)
+async def togglelatex(ctx):
+    if guild_config.toggle_latex(ctx):
+        await ctx.send('D--> Latex functions have been enabled.')
+    else:
+        await ctx.send('D--> Latex functions have been disabled.')
+        
+@togglelatex.error
+async def togglelatex_error(ctx, error):
+    if isinstance(error, MissingPermissions):
+        await ctx.send('D--> Neigh.')
         return
     raise error
     
