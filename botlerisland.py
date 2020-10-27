@@ -16,8 +16,7 @@ from discord.ext import commands, tasks
 from modtools import guild_whitelist, GuildConfig, MemberStalker, Roleplay
 from statstracker import StatsTracker
 
-intents = dc.Intents.all()
-bot = commands.Bot(command_prefix='D--> ', intents=intents)
+bot = commands.Bot(command_prefix='D--> ', intents=dc.Intents.all())
 bot.remove_command('help')
 guild_config = GuildConfig(bot, 'config.pkl')
 member_stalker = MemberStalker('members.pkl')
