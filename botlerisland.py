@@ -333,7 +333,7 @@ async def on_member_unban(guild, member):
     embed = dc.Embed(
         color=dc.Color.dark_teal(),
         timestamp=datetime.utcnow(),
-        description=f':hammer: **{member}** has been unbanned from **{guild}**!'
+        description=f':angel: **{member}** has been unbanned from **{guild}**!'
         )
     embed.set_author(name='Parole has been granted.')
     embed.set_thumbnail(url=member.avatar_url)
@@ -392,6 +392,7 @@ async def on_user_update(bfr, aft): # Log avatar, name, discrim changes
                 f'{bfr} had their discriminator changed from '
                 f'{bfr.discriminator} to {aft.discriminator}',
                 ))
+        await aio.sleep(0)
         if bfr.avatar != aft.avatar:
             changelog.append(('Avatar Update:', f'{bfr} has changed their avatar to:'))
         for ctype, desc in changelog:
@@ -436,6 +437,7 @@ async def on_raw_reaction_add(payload):
     react = payload.emoji
     chn_id = payload.channel_id
     msg_id = payload.message_id
+    await aio.sleep(0)
     # Checks if the message is in the dict
     if roleplay.roledata[chn_id][msg_id]:
         # Checks if the react is in the message
@@ -1274,6 +1276,7 @@ async def latex_error(ctx, error):
 @bot.command(name='linky')
 @commands.bot_has_permissions(send_messages=True)
 async def magic8ball(ctx):
+    await aio.sleep(0)
     msg = re.sub(r'<@!(\d{18,})>', get_name, guild_config.random_linky(ctx.message.content))
     msg = re.sub(r'(?<!<)(https?://[^\s]+)(?!>)', r'<\1>', msg)
     admin = ctx.guild.get_member(CONST_ADMINS[1])
