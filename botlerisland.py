@@ -135,6 +135,7 @@ async def on_ready():
         activity=dc.Game(name='D--> A beautiful stallion.')
         )
     post_dailies.start()
+    userhelp_embed.set_author(icon_url=bot.user.avatar_url)
     print('D--> At your command.\n')
 
 @bot.event
@@ -996,43 +997,57 @@ async def tag_error(ctx, error):
         return
     raise error
 
-# END OF "TAG"S
-# UNGROUPED COMMANDS
+# END OF "TAG" COMMANDS
+# INFOHELP COMMANDS
+
+userhelp_embed = dc.Embed(
+    description=f'D--> It seems you have asked about the *Homestuck and Hiveswap Discord Utility Bot*:tm:.'
+        f'This is a bot designed to cater to the server\'s moderation, utility, and statistic '
+        f'tracking needs. If the functions herein described are not performing to the degree '
+        f'that is claimed, please direct your attention to **Wizard of Chaos#2459** or **virtuNat#7998**.\n\n'
+        f'**Command List:**'
+    ).set_author(
+    name='Help message'
+    ).add_field(
+    name='`help`',
+    value='Display this message.',
+    inline=False,
+    ).add_field(
+    name='`info [user]`',
+    value='Grabs user information. Leave user field empty to get your own info.',
+    inline=False,
+    ).add_field(
+    name='`role (subcommand) [args...]`',
+    value='Provides help for the role command group.',
+    inline=False,
+    ).add_field(
+    name='`ping`',
+    value='Pings the user.',
+    inline=False,
+    ).add_field(
+    name='`fle%`',
+    value='Provides you with STRONG eye candy.',
+    inline=False,
+    ).add_field(
+    name='`roll <n>d<f>[(+|-)<m>]`',
+    value='Try your luck! Roll n f-faced dice, and maybe add a modifier m!',
+    inline=False,
+    ).add_field(
+    name='`latex "<latex_code>"`',
+    value='Presents a pretty little image for your latex code.',
+    inline=False,
+    ).add_field(
+    name='`linky`',
+    value='<:drewkas:684981372678570023>',
+    inline=False,
+    )
         
 @bot.command(name='help')
 @commands.bot_has_permissions(send_messages=True)
 async def userhelp(ctx):
-    embed = dc.Embed(
-        color=ctx.author.color,
-        timestamp=ctx.message.created_at,
-        description=f'D--> It seems you have asked about the *Homestuck and Hiveswap Discord Utility Bot*:tm:.'
-        f'This is a bot designed to cater to the server\'s moderation, utility, and statistic '
-        f'tracking needs. If the functions herein described are not performing to the degree '
-        f'that is claimed, please direct your attention to **Wizard of Chaos#2459** or **virtuNat#7998**.\n\n'
-        f'**Command List:**',
-        )
-    embed.set_author(name='Help message', icon_url=bot.user.avatar_url)
-    embed.add_field(name='`help`', value='Display this message.', inline=False)
-    embed.add_field(
-        name='`info [user]`',
-        value='Grabs user information. Leave user field empty to get your own info.',
-        inline=False
-        )
-    embed.add_field(name='`role (subcommand) [args...]`', value='Provides help for the role command group.', inline=False)
-    embed.add_field(name='`ping`', value='Pings the user.', inline=False)
-    embed.add_field(name='`fle%`', value='Provides you with STRONG eye candy.', inline=False)
-    embed.add_field(
-        name='`roll <n>d<f>[(+|-)<m>]`',
-        value='Try your luck! Roll n f-faced dice, and maybe add a modifier m!',
-        inline=False
-        )
-    embed.add_field(
-        name='`latex "<latex_code>"`',
-        value='Presents a pretty little image for your latex code.',
-        inline=False
-    )
-    embed.add_field(name='`linky`', value='<:drewkas:684981372678570023>', inline=False)
-    await ctx.send(embed=embed)
+    userhelp_embed.color=ctx.author.color
+    userhelp_embed.timestamp=ctx.message.created_at
+    await ctx.send(embed=userhelp_embed)
 
 @userhelp.error
 async def userhelp_error(ctx, error):
@@ -1069,7 +1084,7 @@ async def modhelp(ctx):
         name='`role (subcommand) [args...]`',
         value='(Manage Roles only) Provides mod help for the role command group.',
         inline=False
-    )
+        )
     embed.add_field(
         name='`daily`',
         value='(Manage Roles only) Force server daily counts.',
@@ -1089,7 +1104,7 @@ async def modhelp(ctx):
         name='`togglelatex`',
         value='(Manage Roles only) Toggles whether or not latex commands can be used.',
         inline=False
-    )
+        )
     embed.add_field(
         name='`channel (ban|unban) <username>`',
         value='(Manage Roles only) Add or remove a channel mute role.',
@@ -1137,7 +1152,6 @@ async def info(ctx, *, name=None):
         await ctx.send('D--> It seems that user can\'t be found. Please check your spelling.')
         return
     now = datetime.utcnow()
-    
     firstjoin = member_stalker.get('first_join', member) or member.joined_at
     embed = dc.Embed(color=member.color, timestamp=now)
     embed.set_author(name=f'Information for {member}')
@@ -1181,6 +1195,65 @@ async def info_error(ctx, error):
     if isinstance(error, commands.BotMissingPermissions):
         return
     raise error
+
+@bot.command()
+@commands.has_guild_permissions(manage_roles=True)
+async def daily(ctx):
+    now = datetime.utcnow()
+    msg_counts = "\n".join(
+        f'`{ctx.guild.get_channel(chan_id)}:` **{count}**'
+        for chan_id, count in daily_msg[ctx.guild.id].most_common()
+        )
+    embed = dc.Embed(
+        color=ctx.author.color,
+        timestamp=now,
+        description=f'**Message counts since midnight UTC or bot start:**\n{msg_counts}',
+        )
+    embed.set_author(name=f'Daily counts for {ctx.author}', icon_url=ctx.author.avatar_url)
+    embed.add_field(name='Users Gained:', value=daily_usr[ctx.guild.id]['join'])
+    embed.add_field(name='Users Lost:', value=daily_usr[ctx.guild.id]['leave'])
+    embed.add_field(
+        name='**DISCLAIMER**:',
+        value=
+            'Counts may not be accurate if the bot has been stopped at any point during the day.\n'
+            'Counts will reset upon midnight UTC, upon which an automated message will display.',
+        inline=False,
+        )
+    await guild_config.log(ctx.guild, 'modlog', embed=embed)
+
+@daily.error
+async def daily_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send('D--> It seems you have insufficient permission elevations.')
+        return
+    raise error
+    
+@bot.command()
+@commands.has_guild_permissions(manage_roles=True)
+@commands.bot_has_permissions(send_messages=True)
+async def modperms(ctx):
+    # me and the boys using cursed if as a prototype
+    permlist = ', '.join(perm for perm, val in ctx.author.guild_permissions if val)
+    embed = dc.Embed(
+        color=ctx.author.color,
+        timestamp=datetime.utcnow(),
+        description=f'```{permlist}```',
+        )
+    embed.set_author(name=f'{ctx.author} has the following guild perms:')
+    embed.set_thumbnail(url=ctx.author.avatar_url)
+    await ctx.send(embed=embed)
+
+@modperms.error
+async def modperms_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send('D--> It seems you have insufficient permission elevations.')
+        return
+    elif isinstance(error, commands.BotMissingPermissions):
+        return
+    raise error
+
+# END OF INFOHELP COMMANDS
+# UNGROUPED COMMANDS
 
 @bot.command()
 @commands.bot_has_permissions(send_messages=True)
@@ -1292,62 +1365,6 @@ async def magic8ball(ctx):
 @magic8ball.error
 async def magic8ball_error(ctx, error):
     if isinstance(error, commands.BotMissingPermissions):
-        return
-    raise error
-
-@bot.command()
-@commands.has_guild_permissions(manage_roles=True)
-async def daily(ctx):
-    now = datetime.utcnow()
-    msg_counts = "\n".join(
-        f'`{ctx.guild.get_channel(chan_id)}:` **{count}**'
-        for chan_id, count in daily_msg[ctx.guild.id].most_common()
-        )
-    embed = dc.Embed(
-        color=ctx.author.color,
-        timestamp=now,
-        description=f'**Message counts since midnight UTC or bot start:**\n{msg_counts}',
-        )
-    embed.set_author(name=f'Daily counts for {ctx.author}', icon_url=ctx.author.avatar_url)
-    embed.add_field(name='Users Gained:', value=daily_usr[ctx.guild.id]['join'])
-    embed.add_field(name='Users Lost:', value=daily_usr[ctx.guild.id]['leave'])
-    embed.add_field(
-        name='**DISCLAIMER**:',
-        value=
-            'Counts may not be accurate if the bot has been stopped at any point during the day.\n'
-            'Counts will reset upon midnight UTC, upon which an automated message will display.',
-        inline=False,
-        )
-    await guild_config.log(ctx.guild, 'modlog', embed=embed)
-
-@daily.error
-async def daily_error(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send('D--> It seems you have insufficient permission elevations.')
-        return
-    raise error
-    
-@bot.command()
-@commands.has_guild_permissions(manage_roles=True)
-@commands.bot_has_permissions(send_messages=True)
-async def modperms(ctx):
-    # me and the boys using cursed if as a prototype
-    permlist = ', '.join(perm for perm, val in ctx.author.guild_permissions if val)
-    embed = dc.Embed(
-        color=ctx.author.color,
-        timestamp=datetime.utcnow(),
-        description=f'```{permlist}```',
-        )
-    embed.set_author(name=f'{ctx.author} has the following guild perms:')
-    embed.set_thumbnail(url=ctx.author.avatar_url)
-    await ctx.send(embed=embed)
-
-@modperms.error
-async def modperms_error(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send('D--> It seems you have insufficient permission elevations.')
-        return
-    elif isinstance(error, commands.BotMissingPermissions):
         return
     raise error
 
