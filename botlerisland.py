@@ -604,7 +604,7 @@ async def role_del_error(ctx, error):
     raise error
 
 @role.command(name='forcegrant')
-@commands.bot_has_permissions(send_messages=True, add_reactions=True, read_message_history=True)
+@commands.bot_has_permissions(send_messages=True, manage_messages=True, read_message_history=True, manage_roles=True)
 @commands.has_permissions(manage_roles=True)
 async def role_forcegrant(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str], role: dc.Role):
     # Force all who reacted with the specified emoji in the given message link to be granted a role.
@@ -636,7 +636,7 @@ async def role_forcegrant(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, 
         except HTTPException:
             await ctx.send(f'D--> Could not add {role.name} to {member.name}#{member.discrim}.')
         else:
-            await msg.remove_reaction(str(emoji), member)
+            await msg.remove_reaction(react, member)
     await ctx.send('D--> Roles have been granted.')
 
 @role_forcegrant.error
@@ -655,7 +655,7 @@ async def role_forcegrant_error(ctx, error):
 @commands.bot_has_permissions(send_messages=True, add_reactions=True, read_message_history=True)
 @commands.has_permissions(manage_roles=True)
 async def role_addreact(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str], role: dc.Role):
-    # Force all who reacted with the specified emoji in the given message link to be granted a role.
+    # Add a reaction to a message that will be attached to a toggleable role when reacted to.
     *_, chn_id, msg_id = msglink.split('/')
     try:
         msg = await ctx.guild.get_channel(int(chn_id)).fetch_message(int(msg_id))
@@ -689,7 +689,7 @@ async def role_addreact_error(ctx, error):
     raise error
 
 @role.command(name='delreact')
-@commands.bot_has_permissions(add_reactions=True, read_message_history=True)
+@commands.bot_has_permissions(manage_messages=True, read_message_history=True)
 @commands.has_permissions(manage_roles=True)
 async def role_delreact(ctx, msglink, emoji: Union[dc.Emoji, dc.PartialEmoji, str]):
     pass
