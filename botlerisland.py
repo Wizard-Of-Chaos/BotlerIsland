@@ -1420,7 +1420,7 @@ async def render_latex_error(ctx, error):
 
 @bot.command(name='linky', aliases=['8ball'])
 @commands.bot_has_permissions(send_messages=True)
-async def magic8ball(ctx, *, query=''):
+async def magic_8ball(ctx, *, query=''):
     await aio.sleep(0)
     msg = re.sub(r'<@!(\d{18,})>', get_name, guild_config.random_linky(ctx.message.content))
     msg = re.sub(r'(?<!<)(https?://[^\s]+)(?!>)', r'<\1>', msg)
@@ -1434,8 +1434,8 @@ async def magic8ball(ctx, *, query=''):
     embed.set_author(name=f'{admin.name} says:', icon_url=admin.avatar_url)
     await ctx.send(embed=embed)
 
-@magic8ball.error
-async def magic8ball_error(ctx, error):
+@magic_8ball.error
+async def magic_8ball_error(ctx, error):
     if isinstance(error, commands.BotMissingPermissions):
         return
     raise error
