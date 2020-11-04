@@ -305,4 +305,3 @@ class Roleplay(Singleton):
             print(f'Reaction {react} missing from roledata table at {msg.jump_url}')
             return
         self.save()
-        

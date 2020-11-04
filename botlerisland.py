@@ -1502,7 +1502,7 @@ async def render_latex(ctx, *, raw_latex=''):
         timestamp=datetime.utcnow(),
         )
     embed.set_author(
-        name='D--> Latex render',
+        name=f'D--> Latex render for {ctx.author}',
         icon_url='https://cdn.discordapp.com/attachments/'
         '663453347763716110/773600642752839700/stsmall507x507-pad600x600f8f8f8.png',
         )
