@@ -220,7 +220,7 @@ def guild_callback():
     return {'first_join': None, 'last_seen': None, 'last_roles': []}
 
 def member_callback():
-    return defaultdict(guild_callback)
+    return defaultdict(guild_callback, {'count': 0, 'latex_count': 0})
 
 class MemberStalker(Singleton):
     def __init__(self, fname):
@@ -230,6 +230,10 @@ class MemberStalker(Singleton):
     def load(self):
         with open(self.fname, 'rb') as member_file:
             self.member_data = pickle.load(member_file)
+        if 'count' in self.member_data:
+            self.member_data['avatar_count'] = self.member_data.pop('count')
+        if 'latex_count' not in self.member_data or not isinstance(self.member_data['latex_count'], int):
+            self.member_data['latex_count'] = 0
 
     def save(self):
         with open(self.fname, 'wb') as member_file:
@@ -276,7 +280,7 @@ class Roleplay(Singleton):
             pickle.dump(self.roledata, rolefile)
 
     @staticmethod
-    def get_reaction_id(self, react):
+    def get_reaction_id(react):
         if isinstance(react, dc.Reaction):
             react = react.emoji
         if isinstance(react, (dc.Emoji, dc.PartialEmoji)):
@@ -291,7 +295,7 @@ class Roleplay(Singleton):
         try:
             del self.roledata[msg.channel.id][msg.id]
         except IndexError:
-            pass
+            return
         self.save()
     
     def remove_reaction(self, msg, react):
@@ -299,5 +303,6 @@ class Roleplay(Singleton):
             del self.roledata[msg.channel.id][msg.id][self.get_reaction_id(react)]
         except IndexError:
             print(f'Reaction {react} missing from roledata table at {msg.jump_url}')
+            return
         self.save()
         

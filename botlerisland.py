@@ -58,8 +58,8 @@ async def grab_avatar(user):
                 'https://cdn.discordapp.com/attachments/'
                 '663453347763716110/664578577479761920/unknown.png'
                 )
-    msg_id = hex(member_stalker.member_data['count'])[2:]
-    member_stalker.member_data['count'] += 1
+    msg_id = hex(member_stalker.member_data['avatar_count'])[2:]
+    member_stalker.member_data['avatar_count'] += 1
     with open('avatar.png', mode='rb') as avatarfile:
         await avy_channel.send(
             f'`@{user}`: UID {user.id}: MID {msg_id}',
@@ -120,7 +120,7 @@ async def post_dailies():
             )
 
 @post_dailies.before_loop
-async def start_timer():
+async def post_dailies_start_delay():
     now = datetime.utcnow()
     await aio.sleep(
         (datetime.combine(now.date() + timedelta(1), datetime.min.time()) - now).seconds
@@ -130,7 +130,7 @@ async def start_timer():
 #EVENTS
 
 @bot.event
-async def on_ready():
+async def on_ready(): # Bot starts
     for guild in bot.guilds:
         if guild.id not in guild_whitelist:
             await guild.leave()
@@ -142,7 +142,7 @@ async def on_ready():
     print('D--> At your command.\n')
 
 @bot.event
-async def on_guild_join(guild):
+async def on_guild_join(guild): # Bot joins guild
     if guild.id not in guild_whitelist:
         await guild.leave()
 
@@ -240,10 +240,10 @@ async def on_member_remove(member): # Log left/kicked/banned members
     await guild_config.log(guild, 'usrlog', embed=embed)
 
 @bot.event
-async def on_member_ban(guild, user):
+async def on_member_ban(guild, user): # Log member full bans
     if not guild_config.getlog(guild, 'modlog'):
         return
-    async for entry in guild.audit_logs(action=dc.AuditLogAction.ban):
+    async for entry in guild.audit_logs(limit=16, action=dc.AuditLogAction.ban):
         if entry.target.id == user.id:
             break
     else:
@@ -274,7 +274,7 @@ async def on_member_ban(guild, user):
     await guild_config.log(guild, 'modlog', embed=embed)
 
 @bot.event
-async def on_member_unban(guild, user):
+async def on_member_unban(guild, user): # Log member full ban appeals
     if not guild_config.getlog(guild, 'modlog'):
         return
     embed = dc.Embed(
@@ -322,7 +322,7 @@ async def on_user_update(bfr, aft): # Log avatar, name, discrim changes
             await guild_config.log(guild, 'msglog', embed=embed)
                     
 @bot.event
-async def on_voice_state_update(member, bfr, aft): # Logged when a member joins and leaves VC
+async def on_voice_state_update(member, bfr, aft): # Log when a member joins and leaves VC
     guild = member.guild
     if not guild_config.getlog(guild, 'msglog'):
         return
@@ -337,7 +337,7 @@ async def on_voice_state_update(member, bfr, aft): # Logged when a member joins 
         await guild_config.log(guild, 'msglog', embed=embed)
 
 @bot.event
-async def on_message(msg):
+async def on_message(msg): # Message posted event
     if msg.guild is None:
         return
     if msg.guild.id in guild_whitelist:
@@ -441,7 +441,7 @@ async def on_message_delete(msg): # Log deleted messages
     await guild_config.log(guild, 'msglog', embed=embed)
 
 @bot.event
-async def on_raw_reaction_add(payload):
+async def on_raw_reaction_add(payload): # Reaction is added to message
     # Not on_reaction_add because of this weird assed queue of messages CHRIST i hate discord
     # Because discord can't save every message in RAM, we have to deal with this bs
     guild = bot.get_guild(payload.guild_id)
@@ -471,27 +471,48 @@ async def on_raw_reaction_add(payload):
         await msg.remove_reaction(emoji, member)
 
 @bot.event
-async def on_raw_reaction_remove(payload):
+async def on_raw_reaction_remove(payload): # Reaction is removed from message
     # If reacts from the bot are removed from messages under the role reacts, remove the associated data.
-    guild = bot.get_guild(payload.guild_id)
-    if guild is None:
+    if (guild := bot.get_guild(payload.guild_id)) is None:
         return
     if payload.user_id != bot.user.id:
         return
     emoji = payload.emoji
     chn_id = payload.channel_id
     msg_id = payload.message_id
-    await aio.sleep(0)
     # Checks if the message is in the dict
     if react_map := roleplay.roledata[chn_id][msg_id]:
         # Find the reaction with matching emoji, then prune all further reacts.
         msg = await guild.get_channel(chn_id).fetch_message(msg_id)
+        roleplay.remove_reaction(msg, emoji)
         for react in msg.reactions:
             if str(react.emoji) == str(emoji):
-                break
-        async for member in react.users():
-            await msg.remove_reaction(emoji, member)
+                async for member in react.users():
+                    await msg.remove_reaction(emoji, member)
+                return
+
+@bot.event
+async def on_raw_reaction_clear_emoji(payload): # All reacts of one emoji cleared from message
+    # If all reacts of a certain emoji are removed, remove associated data if it exists.
+    if (guild := bot.get_guild(payload.guild_id)) is None:
+        return
+    emoji = payload.emoji
+    chn_id = payload.channel_id
+    msg_id = payload.message_id
+    # Checks if the message is in the dict
+    if react_map := roleplay.roledata[chn_id][msg_id]:
+        # Find the reaction with matching emoji, then prune all further reacts.
+        msg = await guild.get_channel(chn_id).fetch_message(msg_id)
         roleplay.remove_reaction(msg, emoji)
+
+@bot.event
+async def on_raw_reaction_clear(payload): # All reacts cleared from message
+    # If all reacts from a message are removed, remove associated data if it exists.
+    if (guild := bot.get_guild(payload.guild_id)) is None:
+        return
+    roleplay.remove_message(
+        await guild.get_channel(payload.channel_id).fetch_message(payload.message_id)
+        )
 
 # END OF EVENTS
 # INFOHELP COMMANDS
@@ -953,7 +974,7 @@ async def role(ctx):
             await ctx.send(msg.format((
                 '`role forcegrant <message_link> <emoji> <role>`: Add roles from a message manually.\n'
                 '`role addreact <message_link> <emoji> <role>`: Add a role-bound reaction to a message to toggle a role.\n'
-                '`role delreact <message_link> <emoji>: Delete a role-bound reaction and associated data.\n'
+                '`role delreact <message_link> <emoji>`: Delete a role-bound reaction and associated data.\n'
                 '`role addcategory <category> [<role_name1> <role_name2> ...]`: Add roles to a category.\n'
                 '`role delcategory <category>`: Delete a category and related role data.\n'
                 )))
@@ -993,7 +1014,10 @@ async def role_del_error(ctx, error):
     raise error
 
 @role.command(name='forcegrant')
-@commands.bot_has_permissions(send_messages=True, manage_messages=True, read_message_history=True, manage_roles=True)
+@commands.bot_has_permissions(
+    send_messages=True, manage_messages=True, read_message_history=True,
+    manage_roles=True,
+    )
 @commands.has_permissions(manage_roles=True)
 async def role_forcegrant(ctx, msglink: str, emoji: EmojiUnion, role: dc.Role):
     # Force all who reacted with the specified emoji in the given message link to be granted a role.
@@ -1041,7 +1065,9 @@ async def role_forcegrant_error(ctx, error):
     raise error
 
 @role.command(name='addreact')
-@commands.bot_has_permissions(send_messages=True, add_reactions=True, read_message_history=True)
+@commands.bot_has_permissions(
+    send_messages=True, read_message_history=True, add_reactions=True
+    )
 @commands.has_permissions(manage_roles=True)
 async def role_addreact(ctx, msglink: str, emoji: EmojiUnion, role: dc.Role):
     # Add a reaction to a message that will be attached to a toggleable role when reacted to.
@@ -1306,6 +1332,27 @@ async def deny_old_tags_error(ctx, error):
         return
     raise error
 
+@bot.command(name='husky', aliases=['fathusky', 'fatHusky'])
+@commands.bot_has_permissions(send_messages=True)
+async def post_fat_husky(ctx):
+    await ctx.send(
+        embed=dc.Embed(
+            color=ctx.guild.get_member(bot.user.id).color,
+            ).set_author(
+            name='D--> A corpulent canine.', 
+            icon_url='https://cdn.discordapp.com/attachments/'
+            '663453347763716110/773577148577480754/unknown.png',
+            ).set_image(
+            url='https://cdn.discordapp.com/attachments/'
+            '663453347763716110/773574707231457300/dogress.png',
+            ))
+
+@post_fat_husky.error
+async def post_fat_husky_error(ctx, error):
+    if isinstance(error, commands.BotMissingPermissions):
+        return
+    raise error
+
 # END OF "TAG" COMMANDS
 # STATS COMMANDS
 
@@ -1418,18 +1465,50 @@ async def dice_roller_error(ctx, error):
 async def render_latex(ctx, *, raw_latex=''):
     if not guild_config.getltx(ctx) or not raw_latex:
         return
-    preamble=r'\documentclass{standalone}\usepackage{color}\usepackage{amsmath}\color{white}\begin{document}\begin{math}\displaystyle '
+    preamble=(
+        r'\documentclass{standalone}\usepackage{color}\usepackage{amsmath}'
+        r'\color{white}\begin{document}\begin{math}\displaystyle '
+        )
     postamble=r'\end{math}\end{document}'
-    async with aiohttp.ClientSession() as session:
-        resp = await session.post('https://rtex.probablyaweb.site/api/v2',data={'format':'png','code':preamble+raw_latex+postamble})
+    async with ctx.channel.typing(), aiohttp.ClientSession() as session:
+        resp = await session.post(
+            'https://rtex.probablyaweb.site/api/v2',
+            data={'format':'png','code':preamble+raw_latex+postamble},
+            )
         resp = await resp.text() # Awaiting loading of the raw text data and unicode parsing
         resp = json.loads(resp)
         if (resp['status'] != 'success'):
             await ctx.send('D--> Your latex code is beneighth contempt. Try again.')
             return
-        image = await session.get('https://rtex.probablyaweb.site/api/v2/' + resp['filename'])
-        render = dc.File(io.BytesIO(await image.read()), 'latex.png') # Wrap it up as a discord File object to post directly
-        await ctx.send(file=render) 
+        image = await session.get(f'https://rtex.probablyaweb.site/api/v2/{resp["filename"]}')
+        # Send the image to the latex channel and embed.
+    latex_channel = bot.get_channel(773594582175973376)
+    msg_id = hex(member_stalker.member_data['latex_count'])[2:]
+    member_stalker.member_data['latex_count'] += 1
+    async with ctx.channel.typing():
+        await latex_channel.send(
+            f'`@{ctx.author}`: UID {ctx.author.id}: MID {msg_id}',
+            file=dc.File(io.BytesIO(await image.read()), 'latex.png')
+            )
+        async for msg in latex_channel.history(limit=16):
+            if msg.content.split()[-1] == msg_id:
+                latex_image_url = msg.attachments[0].url
+                break
+        async for msg in ctx.channel.history(limit=128):
+            if msg.author.id == ctx.author.id and msg.content.startswith('D--> latex'):
+                break
+    embed = dc.Embed(
+        color=ctx.author.color,
+        timestamp=datetime.utcnow(),
+        )
+    embed.set_author(
+        name='D--> Latex render',
+        icon_url='https://cdn.discordapp.com/attachments/'
+        '663453347763716110/773600642752839700/stsmall507x507-pad600x600f8f8f8.png',
+        )
+    embed.set_image(url=latex_image_url)
+    await ctx.send(embed=embed)
+    await msg.delete()
 
 @render_latex.error
 async def render_latex_error(ctx, error):
