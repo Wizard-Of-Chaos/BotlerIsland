@@ -294,7 +294,7 @@ class Roleplay(Singleton):
     def remove_message(self, msg):
         try:
             del self.roledata[msg.channel.id][msg.id]
-        except IndexError:
+        except KeyError:
             return
         self.save()
     
