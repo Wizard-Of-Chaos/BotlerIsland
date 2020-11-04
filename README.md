@@ -21,7 +21,7 @@ Command List:
 | `ping`                            | Pong!                                                                             |
 | `fle%`                            | Provides you with STRONG eye candy.                                               |
 | `roll <n>d<f>[(+\|-)<m>]`         | Try your luck! Roll n f-faced dice, and maybe add a modifier m!                   |
-| `latex <"latex command">`         | Returns a picture of your latex function. Must be in quotes. Disabled by default. |
+| `latex <latex command>`           | Returns a picture of your latex function. Must be in quotes. Disabled by default. |
 | `linky`                           | :drewkaS:                                                                         |
 -------------------------------------------------------------------------------------------------------------------------
 Moderation Command List:

@@ -274,11 +274,30 @@ class Roleplay(Singleton):
     def save(self):
         with open(self.fname, 'wb') as rolefile:
             pickle.dump(self.roledata, rolefile)
+
+    @staticmethod
+    def get_reaction_id(self, react):
+        if isinstance(react, dc.Reaction):
+            react = react.emoji
+        if isinstance(react, (dc.Emoji, dc.PartialEmoji)):
+            return react.id
+        return hash(react)
             
-    def add(self, channel, msg, react, role):
-        self.roledata[channel.id][msg.id][react.id] = role.id
+    def add_reaction(self, msg, react, role):
+        self.roledata[msg.channel.id][msg.id][self.get_reaction_id(react)] = role.id
+        self.save()
+
+    def remove_message(self, msg):
+        try:
+            del self.roledata[msg.channel.id][msg.id]
+        except IndexError:
+            pass
         self.save()
     
-    def remove(self, channel, msg, react, role):
-        self.roledata[channel.id][msg.id].pop(react.id)
+    def remove_reaction(self, msg, react):
+        try:
+            del self.roledata[msg.channel.id][msg.id][self.get_reaction_id(react)]
+        except IndexError:
+            print(f'Reaction {react} missing from roledata table at {msg.jump_url}')
+        self.save()
         
