@@ -115,7 +115,7 @@ async def post_dailies():
         daily_usr[guild_id].clear()
         await guild_config.log(
             guild, 'modlog',
-            admin.mention if admin_id == CONST_ADMINS[1] else f'{admin.name}#{admin.discrim}',
+            admin.mention if admin_id == CONST_ADMINS[1] else f'{admin}',
             embed=embed,
             )
 
@@ -138,7 +138,7 @@ async def on_ready():
         activity=dc.Game(name='D--> A beautiful stallion.')
         )
     post_dailies.start()
-    userhelp_embed.set_author(icon_url=bot.user.avatar_url)
+    userhelp_embed.set_author(name='Help message', icon_url=bot.user.avatar_url)
     print('D--> At your command.\n')
 
 @bot.event
@@ -240,40 +240,51 @@ async def on_member_remove(member): # Log left/kicked/banned members
     await guild_config.log(guild, 'usrlog', embed=embed)
 
 @bot.event
-async def on_member_ban(guild, member):
+async def on_member_ban(guild, user):
     if not guild_config.getlog(guild, 'modlog'):
         return
+    async for entry in guild.audit_logs(action=dc.AuditLogAction.ban):
+        if entry.target.id == user.id:
+            break
+    else:
+        print(f'The last ban of {user.id} could not be found in the logs.')
+        return
+    author = entry.user
     embed = dc.Embed(
-        color=dc.Color.red(),
+        color=author.color,
         timestamp=datetime.utcnow(),
-        description=f':hammer: **{member}** has been full banned in **{guild}**!\n'
-        f'The guild now has {guild.member_count} members!\n'
+        description=f'**{author}** has full banned :hammer: **{user}**!'
         )
-    embed.set_author(name='Good riddance.')
-    embed.set_thumbnail(url=member.avatar_url)
+    embed.set_author(name=f'Good riddance.', icon_url=author.avatar_url)
+    embed.set_thumbnail(url=user.avatar_url)
+    embed.add_field(
+        name='**Reason:**',
+        value=entry.reason or 'None specified.',
+        inline=False,
+        )
     embed.add_field(
         name='**Roles Snagged:**',
         value=(', '.join(
                 f'`{guild.get_role(role).name}`'
-                for role in member_stalker.get('last_roles', member)
+                for role in member_stalker.get('last_roles', user)
                 )
             or None),
         inline=False)
-    embed.add_field(name='**User ID:**', value=f'`{member.id}`')
+    embed.add_field(name='**User ID:**', value=f'`{user.id}`')
     await guild_config.log(guild, 'modlog', embed=embed)
 
 @bot.event
-async def on_member_unban(guild, member):
+async def on_member_unban(guild, user):
     if not guild_config.getlog(guild, 'modlog'):
         return
     embed = dc.Embed(
         color=dc.Color.dark_teal(),
         timestamp=datetime.utcnow(),
-        description=f':angel: **{member}** has been unbanned from **{guild}**!'
+        description=f'**{user}** has been unbanned :angel:!'
         )
     embed.set_author(name='Parole has been granted.')
-    embed.set_thumbnail(url=member.avatar_url)
-    embed.add_field(name='**User ID:**', value=f'`{member.id}`')
+    embed.set_thumbnail(url=user.avatar_url)
+    embed.add_field(name='**User ID:**', value=f'`{user.id}`')
     await guild_config.log(guild, 'modlog', embed=embed)
 
 @bot.event
@@ -839,7 +850,7 @@ async def channel_error(ctx, error):
     raise error
 
 @channel.command(name='ban')
-async def channel_ban(ctx, member: dc.Member, *, duration=''):
+async def channel_ban(ctx, member: dc.Member, *, flavor=''):
     if not member: # WE'RE GRABBING A MEMBER WE GIVE NO SHITS
         return
     # WE'RE GONNA FIND THE FIRST FUCKING ROLE THAT HAS NO PERMS IN THIS CHANNEL
@@ -855,7 +866,7 @@ async def channel_ban(ctx, member: dc.Member, *, duration=''):
                     description=f'{member.mention} has been banned in **#{ctx.channel}**'
                     )
                 embed.add_field(name='**Role Granted:**', value=f'`{role}`')
-                embed.add_field(name='**Duration/Reason:**', value=duration or 'None specified')
+                embed.add_field(name='**Reason and/or Duration:**', value=flavor or 'None specified')
                 embed.add_field(name='**User ID:**', value=member.id, inline=False)
                 embed.set_author(
                     name=f'@{ctx.author} Issued Channel Ban:',
@@ -906,14 +917,22 @@ async def channel_unban_error(ctx, error):
 async def raidban(ctx, *args):
     for arg in args:
         member = await commands.UserConverter().convert(ctx, arg)
-        await guild_config.log(ctx.guild, 'modlog', f'{ctx.author} used raidban command.')
         await ctx.guild.ban(member, reason='Banned by anti-raid command.', delete_message_days=1)
+    embed = dc.Embed(
+        color=ctx.author.color,
+        timestamp=ctx.message.created_at,
+        )
+    embed.set_author(
+        name=f'{ctx.author} used raidban command:',
+        icon_url=ctx.author.avatar_url,
+        )
+    await guild_config.log(ctx.guild, 'modlog', embed=embed)
 
 @raidban.error
 async def raidban_error(ctx, error):
     if isinstance(error, commands.BadArgument):
         channel = await ctx.author.create_dm()
-        await channel.send(f'D--> {error.args[0]}.')
+        await channel.send(f'D--> {error.args[0]}')
     raise error
 
 # END OF BANS
@@ -1004,7 +1023,7 @@ async def role_forcegrant(ctx, msglink: str, emoji: EmojiUnion, role: dc.Role):
         try:
             await member.add_roles(role)
         except HTTPException:
-            await ctx.send(f'D--> Could not add {role.name} to {member.name}#{member.discrim}.')
+            await ctx.send(f'D--> Could not add {role.name} to {member}.')
         else:
             await msg.remove_reaction(react, member)
     await ctx.send('D--> Roles have been granted.')
