@@ -115,7 +115,7 @@ async def post_dailies():
         daily_usr[guild_id].clear()
         await guild_config.log(
             guild, 'modlog',
-            admin.mention if admin_id == CONST_ADMINS[1] else f'{admin}',
+            admin.mention if admin_id == CONST_ADMINS[1] else '',
             embed=embed,
             )
 
@@ -443,7 +443,7 @@ async def on_message_delete(msg): # Log deleted messages
 @bot.event
 async def on_raw_reaction_add(payload): # Reaction is added to message
     # Not on_reaction_add because of this weird assed queue of messages CHRIST i hate discord
-    # Because discord can't save every message in RAM, we have to deal with this bs
+    # Because discord can't save every message in RAM, this is what suffering looks like.
     guild = bot.get_guild(payload.guild_id)
     if guild is None:
         return
@@ -453,15 +453,17 @@ async def on_raw_reaction_add(payload): # Reaction is added to message
     emoji = payload.emoji
     chn_id = payload.channel_id
     msg_id = payload.message_id
-    await aio.sleep(0)
     # Checks if the message is in the dict
     if react_map := roleplay.roledata[chn_id][msg_id]:
         # Checks if the react is in the message
-        if role_id := react_map[emoji.id]:
-            role = guild.get_role(role_id)
-        else:
-            # If react was not originally logged into message from outside this bot, must be an error.
-            await msg.remove_reaction(emoji, member)
+        try:
+            role = guild.get_role(react_map[emoji.id])
+        except KeyError: # If emoji is not in the message, ignore.
+            return
+        except commands.RoleNotFound as exc:
+            print(exc.args[0])
+            return
+        # There should be another exception clause here for missing roles but fuck that shit
         # Toggle role addition/removal.
         if role not in member.roles:
             await member.add_roles(role)
@@ -544,6 +546,10 @@ userhelp_embed = dc.Embed(
     ).add_field(
     name='`fle%`',
     value='Provides you with STRONG eye candy.',
+    inline=False,
+    ).add_field(
+    name='`husky`',
+    value='Provides you with an image of a corpulent canine.',
     inline=False,
     ).add_field(
     name='`roll <n>d<f>[(+|-)<m>]`',
@@ -879,23 +885,35 @@ async def channel_ban(ctx, member: dc.Member, *, flavor=''):
     for role in ctx.guild.roles:
         if ctx.channel.overwrites_for(role).pair()[1].send_messages: # BOOM LOOK AT THAT SHIT SUCK MY DICK
             await member.add_roles(role)
-            # OH BUT NOW SOMEONES GONNA WHINE THAT WE DIDNT LOG IT? HOLD YOUR ASS TIGHT BECAUSE WE'RE ABOUT TO
-            if guild_config.getlog(ctx.guild, 'modlog'): # OHHHHHHH! HE DID IT! THE FUCKING MADMAN!
-                embed = dc.Embed(
-                    color=ctx.author.color,
-                    timestamp=ctx.message.created_at,
-                    description=f'{member.mention} has been banned in **#{ctx.channel}**'
-                    )
-                embed.add_field(name='**Role Granted:**', value=f'`{role}`')
-                embed.add_field(name='**Reason and/or Duration:**', value=flavor or 'None specified')
-                embed.add_field(name='**User ID:**', value=member.id, inline=False)
-                embed.set_author(
-                    name=f'@{ctx.author} Issued Channel Ban:',
-                    icon_url=ctx.author.avatar_url,
-                    )
-                await guild_config.log(ctx.guild, 'modlog', embed=embed)
-            return
-            # BOOM! SUUUUUUUUCK - IT!
+            break
+    else:
+        return
+    # OH BUT NOW SOMEONES GONNA WHINE THAT WE DIDNT LOG IT? HOLD YOUR ASS TIGHT BECAUSE WE'RE ABOUT TO
+    if guild_config.getlog(ctx.guild, 'modlog'): # OHHHHHHH! HE DID IT! THE FUCKING MADMAN!
+        async for msg in ctx.channel.history(limit=128):
+            if msg.author.id == ctx.author.id and msg.content.startswith('D--> channel ban'):
+                await msg.delete()
+                break
+        await ctx.send(f'D--> Abberant {member} has been CRUSHED by my STRONG hooves.')
+        await aio.sleep(10)
+        async for msg in ctx.channel.history(limit=128):
+            if msg.author.id == bot.user.id and msg.content.startswith('D--> Abberant'):
+                await msg.delete()
+                break
+        embed = dc.Embed(
+            color=ctx.author.color,
+            timestamp=ctx.message.created_at,
+            description=f'{member.mention} has been banned in **#{ctx.channel}**'
+            )
+        embed.add_field(name='**Role Granted:**', value=f'`{role}`')
+        embed.add_field(name='**Reason and/or Duration:**', value=flavor or 'None specified')
+        embed.add_field(name='**User ID:**', value=member.id, inline=False)
+        embed.set_author(
+            name=f'@{ctx.author} Issued Channel Ban:',
+            icon_url=ctx.author.avatar_url,
+            )
+        await guild_config.log(ctx.guild, 'modlog', embed=embed)
+        # BOOM! SUUUUUUUUCK - IT!
 
 @channel_ban.error
 async def channel_ban_error(ctx, error):
@@ -936,6 +954,8 @@ async def channel_unban_error(ctx, error):
 @commands.bot_has_guild_permissions(ban_members=True)
 @user_or_perms(CONST_ADMINS+CONST_AUTHOR, ban_members=True)
 async def raidban(ctx, *args):
+    if not args:
+        return
     for arg in args:
         member = await commands.UserConverter().convert(ctx, arg)
         await ctx.guild.ban(member, reason='Banned by anti-raid command.', delete_message_days=1)
@@ -1545,11 +1565,5 @@ async def magic_8ball_error(ctx, error):
 # MAIN
 
 if __name__ == '__main__':
-    try:
+    with guild_config, member_stalker, roleplay:
         bot.run(get_token())
-    except BaseException:
-        raise
-    finally:
-        guild_config.save()
-        member_stalker.save()
-        roleplay.save()

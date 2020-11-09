@@ -20,6 +20,7 @@ Command List:
 | `role (subcommand) [args...]`     | Provides help for the role command group.                                         |
 | `ping`                            | Pong!                                                                             |
 | `fle%`                            | Provides you with STRONG eye candy.                                               |
+| `husky`                           | Provides you with an image of a corpulent canine.                                 |
 | `roll <n>d<f>[(+\|-)<m>]`         | Try your luck! Roll n f-faced dice, and maybe add a modifier m!                   |
 | `latex <latex command>`           | Returns a picture of your latex function. Must be in quotes. Disabled by default. |
 | `linky`                           | :drewkaS:                                                                         |

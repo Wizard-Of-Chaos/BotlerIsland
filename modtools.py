@@ -32,6 +32,12 @@ class GuildConfig(Singleton):
         self.punishers = {}
         self.load()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, etype, evalue, etrace):
+        self.save()
+
     def load(self):
         try:
             with open(self.fname, 'rb') as config_file:
@@ -40,10 +46,9 @@ class GuildConfig(Singleton):
                 if guild not in guild_whitelist:
                     del self.mod_channels[guild]
                     continue
-                self.mod_channels[guild] = {**callback(), **config}
         except (OSError, EOFError):
             self.mod_channels = defaultdict(callback)
-        self.save()
+            self.save()
 
     def save(self):
         for guild_id, config in self.mod_channels.items():
@@ -227,13 +232,15 @@ class MemberStalker(Singleton):
         self.fname = os.path.join('data', fname)
         self.load()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, etype, evalue, etrace):
+        self.save()
+
     def load(self):
         with open(self.fname, 'rb') as member_file:
             self.member_data = pickle.load(member_file)
-        if 'count' in self.member_data:
-            self.member_data['avatar_count'] = self.member_data.pop('count')
-        if 'latex_count' not in self.member_data or not isinstance(self.member_data['latex_count'], int):
-            self.member_data['latex_count'] = 0
 
     def save(self):
         with open(self.fname, 'wb') as member_file:
@@ -267,15 +274,26 @@ class Roleplay(Singleton):
         self.fname = os.path.join('data', fname)
         self.load()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, etype, evalue, etrace):
+        self.save()
+
     def load(self):
         try:
             with open(self.fname, 'rb') as rolefile:
                 self.roledata = pickle.load(rolefile)
-        except(OSError, EOFError):
+        except (OSError, EOFError):
             self.roledata = defaultdict(dictgrabber)
-        self.save()
+            self.save()
         
     def save(self):
+        # Purge all empty message entries for sanity's sake.
+        for chn_id, msg_dict in self.roledata.items():
+            for msg_id in list(msg_dict):
+                if not msg_dict[msg_id]:
+                    del msg_dict[msg_id]
         with open(self.fname, 'wb') as rolefile:
             pickle.dump(self.roledata, rolefile)
 
