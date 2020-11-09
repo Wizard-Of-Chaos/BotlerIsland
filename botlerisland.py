@@ -78,7 +78,7 @@ def user_or_perms(user_id, **perms):
         if ctx.guild is None:
             return False
         try:
-            return ctx.author.id in user_id
+            return ctx.author.id in user_id or await perm_check(ctx)
         except TypeError:
             return ctx.author.id == user_id or await perm_check(ctx)
     return commands.check(extended_check)
@@ -1495,7 +1495,11 @@ async def render_latex(ctx, *, raw_latex=''):
                 latex_image_url = msg.attachments[0].url
                 break
         async for msg in ctx.channel.history(limit=128):
-            if msg.author.id == ctx.author.id and msg.content.startswith('D--> latex'):
+            if (msg.author.id == ctx.author.id
+                and (msg.content.startswith('D--> latex')
+                    or msg.content.startswith('D--> l ')
+                    )):
+                await msg.delete()
                 break
     embed = dc.Embed(
         color=ctx.author.color,
@@ -1508,7 +1512,6 @@ async def render_latex(ctx, *, raw_latex=''):
         )
     embed.set_image(url=latex_image_url)
     await ctx.send(embed=embed)
-    await msg.delete()
 
 @render_latex.error
 async def render_latex_error(ctx, error):
