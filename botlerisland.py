@@ -72,6 +72,19 @@ async def grab_avatar(user):
 async def grab_attachments(msg):
     pass
 
+async def grab_latex(preamble, postamble, raw_latex):
+    async with aiohttp.ClientSession() as session:
+        resp = await session.post(
+            'https://rtex.probablyaweb.site/api/v2',
+            data={'format':'png','code':preamble+raw_latex+postamble},
+            )
+        resp = await resp.text() # Awaiting loading of the raw text data and unicode parsing
+        resp = json.loads(resp)
+        if (resp['status'] != 'success'):
+            await ctx.send('D--> Your latex code is beneighth contempt. Try again.')
+            return None
+        return await session.get(f'https://rtex.probablyaweb.site/api/v2/{resp["filename"]}')
+
 def user_or_perms(user_id, **perms):
     perm_check = commands.has_permissions(**perms).predicate
     async def extended_check(ctx):
@@ -862,13 +875,17 @@ async def channel(ctx):
     # ALRIGHT HUNGOVER WIZARD OF CHAOS CODE IN THE HIZ-OUSE
     # WE GONNA WRITE SOME MOTHERFUCKING BAN COMMANDS; INITIALIZE THAT SHIT
     if ctx.invoked_subcommand is None:
-        channel = await ctx.author.create_dm()
-        await channel.send(
+        await ctx.send(
             'D--> Usage of the channel function: `channel (ban|unban) <user>`\n\n'
             '`channel ban <user>`: Apply lowest available channel mute role to user.\n'
             '`channel unban <user>`: Revoke lowest available channel mute role from user.\n'
             '<user> can be the user id, mention, or name.'
             )
+        await aio.sleep(4)
+        async for msg in ctx.channel.history(limit=128):
+            if msg.author.id == bot.user.id and msg.content.startswith('D--> Usage'):
+                await msg.delete()
+                break
 
 @channel.error
 async def channel_error(ctx, error):
@@ -890,16 +907,6 @@ async def channel_ban(ctx, member: dc.Member, *, flavor=''):
         return
     # OH BUT NOW SOMEONES GONNA WHINE THAT WE DIDNT LOG IT? HOLD YOUR ASS TIGHT BECAUSE WE'RE ABOUT TO
     if guild_config.getlog(ctx.guild, 'modlog'): # OHHHHHHH! HE DID IT! THE FUCKING MADMAN!
-        async for msg in ctx.channel.history(limit=128):
-            if msg.author.id == ctx.author.id and msg.content.startswith('D--> channel ban'):
-                await msg.delete()
-                break
-        await ctx.send(f'D--> Abberant {member} has been CRUSHED by my STRONG hooves.')
-        await aio.sleep(10)
-        async for msg in ctx.channel.history(limit=128):
-            if msg.author.id == bot.user.id and msg.content.startswith('D--> Abberant'):
-                await msg.delete()
-                break
         embed = dc.Embed(
             color=ctx.author.color,
             timestamp=ctx.message.created_at,
@@ -913,13 +920,20 @@ async def channel_ban(ctx, member: dc.Member, *, flavor=''):
             icon_url=ctx.author.avatar_url,
             )
         await guild_config.log(ctx.guild, 'modlog', embed=embed)
+        await ctx.message.delete()
+        await ctx.send(f'D--> Abberant {member} has been CRUSHED by my STRONG hooves.')
+        await aio.sleep(10)
+        async for msg in ctx.channel.history(limit=128):
+            if msg.author.id == bot.user.id and msg.content.startswith('D--> Abberant'):
+                await msg.delete()
+                break
         # BOOM! SUUUUUUUUCK - IT!
 
 @channel_ban.error
 async def channel_ban_error(ctx, error):
     if isinstance(error, commands.BadArgument):
         channel = await ctx.author.create_dm()
-        await channel.send(f'D--> {error.args[0]}.')
+        await channel.send(f'D--> {error.args[0]}')
 
 @channel.command(name='unban')
 async def channel_unban(ctx, member: dc.Member):
@@ -928,26 +942,28 @@ async def channel_unban(ctx, member: dc.Member):
     for role in member.roles:
         if ctx.channel.overwrites_for(role).pair()[1].send_messages:
             await member.remove_roles(role)
-            if guild_config.getlog(ctx.guild, 'modlog'):
-                embed = dc.Embed(
-                    color=ctx.author.color,
-                    timestamp=ctx.message.created_at,
-                    description=f'{member.mention} has been unbanned in **#{ctx.channel}**'
-                    )
-                embed.add_field(name='**Role Revoked:**', value=f'`{role}`')
-                embed.add_field(name='**User ID:**', value=member.id)
-                embed.set_author(
-                    name=f'@{ctx.author} Undid Channel Ban:',
-                    icon_url=ctx.author.avatar_url,
-                    )
-                await guild_config.log(ctx.guild, 'modlog', embed=embed)
-                return
+            break
+    else:
+        return
+    if guild_config.getlog(ctx.guild, 'modlog'):
+        embed = dc.Embed(
+            color=ctx.author.color,
+            timestamp=ctx.message.created_at,
+            description=f'{member.mention} has been unbanned in **#{ctx.channel}**'
+            )
+        embed.add_field(name='**Role Revoked:**', value=f'`{role}`')
+        embed.add_field(name='**User ID:**', value=member.id)
+        embed.set_author(
+            name=f'@{ctx.author} Undid Channel Ban:',
+            icon_url=ctx.author.avatar_url,
+            )
+        await guild_config.log(ctx.guild, 'modlog', embed=embed)
 
 @channel_unban.error
 async def channel_unban_error(ctx, error):
     if isinstance(error, commands.BadArgument):
         channel = await ctx.author.create_dm()
-        await channel.send(f'D--> {error.args[0]}.')
+        await channel.send(f'D--> {error.args[0]}')
     raise error
 
 @bot.command()
@@ -1480,32 +1496,24 @@ async def dice_roller_error(ctx, error):
         return
     raise error
 
+default_preamble = (
+    r'\documentclass{standalone}\usepackage{color}\usepackage{amsmath}'
+    r'\color{white}\begin{document}\begin{math}\displaystyle '
+    )
+default_postamble = r'\end{math}\end{document}'
+
 @bot.command(name='latex', aliases=['l'])
 @commands.bot_has_permissions(send_messages=True)
 async def render_latex(ctx, *, raw_latex=''):
     if not guild_config.getltx(ctx) or not raw_latex:
         return
-    preamble=(
-        r'\documentclass{standalone}\usepackage{color}\usepackage{amsmath}'
-        r'\color{white}\begin{document}\begin{math}\displaystyle '
-        )
-    postamble=r'\end{math}\end{document}'
-    async with ctx.channel.typing(), aiohttp.ClientSession() as session:
-        resp = await session.post(
-            'https://rtex.probablyaweb.site/api/v2',
-            data={'format':'png','code':preamble+raw_latex+postamble},
-            )
-        resp = await resp.text() # Awaiting loading of the raw text data and unicode parsing
-        resp = json.loads(resp)
-        if (resp['status'] != 'success'):
-            await ctx.send('D--> Your latex code is beneighth contempt. Try again.')
+    with ctx.channel.typing():
+        if (image := await grab_latex(default_preamble, default_postamble, raw_latex)) is None:
             return
-        image = await session.get(f'https://rtex.probablyaweb.site/api/v2/{resp["filename"]}')
         # Send the image to the latex channel and embed.
-    latex_channel = bot.get_channel(773594582175973376)
-    msg_id = hex(member_stalker.member_data['latex_count'])[2:]
-    member_stalker.member_data['latex_count'] += 1
-    async with ctx.channel.typing():
+        latex_channel = bot.get_channel(773594582175973376)
+        msg_id = hex(member_stalker.member_data['latex_count'])[2:]
+        member_stalker.member_data['latex_count'] += 1
         await latex_channel.send(
             f'`@{ctx.author}`: UID {ctx.author.id}: MID {msg_id}',
             file=dc.File(io.BytesIO(await image.read()), 'latex.png')
@@ -1514,24 +1522,18 @@ async def render_latex(ctx, *, raw_latex=''):
             if msg.content.split()[-1] == msg_id:
                 latex_image_url = msg.attachments[0].url
                 break
-        async for msg in ctx.channel.history(limit=128):
-            if (msg.author.id == ctx.author.id
-                and (msg.content.startswith('D--> latex')
-                    or msg.content.startswith('D--> l ')
-                    )):
-                await msg.delete()
-                break
-    embed = dc.Embed(
-        color=ctx.author.color,
-        timestamp=datetime.utcnow(),
-        )
-    embed.set_author(
-        name=f'D--> Latex render for {ctx.author}',
-        icon_url='https://cdn.discordapp.com/attachments/'
-        '663453347763716110/773600642752839700/stsmall507x507-pad600x600f8f8f8.png',
-        )
-    embed.set_image(url=latex_image_url)
-    await ctx.send(embed=embed)
+        embed = dc.Embed(
+            color=ctx.author.color,
+            timestamp=datetime.utcnow(),
+            )
+        embed.set_author(
+            name=f'D--> Latex render for {ctx.author}',
+            icon_url='https://cdn.discordapp.com/attachments/'
+            '663453347763716110/773600642752839700/stsmall507x507-pad600x600f8f8f8.png',
+            )
+        embed.set_image(url=latex_image_url)
+        await ctx.send(embed=embed)
+        await ctx.message.delete()
 
 @render_latex.error
 async def render_latex_error(ctx, error):
