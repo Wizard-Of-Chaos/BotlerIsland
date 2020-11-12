@@ -81,7 +81,6 @@ async def grab_latex(preamble, postamble, raw_latex):
         resp = await resp.text() # Awaiting loading of the raw text data and unicode parsing
         resp = json.loads(resp)
         if (resp['status'] != 'success'):
-            await ctx.send('D--> Your latex code is beneighth contempt. Try again.')
             return None
         return await session.get(f'https://rtex.probablyaweb.site/api/v2/{resp["filename"]}')
 
@@ -1015,7 +1014,7 @@ async def role(ctx):
                 '`role delcategory <category>`: Delete a category and related role data.\n'
                 )))
         else:
-            await ctx.send(msg.format('', ''))
+            await ctx.send(msg.format(''))
 
 @role.error
 async def role_error(ctx, error):
@@ -1509,6 +1508,7 @@ async def render_latex(ctx, *, raw_latex=''):
         return
     with ctx.channel.typing():
         if (image := await grab_latex(default_preamble, default_postamble, raw_latex)) is None:
+            await ctx.send('D--> Your latex code is beneighth contempt. Try again.')
             return
         # Send the image to the latex channel and embed.
         latex_channel = bot.get_channel(773594582175973376)

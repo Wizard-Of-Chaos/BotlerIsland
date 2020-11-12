@@ -225,7 +225,7 @@ def guild_callback():
     return {'first_join': None, 'last_seen': None, 'last_roles': []}
 
 def member_callback():
-    return defaultdict(guild_callback, {'count': 0, 'latex_count': 0})
+    return defaultdict(guild_callback, {'avatar_count': 0, 'latex_count': 0})
 
 class MemberStalker(Singleton):
     def __init__(self, fname):
@@ -239,8 +239,12 @@ class MemberStalker(Singleton):
         self.save()
 
     def load(self):
-        with open(self.fname, 'rb') as member_file:
-            self.member_data = pickle.load(member_file)
+        try:
+            with open(self.fname, 'rb') as member_file:
+                self.member_data = pickle.load(member_file)
+        except (OSError, EOFError):
+            self.member_data = defaultdict(member_callback)
+            self.save()
 
     def save(self):
         with open(self.fname, 'wb') as member_file:
