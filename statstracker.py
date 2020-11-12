@@ -17,6 +17,12 @@ class StatsTracker(object):
         self.locked_msg = 'Stat cruncher is currently busy.'
         self.load()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, etype, evalue, etrace):
+        self.save()
+
     def load(self):
         try:
             with open(self.fname, 'rb') as role_file:
