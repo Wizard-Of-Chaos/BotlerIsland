@@ -6,6 +6,9 @@ from typing import Callable
 from responses import queries, quirked_responses, unquirked_responses, apply_quirk
 
 class QueryBank(dict):
+    def __getitem__(self, item: str) -> str:
+        return super().__getitem__(item)
+
     __getattr__ = __getitem__
 
 class ResponseBank(dict):
