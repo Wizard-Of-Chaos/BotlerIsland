@@ -1,7 +1,9 @@
+# Statistics data classes
 import os
 from collections import Counter, defaultdict
 import pickle
 import discord as dc
+from textbanks import query_bank, response_bank
 
 CONST_WOC_ID = 125433170047795200
 

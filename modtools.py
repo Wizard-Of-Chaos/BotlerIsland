@@ -1,3 +1,4 @@
+# Moderation data classes
 from datetime import datetime, timedelta
 from collections import defaultdict, deque
 from random import randrange
@@ -7,6 +8,7 @@ import os
 import pickle
 import discord as dc
 from discord.ext import tasks, commands
+from textbanks import query_bank, response_bank
 
 guild_whitelist = (152981670507577344, 663452978237407262)
 

@@ -13,6 +13,7 @@ import asyncio as aio
 
 import discord as dc
 from discord.ext import commands, tasks
+from textbanks import query_bank, response_bank
 from modtools import guild_whitelist, GuildConfig, MemberStalker, Roleplay
 from statstracker import StatsTracker
 
@@ -1431,7 +1432,7 @@ async def woc_counter(ctx): # Beta statistic feature: Woc's Tard Counter!
 @bot.command(name='ping', aliases=['p'])
 @commands.bot_has_permissions(send_messages=True)
 async def reflect_ping(ctx):
-    await ctx.send(f'D--> {ctx.message.author.mention}')
+    await ctx.send(f'D--> {ctx.author.mention}')
 
 @reflect_ping.error
 async def reflect_ping_error(ctx, error):
