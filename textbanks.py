@@ -12,7 +12,7 @@ class ResponseBank(dict):
     __slots__ = ('quirk_func',)
 
     def __init__(self, qres: dict, uqres: dict, quirk_func: Callable[[str], str]) -> None:
-        quirk_func = self.quirk_wrapper(quirk_func)
+        quirk_func = self._quirk_wrapper(quirk_func)
         super().__init__()
         self.quirk_func = quirk_func
         self.update(uqres)
@@ -32,7 +32,7 @@ class ResponseBank(dict):
     __getattr__ = __getitem__
 
     @staticmethod
-    def quirk_wrapper(quirk_func: Callable[[str], str]) -> Callable[[str], str]:
+    def _quirk_wrapper(quirk_func: Callable[[str], str]) -> Callable[[str], str]:
         @functools.wraps(quirk_func)
         def wrapped(response: str) -> str:
             args = []
