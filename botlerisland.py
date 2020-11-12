@@ -1548,13 +1548,17 @@ async def magic_8ball(ctx, *, query=''):
     msg = re.sub(r'<@!(\d{18,})>', get_name, guild_config.random_linky(ctx.message.content))
     msg = re.sub(r'(?<!<)(https?://[^\s]+)(?!>)', r'<\1>', msg)
     admin = ctx.guild.get_member(CONST_ADMINS[1])
-    if admin is None:
-        admin = ctx.guild.get_member(CONST_AUTHOR[0])
     embed = dc.Embed(
-        color=admin.color,
+        color=admin.color if admin else dc.Color.green(),
         description=msg,
         )
-    embed.set_author(name=f'{admin.name} says:', icon_url=admin.avatar_url)
+    embed.set_author(
+        name=f'{admin.name if admin else "Linky"} says:',
+        icon_url=admin.avatar_url if admin else (
+            'https://cdn.discordapp.com/attachments/'
+            '663453347763716110/776420647625949214/Linky.gif'
+            ),
+        )
     await ctx.send(embed=embed)
 
 @magic_8ball.error
