@@ -27,11 +27,6 @@ member_stalker = MemberStalker('members.pkl')
 stats_tracker = StatsTracker('stats.pkl')
 roleplay = Roleplay('roles.pkl')
 
-stats_tracker.locked_msg = (
-    'D--> It seems that I am currently in the middle of something. '
-    'I STRONGLY suggest that you wait for me to finish.'
-    )
-
 daily_msg = {guild_id: Counter() for guild_id in guild_whitelist}
 daily_usr = {guild_id: Counter({'join': 0, 'leave': 0}) for guild_id in guild_whitelist}
 

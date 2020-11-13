@@ -85,7 +85,7 @@ class GuildConfig(Singleton):
 
     def setlog(self, ctx, log):
         if log not in {'usrlog', 'msglog', 'modlog'}:
-            raise ValueError(f'Invalid log channel type {log}')
+            raise ValueError(response_bank.config_args_error.format(log=log))
         self.mod_channels[ctx.guild.id][log] = ctx.channel.id
         self.save()
 
@@ -216,7 +216,7 @@ class StarWarsPunisher(commands.Cog):
         if self.order66 is not None:
             if self.order66[1] < datetime.utcnow():
                 await self.bot.get_channel(self.order66[0]).send(
-                    'D--> It is done, my lord.'
+                    response_bank.star_wars_punish_completion
                     )
                 self.order66 = None
         elif not self.banlist:
@@ -326,6 +326,6 @@ class Roleplay(Singleton):
         try:
             del self.roledata[msg.channel.id][msg.id][self.get_reaction_id(react)]
         except IndexError:
-            print(f'Reaction {react} missing from roledata table at {msg.jump_url}')
+            print(response_bank.role_remove_react_error.format(react=react, msg=msg))
             return
         self.save()

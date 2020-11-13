@@ -16,7 +16,7 @@ class StatsTracker(object):
     def __init__(self, fname):
         self.fname = os.path.join('data', fname)
         self.locked = False
-        self.locked_msg = 'Stat cruncher is currently busy.'
+        self.locked_msg = response_bank.stats_busy
         self.load()
 
     def __enter__(self):
@@ -56,9 +56,9 @@ class StatsTracker(object):
         if not wocstat:
             wocstat['value'] = 0
             wocstat['lastcall'] = None
-        print('D--> Searching for slurs...')
+        print(response_bank.woc_counter_search_begin)
         for channel in ctx.guild.text_channels:
-            print(f'D--> Searching #{channel}:')
+            print(response_bank.woc_counter_search_milestone)
             try:
                 history = channel.history(
                     limit=None,
@@ -71,7 +71,6 @@ class StatsTracker(object):
                 if msg.author.id == CONST_WOC_ID and 'retard' in msg.content:
                     wocstat['value'] += 1
         wocstat['lastcall'] = ctx.message.created_at
-        print(f'D--> Done. Total count: {wocstat["value"]}\n')
         return wocstat['value']
 
     async def insecurity(self, ctx, args):

@@ -2,11 +2,11 @@
 import re
 
 queries = {
-    "affirmation": (
+    "affirmation": {
         "thanks arquius",
         "good job arquius",
         "good work arquius",
-        ),
+        },
     }
 
 quirked_responses = {
@@ -52,8 +52,8 @@ quirked_responses = {
         '`role del <role_name>`: Removes a specified role if valid.\n'
         '{}'
         ),
-    "role_grant_error": "It seems I could not add {role.name} to {member}.",
     "role_addreact_confirm": "I have successfully added the react for the {role.name} role.",
+    "role_forcegrant_error": "It seems I could not add {role.name} to {member}.",
     "role_forcegrant_confirm": "I have successfully granted the roles.",
     "fat_husky_head": "A corpulent canine.",
     "positive_flex_head": "I strongly agree.",
@@ -91,10 +91,13 @@ quirked_responses = {
         "has been expressly forbidden by the powers that be, and has thus been "
         "strongly punished accordingly."
         ),
+    "config_args_error": "It seems that {log} is not a valid status log type.",
     "stats_busy": (
         "It seems that I am currently in the middle of something. "
         "I strongly suggest that you wait for me to finish."
         ),
+    "woc_counter_search_begin": "Searching for slurs...",
+    "woc_counter_search_milestone": "Searching #{channel}...",
     "woc_counter_confirm_linky": (
         "Are you sure you want to know that, Master Linky? "
         "Regardless of your answer, I shall tell you, though I STRONGLY suggest you wait."
@@ -113,8 +116,8 @@ quirked_responses = {
         "Nay, plebian.",
         "Nay, pathetic user.",
         "It seems you have insufficient permission elevations.",
-        "It that you don\'t have the appropriate permissions for this command. "
-        "I STRONGLY recommend you back off or get bucked off, {ctx.author.name}.",
+        "It seems that you don't have the appropriate permissions for this command. "
+        "I strongly recommend you back off or get bucked off, {ctx.author.name}.",
         ),
     "user_error": "It seems that user can't be found. Check your spelling.",
     "message_error": "It seems that your message can't be found. Check your link.",
@@ -134,7 +137,7 @@ unquirked_responses = {
         ),
     }
 
-def apply_quirk(response):
+def apply_quirk(response: str) -> str:
     response = re.sub(r'[xX]', '%', response)
     response = re.sub(r'(loo|lou|lue|lew)', '100', response)
     response = re.sub(r'(ool|oul|ewl)', '001', response)
