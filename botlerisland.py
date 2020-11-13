@@ -143,11 +143,11 @@ async def on_ready(): # Bot starts
         if guild.id not in guild_whitelist:
             await guild.leave()
     await bot.change_presence(
-        activity=dc.Game(name='D--> A beautiful stallion.')
+        activity=dc.Game(name=response_bank.online_status)
         )
     post_dailies.start()
     userhelp_embed.set_author(name='Help message', icon_url=bot.user.avatar_url)
-    print('D--> At your command.\n')
+    print(response_bank.ready_prompt)
 
 @bot.event
 async def on_guild_join(guild): # Bot joins guild

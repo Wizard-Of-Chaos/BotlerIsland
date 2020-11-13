@@ -10,8 +10,8 @@ queries = {
     }
 
 quirked_responses = {
-    "ready_prompt": "A beautiful stallion.",
-    "online_status": "At your command.\n",
+    "ready_prompt": "At your command.\n",
+    "online_status": "A beautiful stallion.",
     "affirmation_response": "😎",
     "mention_self": "{ctx.author.mention}",
     "help_header": (
@@ -52,6 +52,7 @@ quirked_responses = {
         '`role del <role_name>`: Removes a specified role if valid.\n'
         '{}'
         ),
+    "role_remove_react_error": "Reaction {react} missing from roledata table at {msg.jump_url}.",
     "role_addreact_confirm": "I have successfully added the react for the {role.name} role.",
     "role_forcegrant_error": "It seems I could not add {role.name} to {member}.",
     "role_forcegrant_confirm": "I have successfully granted the roles.",
