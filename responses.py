@@ -10,7 +10,10 @@ queries = {
     }
 
 quirked_responses = {
+    "bot_startup": "ArquiusBot verision {version} started, beginning startup tasks...\n",
     "ready_prompt": "At your command.\n",
+    "verify_whitelist_complete": "Whitelist verified.",
+    "tasks_started": "All continuous tasks started.",
     "process_reacts": "Handling leftover reactions...",
     "process_reacts_complete": "Finished with leftover reactions.\n",
     "online_status": "A beautiful stallion.",
@@ -124,6 +127,7 @@ quirked_responses = {
         ),
     "user_error": "It seems that user can't be found. Check your spelling.",
     "message_error": "It seems that your message can't be found. Check your link.",
+    "role_error": "It seems that your role can't be found. Check for the name.",
     "react_error": "It seems that your react can't be found. Check the emoji name.",
     "unexpected_state": (
         "We could not have predicted this tomfoolery. Try again.",
