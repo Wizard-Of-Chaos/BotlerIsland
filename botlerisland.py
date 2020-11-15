@@ -1166,12 +1166,12 @@ async def role_addcategory(ctx, category: str, *roles):
     role_ids = []
     for role_text in roles:
         try:
-            role = await converter(role_text)
+            role = await converter(ctx, role_text)
         except commands.RoleNotFound:
             await ctx.send(f'D--> Role {role} not found.')
             continue
         role_ids.append(role.id)
-    role_categories.add_category(category, role_ids)
+    role_categories.add_category(ctx.guild, category, role_ids)
     await ctx.send(f'D--> Added the roles to category {category}.')
     
 @role_addcategory.error
@@ -1184,7 +1184,7 @@ async def role_addcategory_error(ctx, error):
 @role.command('delcategory')
 @commands.has_permissions(manage_roles=True)
 async def role_delcategory(ctx, category: str):
-    if role_categories.catdata.pop(category):
+    if role_categories.remove_category(ctx.guild, category):
         await ctx.send(f'D--> Removed category {category}.')
     else:
         await ctx.send(f'D--> Unable to remove category. Perhaps... it was never there?')
@@ -1625,10 +1625,11 @@ async def response_from_dev(ctx, msg_id: int, *, response: str):
             continue
         if not msg.embeds:
             continue
-        if not msg.embeds[0].fields:
+        embed = msg.embed[0]
+        suggestion = embed.description
+        if not embed.fields:
             continue
-        if msg.embeds[0].fields[0].value == f'`{msg_id}`':
-            suggestion = msg.embeds[0].description
+        if embed.fields[0].value == f'`{msg_id}`':
             break
     embed = dc.Embed(
         color=dc.Color.green(),
