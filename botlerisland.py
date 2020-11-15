@@ -1588,46 +1588,68 @@ async def magic_8ball_error(ctx, error):
 
 @bot.command(name='suggest')
 @commands.bot_has_permissions(send_messages=True)
-async def suggest(ctx, *, suggestion : str):
+async def suggest_to_dev(ctx, *, suggestion: str):
     suggestions = bot.get_channel(777555413213642772)
     suggest_id = ctx.message.id
     embed = dc.Embed(
         color=dc.Color.red(),
         description=suggestion,
-    )
+        timestamp=datetime.utcnow(),
+        )
     embed.set_author(
-        name=f'{ctx.author} suggests: '
-    )
+        name=f'{ctx.author} suggests:'
+        )
     embed.add_field(
-        name='**ID:**',
-        value=f'{suggest_id}',
-    )
-    if await suggestions.send(embed=embed):
-        await ctx.send(f'Your suggestion has been noted. ID: {suggest_id}')
-        stored_suggestions.add_suggestion(suggest_id, ctx.author.id, ctx.channel.id)
-        
+        name='**Message ID:**',
+        value=f'`{suggest_id}`',
+        inline=False,
+        )
+    await suggestions.send(embed=embed)
+    await ctx.send(f'D--> Your suggestion has been noted.')
+    stored_suggestions.add_suggestion(suggest_id, ctx.author.id, ctx.channel.id) 
+
+@suggest_to_dev.error
+async def suggest_to_dev_error(ctx, error):
+    raise error
 
 @bot.command(name='respond')
 @commands.bot_has_permissions(send_messages=True)
-async def devrespond(ctx, id, *, response : str):
+async def response_from_dev(ctx, msg_id: int, *, response: str):
     if ctx.author.id not in CONST_AUTHOR:
         return
-    suggdata = stored_suggestions.suggestdata[int(id)]
-    returnchannel = bot.get_channel(suggdata[0])
-    returnauthor = returnchannel.guild.get_member(suggdata[1])
+    chn_id, usr_id = stored_suggestions.suggestdata[msg_id]
+    ret_channel = bot.get_channel(chn_id)
+    respondent = ret_channel.guild.get_member(usr_id)
+    async for msg in bot.get_channel(777555413213642772).history(limit=None):
+        if msg.author.id != bot.user.id:
+            continue
+        if not msg.embeds:
+            continue
+        if not msg.embeds[0].fields:
+            continue
+        if msg.embeds[0].fields[0].value == f'`{msg_id}`':
+            suggestion = msg.embeds[0].description
+            break
     embed = dc.Embed(
         color=dc.Color.green(),
         description=response,
-    )
+        timestamp=datetime.utcnow(),
+        )
     embed.set_author(
-        name=f'In response to suggestion {id}, the devs say:',
+        name='D--> In response to your suggestion, the devs say:',
         icon_url=bot.user.avatar_url,
-    )
-    
-    if await returnchannel.send(f'{returnauthor.mention}', embed=embed):
-        stored_suggestions.remove_suggestion(int(id))
-    
-    
+        )
+    embed.add_field(
+        name='Suggestion:',
+        value=suggestion,
+        inline=False,
+        )
+    await ret_channel.send(f'{respondent.mention}', embed=embed)
+    stored_suggestions.remove_suggestion(msg_id)
+
+@response_from_dev.error
+async def response_from_dev_error(ctx, error):
+    raise error
 
 # END OF MISC COMMANDS
 # MAIN
