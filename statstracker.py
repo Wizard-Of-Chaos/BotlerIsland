@@ -25,6 +25,10 @@ class StatsTracker(object):
     def __exit__(self, etype, evalue, etrace):
         self.save()
 
+    def save(self):
+        with open(self.fname, 'wb') as role_file:
+            pickle.dump(self.stats, role_file)
+
     def load(self):
         try:
             with open(self.fname, 'rb') as role_file:
@@ -33,10 +37,6 @@ class StatsTracker(object):
         except (OSError, EOFError):
             self.stats = defaultdict(callback, defaultdict(dict, {}))
             self.save()
-
-    def save(self):
-        with open(self.fname, 'wb') as role_file:
-            pickle.dump(self.stats, role_file)
 
     async def take(self, stat, ctx, args):
         if self.locked:
