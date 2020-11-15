@@ -90,28 +90,8 @@ class GuildConfig(Singleton):
         self.mod_channels[ctx.guild.id][log] = ctx.channel.id
         self.save()
 
-    def toggle_reacts(self, ctx):
-        config = self.mod_channels[ctx.guild.id]['autoreact']
-        channel_id = ctx.channel.id
-        if channel_id in config:
-            config.remove(channel_id)
-            return False
-        else:
-            config.add(channel_id)
-            return True
-
-    def toggle_cmd(self, ctx):
-        config = self.mod_channels[ctx.guild.id]['ignoreplebs']
-        channel_id = ctx.channel.id
-        if channel_id in config:
-            config.remove(channel_id)
-            return False
-        else:
-            config.add(channel_id)
-            return True
-            
-    def toggle_latex(self, ctx):
-        config = self.mod_channels[ctx.guild.id]['enablelatex']
+    def toggle(self, ctx, field):
+        config = self.mod_channels[ctx.guild.id][field]
         channel_id = ctx.channel.id
         if channel_id in config:
             config.remove(channel_id)
@@ -287,45 +267,52 @@ class Roleplay(Singleton):
     def __exit__(self, etype, evalue, etrace):
         self.save()
 
+    def __iter__(self):
+        for key, value in self.role_data.items():
+            yield (key, value)
+
     def save(self):
         # Purge all empty message entries for sanity's sake.
-        for chn_id, msg_dict in self.roledata.items():
+        for chn_id, msg_dict in self.role_data.items():
             for msg_id in list(msg_dict):
                 if not msg_dict[msg_id]:
                     del msg_dict[msg_id]
         with open(self.fname, 'wb') as rolefile:
-            pickle.dump(self.roledata, rolefile)
+            pickle.dump(self.role_data, rolefile)
 
     def load(self):
         try:
             with open(self.fname, 'rb') as rolefile:
-                self.roledata = pickle.load(rolefile)
+                self.role_data = pickle.load(rolefile)
         except (OSError, EOFError):
-            self.roledata = defaultdict(dictgrabber)
+            self.role_data = defaultdict(dictgrabber)
             self.save()
 
     @staticmethod
-    def get_reaction_id(react):
+    def get_react_id(react):
         if isinstance(react, dc.Reaction):
             react = react.emoji
         if isinstance(react, (dc.Emoji, dc.PartialEmoji)):
             return react.id
         return hash(react)
+
+    def get_reactmap(self, chn_id, msg_id):
+        return self.role_data[chn_id][msg_id]
             
     def add_reaction(self, msg, react, role):
-        self.roledata[msg.channel.id][msg.id][self.get_reaction_id(react)] = role.id
+        self.role_data[msg.channel.id][msg.id][self.get_react_id(react)] = role.id
         self.save()
 
     def remove_message(self, msg):
         try:
-            del self.roledata[msg.channel.id][msg.id]
+            del self.role_data[msg.channel.id][msg.id]
         except KeyError:
             return
         self.save()
     
     def remove_reaction(self, msg, react):
         try:
-            del self.roledata[msg.channel.id][msg.id][self.get_reaction_id(react)]
+            del self.role_data[msg.channel.id][msg.id][self.get_react_id(react)]
         except KeyError:
             print(response_bank.role_remove_react_error.format(react=react, msg=msg))
             return
@@ -348,23 +335,28 @@ class RoleCategories(Singleton):
 
     def save(self):
         with open(self.fname, 'wb') as rolefile:
-            pickle.dump(self.catdata, rolefile)
+            pickle.dump(self.category_data, rolefile)
 
     def load(self):
         try:
             with open(self.fname, 'rb') as catfile:
-                self.catdata = pickle.load(catfile)
+                self.category_data = pickle.load(catfile)
         except (OSError, EOFError):
-            self.catdata = defaultdict(category_callback)
+            self.category_data = defaultdict(category_callback)
             self.save()    
     
     def add_category(self, guild, category, roles):
-        self.catdata[guild.id][category].union(roles)
+        self.category_data[guild.id][category].union(roles)
         self.save()
+
+    def get_category(self, role):
+        for category in self.category_data[role.guild.id].values():
+            if role.id in category:
+                return category
 
     def remove_category(self, guild, category):
         try:
-            del self.catdata[guild.id][category]
+            del self.category_data[guild.id][category]
         except KeyError:
             return False
         self.save()
@@ -385,20 +377,23 @@ class Suggestions(Singleton):
     def load(self):
         try:
             with open(self.fname, 'rb') as suggests:
-                self.suggestdata = pickle.load(suggests)
+                self.suggestions = pickle.load(suggests)
         except (OSError, EOFError):
-            self.suggestdata = defaultdict() 
+            self.suggestions = defaultdict() 
             self.save()
 
     def save(self):
         with open(self.fname, 'wb') as suggests:
-            pickle.dump(self.suggestdata, suggests)
+            pickle.dump(self.suggestions, suggests)
             
-    def add_suggestion(self, id, author, channel):
-        self.suggestdata[id] = (channel, author)
+    def add_suggestion(self, msg_id, author, channel):
+        self.suggestions[msg_id] = (channel, author)
         self.save()
+
+    def get_suggestion(self, ctx, msg_id):
+        chn_id, usr_id = self.suggestions[msg_id]
+        channel = ctx.get_channel(chn_id)
+        return (channel, channel.guild.get_member(usr_id))
         
-    def remove_suggestion(self, id):
-        removed = self.suggestdata.pop(id)
-        
-    
+    def remove_suggestion(self, msg_id):
+        removed = self.suggestions.pop(msg_id)

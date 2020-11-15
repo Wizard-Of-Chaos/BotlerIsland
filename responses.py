@@ -11,6 +11,8 @@ queries = {
 
 quirked_responses = {
     "ready_prompt": "At your command.\n",
+    "process_reacts": "Handling leftover reactions...",
+    "process_reacts_complete": "Finished with leftover reactions.\n",
     "online_status": "A beautiful stallion.",
     "affirmation_response": "😎",
     "mention_self": "{ctx.author.mention}",

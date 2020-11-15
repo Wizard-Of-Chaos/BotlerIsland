@@ -14,7 +14,10 @@ import asyncio as aio
 import discord as dc
 from discord.ext import commands, tasks
 from textbanks import query_bank, response_bank
-from modtools import guild_whitelist, GuildConfig, MemberStalker, Roleplay, RoleCategories, Suggestions
+from modtools import (
+    guild_whitelist, GuildConfig, MemberStalker,
+    Roleplay, RoleCategories, Suggestions,
+    )
 from statstracker import StatsTracker
 
 EmojiUnion = Union[dc.Emoji, dc.PartialEmoji, str]
@@ -37,6 +40,7 @@ CONST_ADMINS = (120187484863856640, 148346796186271744) # Mac, Dirt
 CONST_AUTHOR = (125433170047795200, 257144766901256192) # 9, WoC
 
 random.seed(datetime.now())
+
 #FUNCTIONS
 
 def get_token():
@@ -82,6 +86,19 @@ async def grab_latex(preamble, postamble, raw_latex):
         if (resp['status'] != 'success'):
             return None
         return await session.get(f'https://rtex.probablyaweb.site/api/v2/{resp["filename"]}')
+
+async def process_role_grant(msg, react, role, members):
+    for member in members:
+        if role not in member.roles:
+            category = role_categories.get_category(role)
+            if category:
+                for member_role in member.roles:
+                    if member_role.id in category:
+                        await member.remove_roles(member_role)
+            await member.add_roles(role)
+        else:
+            await member.remove_roles(role)
+        await msg.remove_reaction(react, member)
 
 def user_or_perms(user_id, **perms):
     perm_check = commands.has_permissions(**perms).predicate
@@ -150,6 +167,18 @@ async def on_ready(): # Bot starts
         )
     post_dailies.start()
     userhelp_embed.set_author(name='Help message', icon_url=bot.user.avatar_url)
+    print(response_bank.process_reacts)
+    # This is a horrible fucking way of granting all the roles. Too bad!
+    for chn_id, msg_dict in roleplay:
+        channel = bot.get_channel(chn_id)
+        for msg_id, emoji_dict in msg_dict.items():
+            msg = await channel.fetch_message(msg_id)
+            for react in msg.reactions:
+                if (emoji_id := roleplay.get_react_id(react)) in emoji_dict:
+                    role = msg.guild.get_role(emoji_dict[emoji_id])
+                    members = [m async for m in react.users() if m.id != bot.user.id]
+                    await process_role_grant(msg, react, role, members)
+    print(response_bank.process_reacts_complete)
     print(response_bank.ready_prompt)
 
 @bot.event
@@ -465,7 +494,7 @@ async def on_raw_reaction_add(payload): # Reaction is added to message
     chn_id = payload.channel_id
     msg_id = payload.message_id
     # Checks if the message is in the dict
-    if react_map := roleplay.roledata[chn_id][msg_id]:
+    if react_map := roleplay.get_reactmap(chn_id, msg_id):
         # Checks if the react is in the message
         try:
             role = guild.get_role(react_map[emoji.id])
@@ -476,18 +505,8 @@ async def on_raw_reaction_add(payload): # Reaction is added to message
             return
         # There should be another exception clause here for missing roles but fuck that shit
         # Toggle role addition/removal.
-        if role not in member.roles:
-            for category in role_categories.catdata[role.guild.id].values():
-                if role.id in category:
-                    break
-            for member_role in member.roles:
-                if member_role.id in category:
-                    await member.remove_roles(member_role)
-            await member.add_roles(role)
-        else:
-            await member.remove_roles(role)
         msg = await guild.get_channel(chn_id).fetch_message(msg_id)
-        await msg.remove_reaction(emoji, member)
+        await process_role_grant(msg, emoji, role, (member,))
 
 @bot.event
 async def on_raw_reaction_remove(payload): # Reaction is removed from message
@@ -500,7 +519,7 @@ async def on_raw_reaction_remove(payload): # Reaction is removed from message
     chn_id = payload.channel_id
     msg_id = payload.message_id
     # Checks if the message is in the dict
-    if react_map := roleplay.roledata[chn_id][msg_id]:
+    if react_map := roleplay.get_reactmap(chn_id, msg_id):
         # Find the reaction with matching emoji, then prune all further reacts.
         msg = await guild.get_channel(chn_id).fetch_message(msg_id)
         roleplay.remove_reaction(msg, emoji)
@@ -519,7 +538,7 @@ async def on_raw_reaction_clear_emoji(payload): # All reacts of one emoji cleare
     chn_id = payload.channel_id
     msg_id = payload.message_id
     # Checks if the message is in the dict
-    if react_map := roleplay.roledata[chn_id][msg_id]:
+    if react_map := roleplay.get_reactmap(chn_id, msg_id):
         # Find the reaction with matching emoji, then prune all further reacts.
         msg = await guild.get_channel(chn_id).fetch_message(msg_id)
         roleplay.remove_reaction(msg, emoji)
@@ -826,7 +845,7 @@ async def config_error(ctx, error):
 @commands.bot_has_permissions(add_reactions=True, read_message_history=True)
 @commands.has_guild_permissions(manage_roles=True)
 async def autoreact(ctx):
-    if guild_config.toggle_reacts(ctx):
+    if guild_config.toggle(ctx, 'autoreact'):
         await ctx.send('D--> ❤️')
     else:
         await ctx.send('D--> 💔')
@@ -843,7 +862,7 @@ async def autoreact_error(ctx, error):
 @bot.command()
 @commands.has_guild_permissions(manage_roles=True)
 async def ignoreplebs(ctx):
-    if guild_config.toggle_cmd(ctx):
+    if guild_config.toggle(ctx, 'ignoreplebs'):
         await ctx.send('D--> I shall listen only to b100 b100ded commands.')
     else:
         await ctx.send('D--> Unfortunately, I must now listen to the lower classes.')
@@ -858,7 +877,7 @@ async def ignoreplebs_error(ctx, error):
 @bot.command()
 @commands.has_permissions(manage_roles=True)
 async def togglelatex(ctx):
-    if guild_config.toggle_latex(ctx):
+    if guild_config.toggle(ctx, 'enablelatex'):
         await ctx.send('D--> Latex functions have been enabled.')
     else:
         await ctx.send('D--> Latex functions have been disabled.')
@@ -1083,13 +1102,7 @@ async def role_forcegrant(ctx, msglink: str, emoji: EmojiUnion, role: dc.Role):
         await ctx.send('D--> It seems I could not find a matching reaction in that message.')
         return
     members = [m async for m in react.users() if m.id != bot.user.id]
-    for member in members:
-        try:
-            await member.add_roles(role)
-        except HTTPException:
-            await ctx.send(f'D--> Could not add {role.name} to {member}.')
-        else:
-            await msg.remove_reaction(react, member)
+    await process_role_grant(msg, react, role, members)
     await ctx.send('D--> Roles have been granted.')
 
 @role_forcegrant.error
@@ -1617,15 +1630,17 @@ async def suggest_to_dev_error(ctx, error):
 async def response_from_dev(ctx, msg_id: int, *, response: str):
     if ctx.author.id not in CONST_AUTHOR:
         return
-    chn_id, usr_id = stored_suggestions.suggestdata[msg_id]
-    ret_channel = bot.get_channel(chn_id)
-    respondent = ret_channel.guild.get_member(usr_id)
+    try:
+        channel, member = stored_suggestions.get_suggestion(bot, msg_id)
+    except KeyError:
+        await ctx.send('D--> Suggestion does not exist.')
+        return
     async for msg in bot.get_channel(777555413213642772).history(limit=None):
         if msg.author.id != bot.user.id:
             continue
         if not msg.embeds:
             continue
-        embed = msg.embed[0]
+        embed = msg.embeds[0]
         suggestion = embed.description
         if not embed.fields:
             continue
@@ -1645,7 +1660,7 @@ async def response_from_dev(ctx, msg_id: int, *, response: str):
         value=suggestion,
         inline=False,
         )
-    await ret_channel.send(f'{respondent.mention}', embed=embed)
+    await channel.send(f'{member.mention}', embed=embed)
     stored_suggestions.remove_suggestion(msg_id)
 
 @response_from_dev.error
