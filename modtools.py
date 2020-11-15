@@ -256,7 +256,7 @@ class MemberStalker(Singleton):
 def dictgrabber():
     return defaultdict(dict)
 
-class Roleplay(Singleton):
+class EmojiRoles(Singleton):
     def __init__(self, fname):
         self.fname = os.path.join('data', fname)
         self.load()
@@ -349,17 +349,23 @@ class RoleCategories(Singleton):
         self.category_data[guild.id][category].update(roles)
         self.save()
 
-    def get_category(self, role):
-        for category in self.category_data[role.guild.id].values():
-            if role.id in category:
-                return category
-
     def remove_category(self, guild, category):
         try:
             del self.category_data[guild.id][category]
         except KeyError:
             return False
         self.save()
+        return True
+
+    async def purge_category(self, role, member):
+        for category in self.category_data[role.guild.id].values():
+            if role.id in category:
+                break
+        else:
+            return False
+        for member_role in member.roles:
+            if member_role.id in category:
+                await member.remove_roles(member_role)
         return True
             
     
