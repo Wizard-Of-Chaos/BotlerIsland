@@ -365,3 +365,34 @@ class RoleCategories(Singleton):
     def save(self):
         with open(self.fname, 'wb') as rolefile:
             pickle.dump(self.catdata, rolefile)
+            
+    
+class Suggestions(Singleton):
+    def __init__(self, fname):
+        self.fname = os.path.join('data', fname)
+        self.load()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, etype, evalue, etrace):
+        self.save()
+        
+    def load(self):
+        try:
+            with open(self.fname, 'rb') as suggests:
+                self.suggestdata = pickle.load(suggests)
+        except (OSError, EOFError):
+            self.suggestdata = defaultdict() 
+            self.save()
+            
+    def add_suggestion(self, id, author, channel):
+        self.suggestdata[id] = (channel, author)
+        self.save()
+        
+    def remove_suggestion(self, id):
+        removed = self.suggestdata.pop(id)
+        
+    def save(self):
+        with open(self.fname, 'wb') as suggests:
+            pickle.dump(self.suggestdata, suggests)

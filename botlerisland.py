@@ -4,7 +4,7 @@ import io
 import re
 import json
 from datetime import datetime, timedelta
-from random import randint
+import random
 from collections import Counter
 from typing import Union
 
@@ -14,7 +14,7 @@ import asyncio as aio
 import discord as dc
 from discord.ext import commands, tasks
 from textbanks import query_bank, response_bank
-from modtools import guild_whitelist, GuildConfig, MemberStalker, Roleplay, RoleCategories
+from modtools import guild_whitelist, GuildConfig, MemberStalker, Roleplay, RoleCategories, Suggestions
 from statstracker import StatsTracker
 
 EmojiUnion = Union[dc.Emoji, dc.PartialEmoji, str]
@@ -27,6 +27,7 @@ member_stalker = MemberStalker('members.pkl')
 stats_tracker = StatsTracker('stats.pkl')
 roleplay = Roleplay('roles.pkl')
 role_categories = RoleCategories('rolecats.pkl')
+stored_suggestions = Suggestions('suggestions.pkl')
 
 daily_msg = {guild_id: Counter() for guild_id in guild_whitelist}
 daily_usr = {guild_id: Counter({'join': 0, 'leave': 0}) for guild_id in guild_whitelist}
@@ -35,6 +36,7 @@ image_exts = ('png', 'gif', 'jpg', 'jpeg', 'jpe', 'jfif')
 CONST_ADMINS = (120187484863856640, 148346796186271744) # Mac, Dirt
 CONST_AUTHOR = (125433170047795200, 257144766901256192) # 9, WoC
 
+random.seed(datetime.now())
 #FUNCTIONS
 
 def get_token():
@@ -1583,6 +1585,49 @@ async def magic_8ball_error(ctx, error):
     if isinstance(error, commands.BotMissingPermissions):
         return
     raise error
+
+@bot.command(name='suggest')
+@commands.bot_has_permissions(send_messages=True)
+async def suggest(ctx, *, suggestion : str):
+    suggestions = bot.get_channel(777555413213642772)
+    suggest_id = ctx.message.id
+    embed = dc.Embed(
+        color=dc.Color.red(),
+        description=suggestion,
+    )
+    embed.set_author(
+        name=f'{ctx.author} suggests: '
+    )
+    embed.add_field(
+        name='**ID:**',
+        value=f'{suggest_id}',
+    )
+    if await suggestions.send(embed=embed):
+        await ctx.send(f'Your suggestion has been noted. ID: {suggest_id}')
+        stored_suggestions.add_suggestion(suggest_id, ctx.author.id, ctx.channel.id)
+        
+
+@bot.command(name='respond')
+@commands.bot_has_permissions(send_messages=True)
+async def devrespond(ctx, id, *, response : str):
+    if ctx.author.id not in CONST_AUTHOR:
+        return
+    suggdata = stored_suggestions.suggestdata[int(id)]
+    returnchannel = bot.get_channel(suggdata[0])
+    returnauthor = returnchannel.guild.get_member(suggdata[1])
+    embed = dc.Embed(
+        color=dc.Color.green(),
+        description=response,
+    )
+    embed.set_author(
+        name=f'In response to suggestion {id}, the devs say:',
+        icon_url=bot.user.avatar_url,
+    )
+    
+    if await returnchannel.send(f'{returnauthor.mention}', embed=embed):
+        stored_suggestions.remove_suggestion(int(id))
+    
+    
 
 # END OF MISC COMMANDS
 # MAIN
