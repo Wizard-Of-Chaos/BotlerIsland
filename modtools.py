@@ -329,3 +329,30 @@ class Roleplay(Singleton):
             print(response_bank.role_remove_react_error.format(react=react, msg=msg))
             return
         self.save()
+
+class RoleCategories(Singleton):
+    def __init__(self, fname):
+        self.fname = os.path.join('data', fname)
+        self.load()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, etype, evalue, etrace):
+        self.save()
+
+    def load(self):
+        try:
+            with open(self.fname, 'rb') as catfile:
+                self.catdata = pickle.load(catfile)
+        except (OSError, EOFError):
+            self.catdata = defaultdict(list)
+            self.save()
+    
+    def add_category(self, category, role):
+        self.catdata[category].append(role)
+        self.save()
+
+    def save(self):
+        with open(self.fname, 'wb') as rolefile:
+            pickle.dump(self.catdata, rolefile)

@@ -14,7 +14,7 @@ import asyncio as aio
 import discord as dc
 from discord.ext import commands, tasks
 from textbanks import query_bank, response_bank
-from modtools import guild_whitelist, GuildConfig, MemberStalker, Roleplay
+from modtools import guild_whitelist, GuildConfig, MemberStalker, Roleplay, RoleCategories
 from statstracker import StatsTracker
 
 EmojiUnion = Union[dc.Emoji, dc.PartialEmoji, str]
@@ -26,6 +26,7 @@ guild_config = GuildConfig(bot, 'config.pkl')
 member_stalker = MemberStalker('members.pkl')
 stats_tracker = StatsTracker('stats.pkl')
 roleplay = Roleplay('roles.pkl')
+role_categories = RoleCategories('rolecats.pkl')
 
 daily_msg = {guild_id: Counter() for guild_id in guild_whitelist}
 daily_usr = {guild_id: Counter({'join': 0, 'leave': 0}) for guild_id in guild_whitelist}
@@ -477,6 +478,13 @@ async def on_raw_reaction_add(payload): # Reaction is added to message
             await member.add_roles(role)
         else:
             await member.remove_roles(role)
+        for cat in role_categories.catdata.values():
+            if role.id in cat:
+                for mrole in member.roles:
+                    if mrole.id in cat and mrole.id != role.id:
+                        await member.remove_roles(mrole)
+                        #im really tired
+                        
         msg = await guild.get_channel(chn_id).fetch_message(msg_id)
         await msg.remove_reaction(emoji, member)
 
@@ -1152,8 +1160,13 @@ async def role_delreact_error(ctx, error):
 @role.command('addcategory')
 @commands.has_permissions(manage_roles=True)
 async def role_addcategory(ctx, category: str, *roles):
-    pass
-
+    for role in roles:
+        for grole in ctx.guild.roles:
+            if grole.name == role:
+                role_categories.add_category(category, grole.id)
+                
+    await ctx.send(f'D--> Added {roles} to category {category}.')
+    
 @role_addcategory.error
 async def role_addcategory_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
@@ -1164,7 +1177,10 @@ async def role_addcategory_error(ctx, error):
 @role.command('delcategory')
 @commands.has_permissions(manage_roles=True)
 async def role_delcategory(ctx, category: str):
-    pass
+    if role_categories.catdata.pop(category):
+        await ctx.send(f'D--> Removed category {category}.')
+    else:
+        await ctx.send(f'D--> Unable to remove category. Perhaps... it was never there?')
 
 @role_delcategory.error
 async def role_delcategory_error(ctx, error):
