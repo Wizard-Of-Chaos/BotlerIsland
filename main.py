@@ -2,7 +2,7 @@
 from bot_common import (
     bot, guild_config, member_stalker, emoji_roles, role_categories,
     )
-import task_dailycounts
+import cogs_dailycounts
 import bot_events
 import bot_rolecommands
 import bot_usercommands

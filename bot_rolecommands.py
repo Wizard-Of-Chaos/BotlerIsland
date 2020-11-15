@@ -4,7 +4,7 @@ from typing import Union
 import discord as dc
 from discord.ext import commands
 
-from textbanks import query_bank, response_bank
+from cogs_textbanks import query_bank, response_bank
 from bot_common import bot, emoji_roles, role_categories, process_role_grant
 
 EmojiUnion = Union[dc.Emoji, dc.PartialEmoji, str]

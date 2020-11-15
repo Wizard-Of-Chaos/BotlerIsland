@@ -5,11 +5,11 @@ from datetime import datetime
 import discord as dc
 from discord.ext import commands, tasks
 
-from modtools import (
+from cogs_modtools import (
     guild_whitelist, GuildConfig, MemberStalker,
     EmojiRoles, RoleCategories, Suggestions,
     )
-from statstracker import StatsTracker
+from cogs_statstracker import StatsTracker
 
 random.seed(datetime.now())
 bot = commands.Bot(command_prefix='D--> ', intents=dc.Intents.all())

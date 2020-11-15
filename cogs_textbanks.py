@@ -3,7 +3,10 @@ import re
 import random
 import functools
 from typing import Callable
-from responses import queries, quirked_responses, unquirked_responses, apply_quirk
+
+from data_responses import (
+    queries, quirked_responses, unquirked_responses, apply_quirk
+    )
 
 class QueryBank(dict):
     def __getitem__(self, item: str) -> str:

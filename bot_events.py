@@ -3,13 +3,13 @@ from datetime import datetime
 import discord as dc
 from discord.ext import commands
 
-from textbanks import query_bank, response_bank
+from cogs_textbanks import query_bank, response_bank
+from cogs_dailycounts import post_dailies, daily_usr, daily_msg
 from bot_common import (
     bot, guild_whitelist, CONST_ADMINS, CONST_AUTHOR,
     guild_config, member_stalker, emoji_roles,
     process_role_grant,
     )
-from task_dailycounts import post_dailies, daily_usr, daily_msg
 
 image_exts = ('png', 'gif', 'jpg', 'jpeg', 'jpe', 'jfif')
 
@@ -273,29 +273,12 @@ async def on_message(msg): # Message posted event
     if ctx.valid:
         if guild_config.getcmd(ctx):
             await bot.process_commands(msg)
-    elif guild_config.getcmd(ctx) and msg.content.strip().lower() == 'good work arquius':
-        await msg.channel.send('D--> 😎')
+    elif guild_config.getcmd(ctx) and msg.content.strip().lower() in query_bank.affirmation:
+        await msg.channel.send(response_bank.affirmation_response)
     elif (msg.channel.id in guild_config.getlog(msg.guild, 'autoreact')
         and any(any(map(att.url.lower().endswith, image_exts)) for att in msg.attachments)
         ):
         await msg.add_reaction('❤️')
-    elif ctx.author != bot.user and guild_config.detect_star_wars(msg):
-        dt = await guild_config.punish_star_wars(msg)
-        embed = dc.Embed(
-            color=ctx.author.color,
-            timestamp=msg.created_at,
-            description=f'D--> It seems that **{ctx.author.name}** has mentioned that which '
-            'has been expressly forbidden by the powers that be, and has thus been '
-            'STRONGLY punished accordingly.'
-            )
-        embed.set_author(name='D--> Forbidden.', icon_url=bot.user.avatar_url)
-        embed.add_field(
-            name='**Time since last incident:**',
-            value='N/A' if dt is None else
-            f'It has been {dt.days} days, {dt.seconds//3600} hours, '
-            f'{dt.seconds//60%60} minutes and {dt.seconds%60} seconds.'
-            )
-        await ctx.send(embed=embed)
     elif ctx.author.id == CONST_ADMINS[1]:
         if ctx.channel.id == guild_config.getlog(msg.guild, 'modlog'):
             return 

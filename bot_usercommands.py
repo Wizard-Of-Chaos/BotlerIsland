@@ -11,7 +11,7 @@ import aiohttp
 import discord as dc
 from discord.ext import commands
 
-from textbanks import query_bank, response_bank
+from cogs_textbanks import query_bank, response_bank
 from bot_common import (
     bot, CONST_ADMINS, CONST_AUTHOR,
     guild_config, member_stalker, stored_suggestions,

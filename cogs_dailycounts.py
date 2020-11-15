@@ -6,7 +6,7 @@ import asyncio as aio
 import discord as dc
 from discord.ext import tasks
 
-from textbanks import query_bank, response_bank
+from cogs_textbanks import query_bank, response_bank
 from bot_common import bot, guild_whitelist
 
 daily_msg = {guild_id: Counter() for guild_id in guild_whitelist}

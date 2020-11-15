@@ -6,9 +6,9 @@ import asyncio as aio
 import discord as dc
 from discord.ext import commands
 
-from textbanks import query_bank, response_bank
+from cogs_textbanks import query_bank, response_bank
+from cogs_dailycounts import daily_usr, daily_msg
 from bot_common import bot, CONST_ADMINS, CONST_AUTHOR, guild_config
-from task_dailycounts import daily_usr, daily_msg
 
 def user_or_perms(user_id, **perms):
     perm_check = commands.has_permissions(**perms).predicate
@@ -254,6 +254,7 @@ async def channel(ctx):
     # ALRIGHT HUNGOVER WIZARD OF CHAOS CODE IN THE HIZ-OUSE
     # WE GONNA WRITE SOME MOTHERFUCKING BAN COMMANDS; INITIALIZE THAT SHIT
     if ctx.invoked_subcommand is None:
+        await ctx.message.delete()
         await ctx.send(
             'D--> Usage of the channel function: `channel (ban|unban) <user>`\n\n'
             '`channel ban <user>`: Apply lowest available channel mute role to user.\n'
@@ -491,32 +492,6 @@ async def special_mod_command_unfreeze_error(ctx, error):
     raise error
 
 # <== To Be Continued...
-# EXECUTE ORDER 66
-
-@bot.command(name='execute')
-@commands.bot_has_permissions(send_messages=True)
-@commands.has_permissions(view_audit_log=True)
-async def star_wars_punisher_activate(ctx, *, args=''):
-    if args == 'order 66':
-        guild_config.set_containment(ctx)
-        await ctx.send('D--> It will be done, my lord.')
-    else:
-        await ctx.send(
-            'D--> It seems you were not quite clear. Vocalize your desire STRONGLY.'
-            )
-
-@star_wars_punisher_activate.error
-async def star_wars_punisher_activate_error(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send(
-            f'D--> Only the senate may execute this order, {ctx.author.name}.'
-            )
-        return
-    elif isinstance(error, commands.BotMissingPermissions):
-        return
-    raise error
-
-# END OF EXECUTE
 # STATS COMMANDS
 
 @bot.group(name='stats')
