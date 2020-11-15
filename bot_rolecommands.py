@@ -41,6 +41,7 @@ async def role_list_error(ctx, error):
 async def role_add(ctx, role: dc.Role):
     if not await role_categories.purge_category(role, ctx.author):
         await ctx.send('D--> You are not allowed to self-assign this role.')
+        return
     await ctx.author.add_roles(role)
     await ctx.send(f'D--> The role {role} has been granted.')
 
@@ -54,8 +55,12 @@ async def role_add_error(ctx, error):
 @role.command(name='del')
 @commands.bot_has_permissions(send_messages=True)
 async def role_del(ctx, role: dc.Role):
+    if role not in ctx.author.roles:
+        await ctx.send('D--> You do not have this role.')
+        return
     if not await role_categories.purge_category(role, ctx.author):
         await ctx.send('D--> You are not allowed to self-remove this role.')
+        return
     await ctx.send(f'D--> The role {role} has been removed.')
 
 @role_del.error
