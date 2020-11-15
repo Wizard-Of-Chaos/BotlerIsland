@@ -346,7 +346,7 @@ class RoleCategories(Singleton):
             self.save()    
     
     def add_category(self, guild, category, roles):
-        self.category_data[guild.id][category].union(roles)
+        self.category_data[guild.id][category].update(roles)
         self.save()
 
     def get_category(self, role):

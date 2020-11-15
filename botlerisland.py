@@ -168,7 +168,7 @@ async def on_ready(): # Bot starts
     post_dailies.start()
     userhelp_embed.set_author(name='Help message', icon_url=bot.user.avatar_url)
     print(response_bank.process_reacts)
-    # This is a horrible fucking way of granting all the roles. Too bad!
+    # This is a horrible fucking way of granting all the pending roles. Too bad!
     for chn_id, msg_dict in roleplay:
         channel = bot.get_channel(chn_id)
         for msg_id, emoji_dict in msg_dict.items():
