@@ -172,7 +172,11 @@ async def on_ready(): # Bot starts
     for chn_id, msg_dict in roleplay:
         channel = bot.get_channel(chn_id)
         for msg_id, emoji_dict in msg_dict.items():
-            msg = await channel.fetch_message(msg_id)
+            try:
+                msg = await channel.fetch_message(msg_id)
+            except dc.NotFound: # This message entry will be cleared when the bot closes.
+                emoji_dict.clear()
+                continue
             for react in msg.reactions:
                 if (emoji_id := roleplay.get_react_id(react)) in emoji_dict:
                     role = msg.guild.get_role(emoji_dict[emoji_id])
