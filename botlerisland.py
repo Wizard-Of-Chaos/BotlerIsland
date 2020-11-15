@@ -1162,11 +1162,11 @@ async def role_delreact_error(ctx, error):
 @commands.has_permissions(manage_roles=True)
 async def role_addcategory(ctx, category: str, *roles):
     # I'm going full mONKE, no actually idk if serializing it is more efficient.
-    converter = ctx.commands.RoleConverter().convert
+    converter = commands.RoleConverter().convert
     role_ids = []
     for role_text in roles:
         try:
-            role = convert(role_text)
+            role = await converter(role_text)
         except commands.RoleNotFound:
             await ctx.send(f'D--> Role {role} not found.')
             continue
