@@ -2,6 +2,7 @@
 import io
 import re
 import json
+import random
 from datetime import datetime
 
 import asyncio as aio
@@ -11,7 +12,10 @@ import discord as dc
 from discord.ext import commands
 
 from textbanks import query_bank, response_bank
-from bot_common import bot
+from bot_common import (
+    bot, CONST_ADMINS, CONST_AUTHOR,
+    guild_config, member_stalker, stored_suggestions,
+    )
 
 def get_name(member_id):
     return str(bot.get_user(int(member_id[1])))
@@ -242,7 +246,7 @@ async def dice_roller(ctx, *, args):
     if ndice == nfaces == 8 and ctx.author.id == CONST_AUTHOR[0]:
         rolls = [8] * 8
     else:
-        rolls = [randint(1, nfaces) for _ in range(ndice)]
+        rolls = [random.randint(1, nfaces) for _ in range(ndice)]
     msg = f'{bfr}{" + ".join(map(str, rolls))}{aft}{sum(rolls) + modnum}`'
     if len(msg) > 2000:
         await ctx.send(

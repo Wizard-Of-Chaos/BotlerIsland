@@ -3,12 +3,12 @@ from datetime import datetime
 import discord as dc
 from discord.ext import commands
 
+from textbanks import query_bank, response_bank
 from bot_common import (
     bot, guild_whitelist, CONST_ADMINS, CONST_AUTHOR,
     guild_config, member_stalker, emoji_roles,
     process_role_grant,
     )
-from textbanks import query_bank, response_bank
 from task_dailycounts import post_dailies, daily_usr, daily_msg
 
 image_exts = ('png', 'gif', 'jpg', 'jpeg', 'jpe', 'jfif')

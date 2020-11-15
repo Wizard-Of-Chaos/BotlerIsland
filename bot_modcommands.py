@@ -7,7 +7,8 @@ import discord as dc
 from discord.ext import commands
 
 from textbanks import query_bank, response_bank
-from bot_common import bot, CONST_ADMINS, CONST_AUTHOR
+from bot_common import bot, CONST_ADMINS, CONST_AUTHOR, guild_config
+from task_dailycounts import daily_usr, daily_msg
 
 def user_or_perms(user_id, **perms):
     perm_check = commands.has_permissions(**perms).predicate
