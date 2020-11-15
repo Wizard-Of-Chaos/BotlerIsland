@@ -44,13 +44,14 @@ class GuildConfig(Singleton):
         try:
             with open(self.fname, 'rb') as config_file:
                 self.mod_channels = pickle.load(config_file)
+        except (OSError, EOFError):
+            self.mod_channels = defaultdict(callback)
+            self.save()
+        else:
             for guild, config in self.mod_channels.copy().items():
                 if guild not in guild_whitelist:
                     del self.mod_channels[guild]
                     continue
-        except (OSError, EOFError):
-            self.mod_channels = defaultdict(callback)
-            self.save()
 
     def save(self):
         for guild_id, config in self.mod_channels.items():
@@ -330,6 +331,10 @@ class Roleplay(Singleton):
             return
         self.save()
 
+
+def category_callback():
+    return defaultdict(set)
+
 class RoleCategories(Singleton):
     def __init__(self, fname):
         self.fname = os.path.join('data', fname)
@@ -345,12 +350,16 @@ class RoleCategories(Singleton):
         try:
             with open(self.fname, 'rb') as catfile:
                 self.catdata = pickle.load(catfile)
+            if self.catdata.default_factory is not category_callback:
+                for key, value in self.catdata.items():
+                    self.catdata[key] = set(value)
+                self.catdata = defaultdict(category_callback)
         except (OSError, EOFError):
-            self.catdata = defaultdict(list)
+            self.catdata = defaultdict(category_callback)
             self.save()
     
-    def add_category(self, category, role):
-        self.catdata[category].append(role)
+    def add_category(self, category, roles):
+        self.catdata[roles[0].guild.id][category].union(roles)
         self.save()
 
     def save(self):

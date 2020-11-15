@@ -475,16 +475,15 @@ async def on_raw_reaction_add(payload): # Reaction is added to message
         # There should be another exception clause here for missing roles but fuck that shit
         # Toggle role addition/removal.
         if role not in member.roles:
+            for category in role_categories.catdata[role.guild.id].values():
+                if role.id in category:
+                    break
+            for member_role in member.roles:
+                if member_role.id in category:
+                    await member.remove_roles(member_role)
             await member.add_roles(role)
         else:
             await member.remove_roles(role)
-        for cat in role_categories.catdata.values():
-            if role.id in cat:
-                for mrole in member.roles:
-                    if mrole.id in cat and mrole.id != role.id:
-                        await member.remove_roles(mrole)
-                        #im really tired
-                        
         msg = await guild.get_channel(chn_id).fetch_message(msg_id)
         await msg.remove_reaction(emoji, member)
 
@@ -1160,12 +1159,18 @@ async def role_delreact_error(ctx, error):
 @role.command('addcategory')
 @commands.has_permissions(manage_roles=True)
 async def role_addcategory(ctx, category: str, *roles):
-    for role in roles:
-        for grole in ctx.guild.roles:
-            if grole.name == role:
-                role_categories.add_category(category, grole.id)
-                
-    await ctx.send(f'D--> Added {roles} to category {category}.')
+    # I'm going full mONKE, no actually idk if serializing it is more efficient.
+    converter = ctx.commands.RoleConverter().convert
+    role_ids = []
+    for role_text in roles:
+        try:
+            role = convert(role_text)
+        except commands.RoleNotFound:
+            await ctx.send(f'D--> Role {role} not found.')
+            continue
+        role_ids.append(role.id)
+    role_categories.add_category(category, role_ids)
+    await ctx.send(f'D--> Added the roles to category {category}.')
     
 @role_addcategory.error
 async def role_addcategory_error(ctx, error):
@@ -1583,5 +1588,5 @@ async def magic_8ball_error(ctx, error):
 # MAIN
 
 if __name__ == '__main__':
-    with guild_config, member_stalker, roleplay:
+    with guild_config, member_stalker, roleplay, role_categories:
         bot.run(get_token())
