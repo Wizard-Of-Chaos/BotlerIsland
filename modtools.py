@@ -40,6 +40,16 @@ class GuildConfig(Singleton):
     def __exit__(self, etype, evalue, etrace):
         self.save()
 
+    def save(self):
+        for guild_id, config in self.mod_channels.items():
+            try:
+                config['star_wars'] = self.punishers[guild_id].dump()
+            except KeyError:
+                if 'star_wars' not in config:
+                    config['star_wars'] = None
+        with open(self.fname, 'wb') as config_file:
+            pickle.dump(self.mod_channels, config_file)
+
     def load(self):
         try:
             with open(self.fname, 'rb') as config_file:
@@ -52,16 +62,6 @@ class GuildConfig(Singleton):
                 if guild not in guild_whitelist:
                     del self.mod_channels[guild]
                     continue
-
-    def save(self):
-        for guild_id, config in self.mod_channels.items():
-            try:
-                config['star_wars'] = self.punishers[guild_id].dump()
-            except KeyError:
-                if 'star_wars' not in config:
-                    config['star_wars'] = None
-        with open(self.fname, 'wb') as config_file:
-            pickle.dump(self.mod_channels, config_file)
 
     async def log(self, guild, log, *args, **kwargs):
         await self.bot.get_channel(
@@ -241,6 +241,10 @@ class MemberStalker(Singleton):
     def __exit__(self, etype, evalue, etrace):
         self.save()
 
+    def save(self):
+        with open(self.fname, 'wb') as member_file:
+            pickle.dump(self.member_data, member_file)
+
     def load(self):
         try:
             with open(self.fname, 'rb') as member_file:
@@ -248,10 +252,6 @@ class MemberStalker(Singleton):
         except (OSError, EOFError):
             self.member_data = defaultdict(member_callback)
             self.save()
-
-    def save(self):
-        with open(self.fname, 'wb') as member_file:
-            pickle.dump(self.member_data, member_file)
 
     def get(self, field, member):
         return self.member_data[member.id][member.guild.id][field]
@@ -287,14 +287,6 @@ class Roleplay(Singleton):
     def __exit__(self, etype, evalue, etrace):
         self.save()
 
-    def load(self):
-        try:
-            with open(self.fname, 'rb') as rolefile:
-                self.roledata = pickle.load(rolefile)
-        except (OSError, EOFError):
-            self.roledata = defaultdict(dictgrabber)
-            self.save()
-        
     def save(self):
         # Purge all empty message entries for sanity's sake.
         for chn_id, msg_dict in self.roledata.items():
@@ -303,6 +295,14 @@ class Roleplay(Singleton):
                     del msg_dict[msg_id]
         with open(self.fname, 'wb') as rolefile:
             pickle.dump(self.roledata, rolefile)
+
+    def load(self):
+        try:
+            with open(self.fname, 'rb') as rolefile:
+                self.roledata = pickle.load(rolefile)
+        except (OSError, EOFError):
+            self.roledata = defaultdict(dictgrabber)
+            self.save()
 
     @staticmethod
     def get_reaction_id(react):
@@ -326,7 +326,7 @@ class Roleplay(Singleton):
     def remove_reaction(self, msg, react):
         try:
             del self.roledata[msg.channel.id][msg.id][self.get_reaction_id(react)]
-        except IndexError:
+        except KeyError:
             print(response_bank.role_remove_react_error.format(react=react, msg=msg))
             return
         self.save()
@@ -346,25 +346,29 @@ class RoleCategories(Singleton):
     def __exit__(self, etype, evalue, etrace):
         self.save()
 
+    def save(self):
+        with open(self.fname, 'wb') as rolefile:
+            pickle.dump(self.catdata, rolefile)
+
     def load(self):
         try:
             with open(self.fname, 'rb') as catfile:
                 self.catdata = pickle.load(catfile)
-            if self.catdata.default_factory is not category_callback:
-                for key, value in self.catdata.items():
-                    self.catdata[key] = set(value)
-                self.catdata = defaultdict(category_callback)
         except (OSError, EOFError):
             self.catdata = defaultdict(category_callback)
-            self.save()
+            self.save()    
     
-    def add_category(self, category, roles):
-        self.catdata[roles[0].guild.id][category].union(roles)
+    def add_category(self, guild, category, roles):
+        self.catdata[guild.id][category].union(roles)
         self.save()
 
-    def save(self):
-        with open(self.fname, 'wb') as rolefile:
-            pickle.dump(self.catdata, rolefile)
+    def remove_category(self, guild, category):
+        try:
+            del self.catdata[guild.id][category]
+        except KeyError:
+            return False
+        self.save()
+        return True
             
     
 class Suggestions(Singleton):
@@ -385,6 +389,10 @@ class Suggestions(Singleton):
         except (OSError, EOFError):
             self.suggestdata = defaultdict() 
             self.save()
+
+    def save(self):
+        with open(self.fname, 'wb') as suggests:
+            pickle.dump(self.suggestdata, suggests)
             
     def add_suggestion(self, id, author, channel):
         self.suggestdata[id] = (channel, author)
@@ -393,6 +401,4 @@ class Suggestions(Singleton):
     def remove_suggestion(self, id):
         removed = self.suggestdata.pop(id)
         
-    def save(self):
-        with open(self.fname, 'wb') as suggests:
-            pickle.dump(self.suggestdata, suggests)
+    
