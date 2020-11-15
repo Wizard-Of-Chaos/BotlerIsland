@@ -1625,7 +1625,7 @@ async def response_from_dev(ctx, msg_id: int, *, response: str):
             continue
         if not msg.embeds:
             continue
-        embed = msg.embed[0]
+        embed = msg.embeds[0]
         suggestion = embed.description
         if not embed.fields:
             continue
