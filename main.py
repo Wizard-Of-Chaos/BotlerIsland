@@ -8,7 +8,7 @@ import bot_rolecommands
 import bot_usercommands
 import bot_modcommands
 
-def get_token():
+def get_token() -> str:
     with open('token.dat', 'r') as tokenfile:
         raw = tokenfile.read().strip()
         return ''.join(chr(int(''.join(c), 16)) for c in zip(*[iter(raw)]*2))

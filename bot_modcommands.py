@@ -8,7 +8,7 @@ from discord.ext import commands
 
 from cogs_textbanks import query_bank, response_bank
 from cogs_dailycounts import daily_usr, daily_msg
-from bot_common import bot, CONST_ADMINS, CONST_AUTHOR, guild_config
+from bot_common import bot, CONST_ADMINS, CONST_AUTHOR, guild_config, stats_tracker
 
 def user_or_perms(user_id, **perms):
     perm_check = commands.has_permissions(**perms).predicate
@@ -216,6 +216,7 @@ async def autoreact_error(ctx, error):
     raise error
 
 @bot.command()
+@commands.bot_has_permissions(send_messages=True)
 @commands.has_guild_permissions(manage_roles=True)
 async def ignoreplebs(ctx):
     if guild_config.toggle(ctx, 'ignoreplebs'):
@@ -231,6 +232,7 @@ async def ignoreplebs_error(ctx, error):
     raise error
 
 @bot.command()
+@commands.bot_has_permissions(send_messages=True)
 @commands.has_permissions(manage_roles=True)
 async def togglelatex(ctx):
     if guild_config.toggle(ctx, 'enablelatex'):
@@ -301,12 +303,10 @@ async def channel_ban(ctx, member: dc.Member, *, flavor=''):
             )
         await guild_config.log(ctx.guild, 'modlog', embed=embed)
         await ctx.message.delete()
-        await ctx.send(f'D--> Abberant {member} has been CRUSHED by my STRONG hooves.')
-        await aio.sleep(10)
-        async for msg in ctx.channel.history(limit=128):
-            if msg.author.id == bot.user.id and msg.content.startswith('D--> Abberant'):
-                await msg.delete()
-                break
+        await ctx.send(
+            f'D--> Abberant {member} has been CRUSHED by my STRONG hooves.\n\n'
+            f'Reason and/or Duration: {flavor or "None specified."}'
+            )
         # BOOM! SUUUUUUUUCK - IT!
 
 @channel_ban.error
@@ -352,9 +352,15 @@ async def channel_unban_error(ctx, error):
 async def raidban(ctx, *args):
     if not args:
         return
+    members = []
     for arg in args:
         member = await commands.UserConverter().convert(ctx, arg)
-        await ctx.guild.ban(member, reason='Banned by anti-raid command.', delete_message_days=1)
+        members.append(f'`{member}`')
+        await ctx.guild.ban(
+            member,
+            reason='Banned by anti-raid command.',
+            delete_message_days=1,
+            )
     embed = dc.Embed(
         color=ctx.author.color,
         timestamp=ctx.message.created_at,
@@ -364,6 +370,10 @@ async def raidban(ctx, *args):
         icon_url=ctx.author.avatar_url,
         )
     await guild_config.log(ctx.guild, 'modlog', embed=embed)
+    await ctx.message.delete()
+    await ctx.send(
+        f'D--> The abbreants listed below have been STRONGLY executed:\n{", ".join(members)}'
+        )
 
 @raidban.error
 async def raidban_error(ctx, error):
