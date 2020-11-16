@@ -7,6 +7,7 @@ import bot_events
 import bot_rolecommands
 import bot_usercommands
 import bot_modcommands
+import stupid_arquius_tricks
 
 def get_token():
     with open('token.dat', 'r') as tokenfile:
