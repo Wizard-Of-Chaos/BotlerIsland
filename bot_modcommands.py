@@ -252,7 +252,7 @@ async def togglelatex_error(ctx, error):
 # BAN COMMANDS
 
 @bot.group()
-@commands.has_guild_permissions(manage_roles=True)
+@commands.has_guild_permissions(send_messages=True, manage_roles=True)
 async def channel(ctx):
     # ALRIGHT HUNGOVER WIZARD OF CHAOS CODE IN THE HIZ-OUSE
     # WE GONNA WRITE SOME MOTHERFUCKING BAN COMMANDS; INITIALIZE THAT SHIT
@@ -319,6 +319,9 @@ async def channel_ban_error(ctx, error):
 @channel.command(name='unban')
 async def channel_unban(ctx, member: dc.Member):
     if not member:
+        return
+    if member.id == bot.user.id:
+        await ctx.send('<:professionalism:778997791829000203>')
         return
     for role in member.roles:
         if ctx.channel.overwrites_for(role).pair()[1].send_messages:
@@ -431,8 +434,12 @@ async def special_mod_command_freeze_error(ctx, error):
 
 @special_mod_command.command(name='HANDO')
 @commands.bot_has_permissions(manage_messages=True)
-async def special_mod_command_purge(ctx):
-    msgs = await ctx.channel.purge(limit=11)
+async def special_mod_command_purge(ctx, limit: int=10):
+    await ctx.message.delete()
+    if limit < 1:
+        await ctx.send('D--> You foolish creature.')
+        return
+    msgs = await ctx.channel.purge(limit=limit)
     embed = dc.Embed(
         color=dc.Color(0x303EBB),
         timestamp=ctx.message.created_at,
