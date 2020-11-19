@@ -1,5 +1,6 @@
 # For most moderation commands.
 from datetime import datetime
+from collections import Counter
 
 import asyncio as aio
 
@@ -416,10 +417,11 @@ async def special_mod_command_freeze(ctx):
         '663453347763716110/667117771099734052/ZAWARUDO.gif'
         )
     await ctx.channel.send(embed=embed) # Order of operations is important
-    await ctx.channel.set_permissions(
-        ctx.guild.roles[0],
-        overwrite=dc.PermissionOverwrite(send_messages=False)
-        )
+    perms = ctx.channel.overwrites_for(ctx.guild.roles[0])
+    if perms.pair()[1].read_messages:
+        return
+    perms.update(send_messages=False)
+    await ctx.channel.set_permissions(ctx.guild.roles[0], overwrite=perms)
 
 @special_mod_command_freeze.error
 async def special_mod_command_freeze_error(ctx, error):
@@ -448,11 +450,7 @@ async def special_mod_command_purge(ctx):
     await ctx.channel.send(embed=embed)
     if not guild_config.getlog(ctx.guild, 'msglog'): # Log immediately after.
         return
-    user_msgs = {}
-    for msg in msgs:
-        if msg.author not in user_msgs:
-            user_msgs[msg.author] = 0
-        user_msgs[msg.author] += 1
+    user_msgs = Counter(msg.author for msg in msgs)
     log_embed = dc.Embed(
         color=dc.Color.blue(),
         timestamp=ctx.message.created_at,

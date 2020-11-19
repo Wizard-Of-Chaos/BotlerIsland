@@ -332,7 +332,7 @@ async def magic_8ball(ctx, *, query=''):
             '663453347763716110/776420647625949214/Linky.gif'
             ),
         )
-    if random.random() < 0.01:
+    if random.random() < 0.001:
         embed.set_image(
             url='https://cdn.discordapp.com/attachments/'
             '663453347763716110/778782271775178782/EXCEPTIONAL.png'
