@@ -1,11 +1,12 @@
 #Really, really stupid commands.
-
 import random
-import bot_common
 import discord as dc
-from cogs_textbanks import query_bank, response_bank
+from discord.ext import commands
 
-bot.group()
+from cogs_textbanks import query_bank, response_bank
+from bot_common import bot
+
+@bot.group()
 @commands.bot_has_permissions(send_messages=True)
 async def generate(ctx):
     if ctx.invoked_subcommand is None:

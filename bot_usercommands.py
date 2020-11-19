@@ -321,13 +321,9 @@ async def render_latex_error(ctx, error):
 @bot.command(name='linky', aliases=['8ball'])
 @commands.bot_has_permissions(send_messages=True)
 async def magic_8ball(ctx, *, query=''):
-    await aio.sleep(0)
-    msg = re.sub(r'<@!(\d{18,})>', get_name, guild_config.random_linky(ctx.message.content))
-    msg = re.sub(r'(?<!<)(https?://[^\s]+)(?!>)', r'<\1>', msg)
     admin = ctx.guild.get_member(CONST_ADMINS[1])
     embed = dc.Embed(
         color=admin.color if admin else dc.Color.green(),
-        description=msg,
         )
     embed.set_author(
         name=f'{admin.name if admin else "Linky"} says:',
@@ -336,6 +332,15 @@ async def magic_8ball(ctx, *, query=''):
             '663453347763716110/776420647625949214/Linky.gif'
             ),
         )
+    if random.random() < 0.01:
+        embed.set_image(
+            url='https://cdn.discordapp.com/attachments/'
+            '663453347763716110/778782271775178782/EXCEPTIONAL.png'
+            )
+        await ctx.send(embed=embed)
+        return
+    msg = re.sub(r'<@!(\d{18,})>', get_name, guild_config.random_linky(ctx.message.content))
+    embed.description = re.sub(r'(?<!<)(https?://[^\s]+)(?!>)', r'<\1>', msg)
     await ctx.send(embed=embed)
 
 @magic_8ball.error

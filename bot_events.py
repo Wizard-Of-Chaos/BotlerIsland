@@ -39,7 +39,7 @@ async def grab_attachments(msg):
 
 @bot.event
 async def on_ready(): # Bot starts
-    print(response_bank.bot_startup.format(version='1.3.0'))
+    print(response_bank.bot_startup.format(version='1.3.4'))
     for guild in bot.guilds:
         if guild.id not in guild_whitelist:
             await guild.leave()
