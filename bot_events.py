@@ -7,8 +7,7 @@ from cogs_textbanks import query_bank, response_bank
 from cogs_dailycounts import post_dailies, daily_usr, daily_msg
 from bot_common import (
     bot, guild_whitelist, CONST_ADMINS, CONST_AUTHOR,
-    guild_config, member_stalker, emoji_roles,
-    process_role_grant,
+    guild_config, member_stalker,
     )
 
 image_exts = ('png', 'gif', 'jpg', 'jpeg', 'jpe', 'jfif')
@@ -49,22 +48,6 @@ async def on_ready(): # Bot starts
         )
     post_dailies.start()
     print(response_bank.tasks_started)
-    print(response_bank.process_reacts)
-    # This is a horrible fucking way of granting all the pending roles. Too bad!
-    for chn_id, msg_dict in emoji_roles:
-        channel = bot.get_channel(chn_id)
-        for msg_id, emoji_dict in msg_dict.items():
-            try:
-                msg = await channel.fetch_message(msg_id)
-            except dc.NotFound: # This message entry will be cleared when the bot closes.
-                emoji_dict.clear()
-                continue
-            for react in msg.reactions:
-                if (emoji_id := emoji_roles.get_react_id(react)) in emoji_dict:
-                    role = msg.guild.get_role(emoji_dict[emoji_id])
-                    members = [m async for m in react.users() if m.id != bot.user.id]
-                    await process_role_grant(msg, react, role, members)
-    print(response_bank.process_reacts_complete)
     print(response_bank.ready_prompt)
 
 @bot.event
@@ -348,75 +331,3 @@ async def on_message_delete(msg): # Log deleted messages
             inline=False,
             )
     await guild_config.log(guild, 'msglog', embed=embed)
-
-@bot.event
-async def on_raw_reaction_add(payload): # Reaction is added to message
-    # Not on_reaction_add because of this weird assed queue of messages CHRIST i hate discord
-    # Because discord can't save every message in RAM, this is what suffering looks like.
-    guild = bot.get_guild(payload.guild_id)
-    if guild is None:
-        return
-    member = guild.get_member(payload.user_id)
-    if member.id == bot.user.id:
-        return 
-    emoji = payload.emoji
-    chn_id = payload.channel_id
-    msg_id = payload.message_id
-    # Checks if the message is in the dict
-    if react_map := emoji_roles.get_reactmap(chn_id, msg_id):
-        # Checks if the react is in the message
-        try:
-            role = guild.get_role(react_map[emoji.id])
-        except KeyError: # If emoji is not in the message, ignore.
-            return
-        except commands.RoleNotFound as exc:
-            print(exc.args[0])
-            return
-        # There should be another exception clause here for missing roles but fuck that shit
-        # Toggle role addition/removal.
-        msg = await guild.get_channel(chn_id).fetch_message(msg_id)
-        await process_role_grant(msg, emoji, role, (member,))
-
-@bot.event
-async def on_raw_reaction_remove(payload): # Reaction is removed from message
-    # If reacts from the bot are removed from messages under the role reacts, remove the associated data.
-    if (guild := bot.get_guild(payload.guild_id)) is None:
-        return
-    if payload.user_id != bot.user.id:
-        return
-    emoji = payload.emoji
-    chn_id = payload.channel_id
-    msg_id = payload.message_id
-    # Checks if the message is in the dict
-    if react_map := emoji_roles.get_reactmap(chn_id, msg_id):
-        # Find the reaction with matching emoji, then prune all further reacts.
-        msg = await guild.get_channel(chn_id).fetch_message(msg_id)
-        emoji_roles.remove_reaction(msg, emoji)
-        for react in msg.reactions:
-            if str(react.emoji) == str(emoji):
-                async for member in react.users():
-                    await msg.remove_reaction(emoji, member)
-                return
-
-@bot.event
-async def on_raw_reaction_clear_emoji(payload): # All reacts of one emoji cleared from message
-    # If all reacts of a certain emoji are removed, remove associated data if it exists.
-    if (guild := bot.get_guild(payload.guild_id)) is None:
-        return
-    emoji = payload.emoji
-    chn_id = payload.channel_id
-    msg_id = payload.message_id
-    # Checks if the message is in the dict
-    if react_map := emoji_roles.get_reactmap(chn_id, msg_id):
-        # Find the reaction with matching emoji, then prune all further reacts.
-        msg = await guild.get_channel(chn_id).fetch_message(msg_id)
-        emoji_roles.remove_reaction(msg, emoji)
-
-@bot.event
-async def on_raw_reaction_clear(payload): # All reacts cleared from message
-    # If all reacts from a message are removed, remove associated data if it exists.
-    if (guild := bot.get_guild(payload.guild_id)) is None:
-        return
-    emoji_roles.remove_message(
-        await guild.get_channel(payload.channel_id).fetch_message(payload.message_id)
-        )

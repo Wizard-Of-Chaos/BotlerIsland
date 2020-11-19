@@ -12,13 +12,51 @@ from discord.ext import tasks, commands
 
 from cogs_textbanks import query_bank, response_bank
 
-guild_whitelist = (152981670507577344, 663452978237407262, 402880303065989121, 431698070510501891)
+guild_whitelist = (
+    152981670507577344, 663452978237407262, 402880303065989121, 431698070510501891,
+    )
 
-def callback(): # Lambdas can't be pickled, but named functions can.
-    return {
-    'usrlog': None, 'msglog': None, 'modlog': None,
-    'autoreact': set(), 'star_wars': {}, 'ignoreplebs': set(), 'enablelatex': set(),
-    }
+class CogtextManager(commands.Cog):
+    _generate_empty = None
+
+    def __init__(self, bot):
+        self._fname = os.path.join('data', self.__class__.__name__+'.pkl')
+        self.bot = bot
+        self.data_load()
+
+    def cleanup_on_save(self):
+        """This function is called to clean up empty entries."""
+
+    def cleanup_on_load(self):
+        """
+        This function is called modify structure between refactors to ensure continuity.
+        """
+
+    def data_save(self):
+        """
+        Save the data file. Currently uses pickle, which isn't the smartest format.
+        This will work for now.
+        """
+        self.cleanup_on_save()
+        with open(self._fname, 'wb') as data_file:
+            pickle.dump(self.data, data_file)
+
+    def data_load(self):
+        """Load from the data file."""
+        try:
+            with open(self._fname, 'rb') as data_file:
+                self.data = pickle.load(data_file)
+        except (OSError, EOFError):
+            self.data = self._generate_empty()
+            with open(self._fname, 'wb') as data_file:
+                pickle.dump(self.data, data_file)
+        else:
+            self.cleanup_on_load()
+
+    def cog_unload(self):
+        """Ensures saving of the updated data."""
+        self.data_save()
+
 
 class Singleton(object):
     _self_instance_ref = None
@@ -27,6 +65,12 @@ class Singleton(object):
             cls._self_instance_ref = super().__new__(cls)
         return cls._self_instance_ref
 
+
+def callback(): # Lambdas can't be pickled, but named functions can.
+    return {
+    'usrlog': None, 'msglog': None, 'modlog': None,
+    'autoreact': set(), 'star_wars': {}, 'ignoreplebs': set(), 'enablelatex': set(),
+    }
 
 class GuildConfig(Singleton):
     def __init__(self, bot, fname):
@@ -60,9 +104,9 @@ class GuildConfig(Singleton):
             self.mod_channels = defaultdict(callback)
             self.save()
         else:
-            for guild, config in self.mod_channels.copy().items():
-                if guild not in guild_whitelist:
-                    del self.mod_channels[guild]
+            for guild_id, config in self.mod_channels.copy().items():
+                if guild_id not in guild_whitelist:
+                    del self.mod_channels[guild_id]
                     continue
 
     async def log(self, guild, log, *args, **kwargs):
@@ -258,118 +302,8 @@ class MemberStalker(Singleton):
 def dictgrabber():
     return defaultdict(dict)
 
-class EmojiRoles(Singleton):
-    def __init__(self, fname):
-        self.fname = os.path.join('data', fname)
-        self.load()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, etype, evalue, etrace):
-        self.save()
-
-    def __iter__(self):
-        for key, value in self.role_data.items():
-            yield (key, value)
-
-    def save(self):
-        # Purge all empty message entries for sanity's sake.
-        for chn_id, msg_dict in self.role_data.items():
-            for msg_id in list(msg_dict):
-                if not msg_dict[msg_id]:
-                    del msg_dict[msg_id]
-        with open(self.fname, 'wb') as rolefile:
-            pickle.dump(self.role_data, rolefile)
-
-    def load(self):
-        try:
-            with open(self.fname, 'rb') as rolefile:
-                self.role_data = pickle.load(rolefile)
-        except (OSError, EOFError):
-            self.role_data = defaultdict(dictgrabber)
-            self.save()
-
-    @staticmethod
-    def get_react_id(react):
-        if isinstance(react, dc.Reaction):
-            react = react.emoji
-        if isinstance(react, (dc.Emoji, dc.PartialEmoji)):
-            return react.id
-        return hash(react)
-
-    def get_reactmap(self, chn_id, msg_id):
-        return self.role_data[chn_id][msg_id]
-            
-    def add_reaction(self, msg, react, role):
-        self.role_data[msg.channel.id][msg.id][self.get_react_id(react)] = role.id
-        self.save()
-
-    def remove_message(self, msg):
-        try:
-            del self.role_data[msg.channel.id][msg.id]
-        except KeyError:
-            return
-        self.save()
-    
-    def remove_reaction(self, msg, react):
-        try:
-            del self.role_data[msg.channel.id][msg.id][self.get_react_id(react)]
-        except KeyError:
-            print(response_bank.role_remove_react_error.format(react=react, msg=msg))
-            return
-        self.save()
-
-
 def category_callback():
     return defaultdict(set)
-
-class RoleCategories(Singleton):
-    def __init__(self, fname):
-        self.fname = os.path.join('data', fname)
-        self.load()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, etype, evalue, etrace):
-        self.save()
-
-    def save(self):
-        with open(self.fname, 'wb') as rolefile:
-            pickle.dump(self.category_data, rolefile)
-
-    def load(self):
-        try:
-            with open(self.fname, 'rb') as catfile:
-                self.category_data = pickle.load(catfile)
-        except (OSError, EOFError):
-            self.category_data = defaultdict(category_callback)
-            self.save()    
-    
-    def add_category(self, guild, category, roles):
-        self.category_data[guild.id][category].update(roles)
-        self.save()
-
-    def remove_category(self, guild, category):
-        try:
-            del self.category_data[guild.id][category]
-        except KeyError:
-            return False
-        self.save()
-        return True
-
-    async def purge_category(self, role, member):
-        for category in self.category_data[role.guild.id].values():
-            if role.id in category:
-                break
-        else:
-            return False
-        for member_role in member.roles:
-            if member_role.id in category:
-                await member.remove_roles(member_role)
-        return True
-            
     
 class Suggestions(Singleton):
     def __init__(self, fname):
