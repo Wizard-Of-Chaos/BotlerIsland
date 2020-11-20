@@ -12,6 +12,8 @@ from bot_common import bot, CogtextManager
 
 EmojiUnion = Union[dc.Emoji, dc.PartialEmoji, str]
 
+react_timetable = {}
+
 def get_react_id(react: Union[dc.Reaction, EmojiUnion]) -> int:
     if isinstance(react, dc.Reaction):
         react = react.emoji
@@ -39,11 +41,9 @@ async def process_role_grant(bot, msg, react, role, members) -> None:
     if role_manager is None:
         raise RuntimeError(response_bank.unexpected_state)
     for member in members:
+        await role_manager.purge_category(role, member)
         if role not in member.roles:
-            await role_manager.purge_category(role, member)
             await member.add_roles(role)
-        else:
-            await member.remove_roles(role)
         await msg.remove_reaction(react, member)
 
 class ReactRoleTagger(CogtextManager):
@@ -93,7 +93,7 @@ class ReactRoleTagger(CogtextManager):
                     if (emoji_id := get_react_id(react)) in emoji_dict:
                         role = msg.guild.get_role(emoji_dict[emoji_id])
                         members = [m async for m in react.users() if m.id != bot.user.id]
-                        await process_role_grant(msg, react, role, members)
+                        await process_role_grant(self.bot, msg, react, role, members)
         print(response_bank.process_reacts_complete)
 
     @commands.Cog.listener()
@@ -122,7 +122,12 @@ class ReactRoleTagger(CogtextManager):
             # There should be another exception clause here for missing roles but fuck that shit
             # Toggle role addition/removal.
             msg = await guild.get_channel(chn_id).fetch_message(msg_id)
-            await process_role_grant(msg, emoji, role, (member,))
+            if (last_react := react_timetable.get(member.id)) is not None:
+                if (datetime.utcnow() - last_react).seconds < 5*60:
+                    await msg.remove_reaction(emoji, member)
+                    return
+            react_timetable[member.id] = datetime.utcnow()
+            await process_role_grant(self.bot, msg, emoji, role, (member,))
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload): # Reaction is removed from message
