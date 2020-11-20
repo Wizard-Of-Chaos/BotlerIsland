@@ -27,9 +27,7 @@ CONST_AUTHOR = (125433170047795200, 257144766901256192) # 9, WoC
 
 async def process_role_grant(msg, react, role, members):
     for member in members:
+        await role_categories.purge_category(role, member)
         if role not in member.roles:
-            await role_categories.purge_category(role, member)
             await member.add_roles(role)
-        else:
-            await member.remove_roles(role)
         await msg.remove_reaction(react, member)

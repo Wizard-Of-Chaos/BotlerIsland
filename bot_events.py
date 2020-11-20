@@ -349,6 +349,8 @@ async def on_message_delete(msg): # Log deleted messages
             )
     await guild_config.log(guild, 'msglog', embed=embed)
 
+react_timetable = {}
+
 @bot.event
 async def on_raw_reaction_add(payload): # Reaction is added to message
     # Not on_reaction_add because of this weird assed queue of messages CHRIST i hate discord
@@ -372,9 +374,13 @@ async def on_raw_reaction_add(payload): # Reaction is added to message
         except commands.RoleNotFound as exc:
             print(exc.args[0])
             return
-        # There should be another exception clause here for missing roles but fuck that shit
         # Toggle role addition/removal.
         msg = await guild.get_channel(chn_id).fetch_message(msg_id)
+        if (last_react := react_timetable.get(member.id)) is not None:
+            if (datetime.utcnow() - last_react).seconds < 5*60:
+                await msg.remove_reaction(emoji, member)
+                return
+        react_timetable[member.id] = datetime.utcnow()
         await process_role_grant(msg, emoji, role, (member,))
 
 @bot.event
