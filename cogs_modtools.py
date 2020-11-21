@@ -14,12 +14,6 @@ from cogs_textbanks import query_bank, response_bank
 
 guild_whitelist = (152981670507577344, 663452978237407262, 402880303065989121, 431698070510501891)
 
-def callback(): # Lambdas can't be pickled, but named functions can.
-    return {
-    'usrlog': None, 'msglog': None, 'modlog': None,
-    'autoreact': set(), 'star_wars': {}, 'ignoreplebs': set(), 'enablelatex': set(),
-    }
-
 class Singleton(object):
     _self_instance_ref = None
     def __new__(cls, *args, **kwargs):
@@ -27,6 +21,12 @@ class Singleton(object):
             cls._self_instance_ref = super().__new__(cls)
         return cls._self_instance_ref
 
+
+def callback(): # Lambdas can't be pickled, but named functions can.
+    return {
+    'usrlog': None, 'msglog': None, 'modlog': None,
+    'autoreact': set(), 'star_wars': {}, 'ignoreplebs': set(), 'enablelatex': set(),
+    }
 
 class GuildConfig(Singleton):
     def __init__(self, bot, fname):
