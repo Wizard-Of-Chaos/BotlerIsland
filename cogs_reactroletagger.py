@@ -27,13 +27,13 @@ async def get_msg_from_link(ctx, msglink: str) -> Optional[dc.Message]:
         msg = await ctx.guild.get_channel(int(chn_id)).fetch_message(int(msg_id))
     except dc.NotFound:
         await ctx.send(response_bank.message_error)
-        return
+        return None
     except dc.Forbidden:
         await ctx.send(response_bank.channel_perms_error)
-        return
+        return None
     except dc.HTTPException:
         await ctx.send(response_bank.unexpected_state)
-        return
+        return None
     return msg
 
 async def process_role_grant(bot, msg, react, role, members) -> None:
