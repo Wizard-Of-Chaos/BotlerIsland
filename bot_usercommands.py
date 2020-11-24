@@ -310,7 +310,7 @@ async def render_latex(ctx, *, raw_latex=''):
             )
         embed.set_image(url=latex_image_url)
         await ctx.send(embed=embed)
-        await ctx.message.delete()
+    await ctx.message.delete()
 
 @render_latex.error
 async def render_latex_error(ctx, error):
@@ -332,7 +332,7 @@ async def magic_8ball(ctx, *, query=''):
             '663453347763716110/776420647625949214/Linky.gif'
             ),
         )
-    if random.random() < 0.001:
+    if random.randint(1, 500) == 1:
         embed.set_image(
             url='https://cdn.discordapp.com/attachments/'
             '663453347763716110/778782271775178782/EXCEPTIONAL.png'
@@ -396,6 +396,10 @@ async def response_from_dev(ctx, msg_id: int, *, response: str):
             continue
         if embed.fields[0].value == f'`{msg_id}`':
             break
+    else:
+        await ctx.send('D--> Suggestion does not exist.')
+        stored_suggestions.remove_suggestion(msg_id)
+        return
     embed = dc.Embed(
         color=member.color,
         description=response,
