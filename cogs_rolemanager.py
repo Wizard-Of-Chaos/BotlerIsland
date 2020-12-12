@@ -70,6 +70,9 @@ class RoleManager(CogtextManager):
 
     @role.command(name='add')
     async def role_add(self, ctx, role: dc.Role):
+        if role in ctx.author.roles:
+            await ctx.send('D--> You already have this role.')
+            return
         if not await self.purge_category(role, ctx.author):
             await ctx.send('D--> You are not allowed to self-assign this role.')
             return

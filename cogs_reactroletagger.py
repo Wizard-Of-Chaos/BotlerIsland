@@ -197,7 +197,7 @@ class ReactRoleTagger(CogtextManager):
     @commands.has_permissions(manage_roles=True)
     async def reactrole_grant(self, ctx, msglink: str, emoji: EmojiUnion, role: dc.Role):
         # Force all who reacted with the specified emoji in the given message link to be granted a role.
-        if (msg := get_msg_from_link(ctx, msglink)) is None:
+        if (msg := await get_msg_from_link(ctx, msglink)) is None:
             return
         try:
             react = next(
@@ -232,7 +232,7 @@ class ReactRoleTagger(CogtextManager):
     @commands.has_permissions(manage_roles=True)
     async def reactrole_add(self, ctx, msglink: str, emoji: EmojiUnion, role: dc.Role):
         # Add a reaction to a message that will be attached to a toggleable role when reacted to.
-        if (msg := get_msg_from_link(ctx, msglink)) is None:
+        if (msg := await get_msg_from_link(ctx, msglink)) is None:
             return
         try:
             await msg.add_reaction(emoji)
