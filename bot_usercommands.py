@@ -19,8 +19,8 @@ from bot_common import (
 
 consonants = "BCDFGHJKLMNPQRSTVXZ"
 vowels = "AEIOUWY"
+weights = ((7, 19), (3, 1), (7, 15), (2, 9), (7, 2), (3, 7))
 def generate_troll_name():
-    weights = ((7, 19), (3, 1), (7, 15), (2, 9), (7, 2), (3, 7))
     return ' '.join(
         ''.join(
             random.choice(random.choices((vowels, consonants), i)[0])
