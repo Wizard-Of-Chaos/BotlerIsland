@@ -7,7 +7,7 @@ import discord as dc
 from discord.ext import tasks
 
 from cogs_textbanks import query_bank, response_bank
-from bot_common import bot, guild_whitelist
+from bot_common import bot, guild_whitelist, CONST_ADMINS, CONST_AUTHOR
 
 daily_msg = {guild_id: Counter() for guild_id in guild_whitelist}
 daily_usr = {guild_id: Counter({'join': 0, 'leave': 0}) for guild_id in guild_whitelist}
