@@ -265,7 +265,9 @@ async def on_message(msg): # Message posted event
         await msg.add_reaction('❤️')
     elif ctx.author.id == CONST_ADMINS[1]:
         if ctx.channel.id == guild_config.getlog(msg.guild, 'modlog'):
-            return 
+            return
+        if ctx.channel.category_id == 360676396172836867:
+            return
         guild_config.log_linky(msg)
    
 @bot.event

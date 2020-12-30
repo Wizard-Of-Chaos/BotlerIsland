@@ -1,6 +1,7 @@
 # The ReactRoleTagger cog and all associated commands and data.
 import os
 import pickle
+from datetime import datetime
 from collections import defaultdict
 from typing import Union, List, Optional
 
@@ -71,7 +72,7 @@ class ReactRoleTagger(CogtextManager):
     
     def remove_reaction(self, msg, react):
         try:
-            del self.role_data[msg.channel.id][msg.id][get_react_id(react)]
+            del self.data[msg.channel.id][msg.id][get_react_id(react)]
         except KeyError:
             print(response_bank.role_remove_react_error.format(react=react, msg=msg))
             return
@@ -110,7 +111,7 @@ class ReactRoleTagger(CogtextManager):
         chn_id = payload.channel_id
         msg_id = payload.message_id
         # Checks if the message is in the dict
-        if react_map := self.role_data[chn_id][msg_id]:
+        if react_map := self.data[chn_id][msg_id]:
             # Checks if the react is in the message
             try:
                 role = guild.get_role(react_map[emoji.id])
@@ -140,7 +141,7 @@ class ReactRoleTagger(CogtextManager):
         chn_id = payload.channel_id
         msg_id = payload.message_id
         # Checks if the message is in the dict
-        if react_map := self.role_data[chn_id][msg_id]:
+        if react_map := self.data[chn_id][msg_id]:
             # Find the reaction with matching emoji, then prune all further reacts.
             msg = await guild.get_channel(chn_id).fetch_message(msg_id)
             self.remove_reaction(msg, emoji)
@@ -159,7 +160,7 @@ class ReactRoleTagger(CogtextManager):
         chn_id = payload.channel_id
         msg_id = payload.message_id
         # Checks if the message is in the dict
-        if react_map := self.role_data[chn_id][msg_id]:
+        if react_map := self.data[chn_id][msg_id]:
             # Find the reaction with matching emoji, then prune all further reacts.
             msg = await guild.get_channel(chn_id).fetch_message(msg_id)
             self.remove_reaction(msg, emoji)
@@ -171,7 +172,7 @@ class ReactRoleTagger(CogtextManager):
             return
         msg = await guild.get_channel(payload.channel_id).fetch_message(payload.message_id)
         try:
-            del self.role_data[msg.channel.id][msg.id]
+            del self.data[msg.channel.id][msg.id]
         except KeyError:
             return
         self.data_save()
@@ -239,7 +240,7 @@ class ReactRoleTagger(CogtextManager):
         except dc.HTTPException:
             await ctx.send(response_bank.reactrole_add_error)
             return
-        self.role_data[msg.channel.id][msg.id][get_react_id(emoji)] = role.id
+        self.data[msg.channel.id][msg.id][get_react_id(emoji)] = role.id
         self.data_save()
         await ctx.send(response_bank.reactrole_add_confirm.format(role=role))
 
