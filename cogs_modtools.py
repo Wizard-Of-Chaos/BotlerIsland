@@ -74,7 +74,6 @@ def callback(): # Lambdas can't be pickled, but named functions can.
 
 class GuildConfig(Singleton):
     def __init__(self, bot, fname):
-        StarWarsPunisher.bot = bot
         self.bot = bot
         self.fname = os.path.join('data', fname)
         self.load()
