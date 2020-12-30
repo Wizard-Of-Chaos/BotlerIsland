@@ -7,7 +7,7 @@ import asyncio as aio
 import discord as dc
 from discord.ext import commands
 
-from cogs_textbanks import query_bank, response_bank
+from cogs_textbanks import url_bank, query_bank, response_bank
 from cogs_dailycounts import daily_usr, daily_msg
 from bot_common import bot, CONST_ADMINS, CONST_AUTHOR, guild_config, stats_tracker
 
@@ -85,20 +85,15 @@ async def modhelp(ctx):
             value='(Ban Members only) Ban a list of raiders.',
             inline=False
             )
-    if perms.view_audit_log:
+    if perms.manage_channels:
         embed.add_field(
             name='`config (msglog|usrlog|modlog)`',
-            value='(View Audit only) Sets the appropriate log channel.',
-            inline=False
-            )
-        embed.add_field(
-            name='`execute order 66`',
-            value='(View Audit only) Declares all Jedi to be enemies of the Republic for 5 minutes.',
+            value='(Manage Channels only) Sets the appropriate log channel.',
             inline=False
             )
         embed.add_field(
             name='`ZA (WARUDO|HANDO)`',
-            value='(View Audit Only) Utilizes highly dangerous Stand power to moderate the server.',
+            value='(Manage Channels Only) Utilizes highly dangerous Stand power to moderate the server.',
             inline=False
             )
     await ctx.send(embed=embed)
@@ -162,7 +157,7 @@ async def modperms(ctx):
 @modperms.error
 async def modperms_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
-        await ctx.send('D--> It seems you have insufficient permission elevations.')
+        await ctx.send(response_bank.perms_error)
         return
     elif isinstance(error, commands.BotMissingPermissions):
         return
@@ -173,23 +168,14 @@ async def modperms_error(ctx, error):
 
 @bot.command()
 @commands.bot_has_permissions(send_messages=True)
-@commands.has_permissions(view_audit_log=True)
+@commands.has_permissions(manage_channels=True)
 async def config(ctx, log: str):
-    if log not in ('usrlog', 'msglog', 'modlog'):
-        await ctx.send(
-            'D--> It seems that you have attempted to create an invalid log. '
-            'Would you like to try again? Redos are free, you know.'
-            )
-        return
-    await ctx.send(f'D--> The {log} channel has been set and saved.')
+    guild_config.setlog(ctx, log)
 
 @config.error
 async def config_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
-        await ctx.send(
-            f'D--> It seems that you don\'t have the appropriate permissions for this command. '
-            f'I STRONGLY recommend you back off or get bucked off, {ctx.author.name}.'
-            )
+        await ctx.send(response_bank.perms_error)
         return
     elif isinstance(error, commands.BotMissingPermissions):
         return
@@ -254,19 +240,12 @@ async def togglelatex_error(ctx, error):
 @bot.group()
 @commands.has_guild_permissions(send_messages=True, manage_roles=True)
 async def channel(ctx):
-    # ALRIGHT HUNGOVER WIZARD OF CHAOS CODE IN THE HIZ-OUSE
-    # WE GONNA WRITE SOME MOTHERFUCKING BAN COMMANDS; INITIALIZE THAT SHIT
     if ctx.invoked_subcommand is None:
         await ctx.message.delete()
-        await ctx.send(
-            'D--> Usage of the channel function: `channel (ban|unban) <user>`\n\n'
-            '`channel ban <user>`: Apply lowest available channel mute role to user.\n'
-            '`channel unban <user>`: Revoke lowest available channel mute role from user.\n'
-            '<user> can be the user id, mention, or name.'
-            )
+        await ctx.send(response_bank.channel_usage)
         await aio.sleep(4)
         async for msg in ctx.channel.history(limit=128):
-            if msg.author.id == bot.user.id and msg.content.startswith('D--> Usage'):
+            if msg.author.id == bot.user.id and msg.content == response_bank.channel_usage:
                 await msg.delete()
                 break
 
@@ -278,7 +257,15 @@ async def channel_error(ctx, error):
 
 @channel.command(name='ban')
 async def channel_ban(ctx, member: dc.Member, *, flavor=''):
+    # ALRIGHT HUNGOVER WIZARD OF CHAOS CODE IN THE HIZ-OUSE
+    # WE GONNA WRITE SOME MOTHERFUCKING BAN COMMANDS; INITIALIZE THAT SHIT
     if not member: # WE'RE GRABBING A MEMBER WE GIVE NO SHITS
+        return
+    if member.id == bot.user.id:
+        await ctx.send('<:professionalism:778997791829000203>')
+        return
+    if member.guild_permissions.manage_roles and not ctx.author.manage_channels:
+        await ctx.send('D--> Horizontal bans are disallowed. Be ashamed.')
         return
     # WE'RE GONNA FIND THE FIRST FUCKING ROLE THAT HAS NO PERMS IN THIS CHANNEL
     # AND GUESS HOW WE DO THAT? THAT'S RIGHT, CURSED IF STATEMENT
@@ -365,19 +352,19 @@ async def raidban(ctx, *args):
             reason='Banned by anti-raid command.',
             delete_message_days=1,
             )
+    desc = f'D--> The abbreants listed below have been STRONGLY executed:\n{", ".join(members)}'
     embed = dc.Embed(
         color=ctx.author.color,
         timestamp=ctx.message.created_at,
+        # description=desc,
         )
     embed.set_author(
-        name=f'{ctx.author} used raidban command:',
+        name=f'{ctx.author} used raidban command in #{ctx.channel}:',
         icon_url=ctx.author.avatar_url,
         )
     await guild_config.log(ctx.guild, 'modlog', embed=embed)
     await ctx.message.delete()
-    await ctx.send(
-        f'D--> The abbreants listed below have been STRONGLY executed:\n{", ".join(members)}'
-        )
+    await ctx.send(desc)
 
 @raidban.error
 async def raidban_error(ctx, error):
@@ -390,7 +377,7 @@ async def raidban_error(ctx, error):
 # JOJO's Bizarre Adventure Commands
 
 @bot.group(name='ZA')
-@user_or_perms(CONST_ADMINS, view_audit_log=True)
+@user_or_perms(CONST_ADMINS, manage_channels=True)
 async def special_mod_command(ctx):
     if ctx.invoked_subcommand is None:
         pass
@@ -412,13 +399,9 @@ async def special_mod_command_freeze(ctx):
         )
     embed.set_author(
         name='D--> 「ザ・ワールド」!!',
-        icon_url='https://cdn.discordapp.com/attachments/'
-        '663453347763716110/667117484612124694/DIOICON.png',
+        icon_url=url_bank.dio_icon,
         )
-    embed.set_image(
-        url='https://cdn.discordapp.com/attachments/'
-        '663453347763716110/667117771099734052/ZAWARUDO.gif'
-        )
+    embed.set_image(url=url_bank.za_warudo)
     await ctx.channel.send(embed=embed) # Order of operations is important
     perms = ctx.channel.overwrites_for(ctx.guild.roles[0])
     if perms.pair()[1].read_messages:
@@ -447,13 +430,9 @@ async def special_mod_command_purge(ctx, limit: int=10):
         )
     embed.set_author(
         name='D--> 「ザ・ハンド」!!',
-        icon_url='https://cdn.discordapp.com/attachments/'
-        '663453347763716110/667117479910440976/OKUYASUICON.png',
+        icon_url=url_bank.okuyasu_icon,
         )
-    embed.set_image(
-        url='https://cdn.discordapp.com/attachments/'
-        '663453347763716110/667117626128072714/ZAHANDO.gif'
-        )
+    embed.set_image(url=url_bank.za_hando)
     await ctx.channel.send(embed=embed)
     if not guild_config.getlog(ctx.guild, 'msglog'): # Log immediately after.
         return
@@ -467,8 +446,7 @@ async def special_mod_command_purge(ctx, limit: int=10):
         )
     log_embed.set_author(
         name=f'{ctx.channel} has been purged:',
-        icon_url='https://cdn.discordapp.com/attachments/'
-        '663453347763716110/667117479910440976/OKUYASUICON.png',
+        icon_url=url_bank.okuyasu_icon,
         )
     await guild_config.log(ctx.guild, 'msglog', embed=log_embed)
 
@@ -480,7 +458,7 @@ async def special_mod_command_purge_error(ctx, error):
 
 @bot.command(name='time')
 @commands.bot_has_permissions(manage_roles=True)
-@user_or_perms(CONST_ADMINS, view_audit_log=True)
+@user_or_perms(CONST_ADMINS, manage_channels=True)
 async def special_mod_command_unfreeze(ctx, *, args=''):
     if args == 'resumes':
         perms = ctx.channel.overwrites_for(ctx.guild.roles[0])
@@ -495,8 +473,7 @@ async def special_mod_command_unfreeze(ctx, *, args=''):
             )
         embed.set_author(
             name='D--> 時は動きです。',
-            icon_url='https://cdn.discordapp.com/attachments/'
-            '663453347763716110/667117484612124694/DIOICON.png',
+            icon_url=url_bank.dio_icon,
             )
         await ctx.channel.send(embed=embed)
 

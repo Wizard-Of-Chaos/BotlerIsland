@@ -5,7 +5,7 @@ from collections import Counter, defaultdict
 
 import discord as dc
 
-from cogs_textbanks import query_bank, response_bank
+from cogs_textbanks import url_bank, query_bank, response_bank
 
 CONST_WOC_ID = 125433170047795200
 

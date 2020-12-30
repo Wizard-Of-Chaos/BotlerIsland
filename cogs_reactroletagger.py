@@ -8,7 +8,7 @@ from typing import Union, List, Optional
 import discord as dc
 from discord.ext import commands
 
-from cogs_textbanks import query_bank, response_bank
+from cogs_textbanks import url_bank, query_bank, response_bank
 from bot_common import bot, CogtextManager
 
 EmojiUnion = Union[dc.Emoji, dc.PartialEmoji, str]

@@ -107,6 +107,7 @@ quirked_responses = {
         "strongly punished accordingly."
         ),
     "config_args_error": "It seems that {log} is not a valid status log type.",
+    "config_completion": "The {log} channel has been set and saved.",
     "stats_busy": (
         "It seems that I am currently in the middle of something. "
         "I strongly suggest that you wait for me to finish."

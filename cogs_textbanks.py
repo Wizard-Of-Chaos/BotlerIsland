@@ -4,54 +4,46 @@ import random
 import functools
 from typing import Callable
 
+from data_urls import urls
 from data_responses import (
     queries, quirked_responses, unquirked_responses, apply_quirk
     )
 
-class QueryBank(dict):
+class AttrDict(dict):
     def __getitem__(self, item: str) -> str:
         return super().__getitem__(item)
 
     __getattr__ = __getitem__
 
-class ResponseBank(dict):
+class ResponseBank(AttrDict):
     __slots__ = ('quirk_func',)
 
-    def __init__(self, qres: dict, uqres: dict, quirk_func: Callable[[str], str]) -> None:
+    def __init__(self, qresps: dict, uresps: dict, quirk_func: Callable[[str], str]) -> None:
         quirk_func = self._quirk_wrapper(quirk_func)
-        super().__init__()
+        super().__init__(uresps)
         self.quirk_func = quirk_func
-        self.update(uqres)
-        for res_id, res in qres.items():
-            if isinstance(res, tuple):
-                super().__setitem__(res_id, tuple(map(self.quirk_func, res)))
+        for resp_id, resp in qresps.items():
+            if isinstance(resp, str):
+                self[resp_id] = quirk_func(resp)
             else:
-                super().__setitem__(res_id, self.quirk_func(res))
+                self[resp_id] = tuple(map(quirk_func, resp))
 
-    def __getitem__(self, res_id: str) -> str:
-        res = super().__getitem__(res_id)
-        if isinstance(res, tuple):
-            return random.choice(res)
-        else:
-            return res
-
-    __getattr__ = __getitem__
+    def __getitem__(self, resp_id: str) -> str:
+        resp = super().__getitem__(resp_id)
+        return resp if isinstance(resp, str) else random.choice(resp)
 
     @staticmethod
     def _quirk_wrapper(quirk_func: Callable[[str], str]) -> Callable[[str], str]:
         @functools.wraps(quirk_func)
-        def wrapped(response: str) -> str:
+        def _wrapped_quirk(resp: str) -> str:
             args = []
-            while (match := re.search(r'{.+?}', response)):
-                response = f'{response[:match.start(0)]}\\{len(args)}{response[match.end(0):]}'
+            while (match := re.search(r'{.+?}', resp)):
+                resp = f'{resp[:match.start(0)]}\\{len(args)}{resp[match.end(0):]}'
                 args.append(match[0])
-            response = quirk_func(response)
-            return re.sub(
-                r'\\\d+',
-                lambda m: args[int(m[0][1:])],
-                response,
-                )
-        return wrapped
+            resp = quirk_func(resp)
+            return re.sub(r'\\\d+', lambda m: args[int(m[0][1:])], resp)
+        return _wrapped_quirk
 
-query_bank = QueryBank(queries)
+url_bank = AttrDict(urls)
+query_bank = AttrDict(queries)
 response_bank = ResponseBank(quirked_responses, unquirked_responses, apply_quirk)
