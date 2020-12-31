@@ -55,12 +55,21 @@ quirked_responses = {
         '`role list`: List all valid roles under their categories.\n'
         '`role add <role_name>`: Adds a specified role if valid.\n'
         '`role del <role_name>`: Removes a specified role if valid.\n'
-        '{}'
         ),
     "role_remove_react_error": "Reaction {react} missing from roledata table at {msg.jump_url}.",
-    "role_addreact_confirm": "I have successfully added the react for the {role.name} role.",
-    "role_forcegrant_error": "It seems I could not add {role.name} to {member}.",
-    "role_forcegrant_confirm": "I have successfully granted the roles.",
+    "role_addcategory_confirm": "Added the roles to category {category}.",
+    "role_addcategory_error": "Role {role} not found.",
+    "role_delcategory_confirm": "Removed category {category}.",
+    "role_delcategory_error": "Unable to remove category. Perhaps... it was never there?",
+    "reactrole_usage_format": (
+        'Usage of the reactrole command: `reactrole (subcommand) [args...]`\n\n'
+        '`reactrole grant <message_link> <emoji> <role>`: Add roles from a message manually.\n'
+        '`reactrole add <message_link> <emoji> <role>`: Add a role-bound reaction to a message to toggle a role.\n'
+        '`reactrole del <message_link> <emoji>`: Delete a role-bound reaction and associated data.\n'
+        ),
+    "reactrole_grant_confirm": "I have successfully granted the roles.",
+    "reactrole_add_confirm": "I have successfully added the react for the {role.name} role.",
+    "reactrole_add_error": "I was unable to react to the specified message. Try again.",
     "fat_husky_head": "A corpulent canine.",
     "positive_flex_head": "I strongly agree.",
     "positive_flex_desc": (
@@ -98,6 +107,7 @@ quirked_responses = {
         "strongly punished accordingly."
         ),
     "config_args_error": "It seems that {log} is not a valid status log type.",
+    "config_completion": "The {log} channel has been set and saved.",
     "stats_busy": (
         "It seems that I am currently in the middle of something. "
         "I strongly suggest that you wait for me to finish."
@@ -123,7 +133,10 @@ quirked_responses = {
         "Nay, pathetic user.",
         "It seems you have insufficient permission elevations.",
         "It seems that you don't have the appropriate permissions for this command. "
-        "I strongly recommend you back off or get bucked off, {ctx.author.name}.",
+        "I strongly recommend you back off or get bucked off, broseph.",
+        ),
+    "channel_perms_error": (
+        "{ctx.channel} does not support the required permissions."
         ),
     "user_error": "It seems that user can't be found. Check your spelling.",
     "message_error": "It seems that your message can't be found. Check your link.",
@@ -136,9 +149,6 @@ quirked_responses = {
 
 unquirked_responses = {
     "role_usage_extension": (
-        '`role forcegrant <message_link> <emoji> <role>`: Add roles from a message manually.\n'
-        '`role addreact <message_link> <emoji> <role>`: Add a role-bound reaction to a message to toggle a role.\n'
-        '`role delreact <message_link> <emoji>`: Delete a role-bound reaction and associated data.\n'
         '`role addcategory <category> [<role_name1> <role_name2> ...]`: Add roles to a category.\n'
         '`role delcategory <category>`: Delete a category and related role data.\n'
         ),
