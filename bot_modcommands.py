@@ -170,7 +170,7 @@ async def modperms_error(ctx, error):
 @commands.bot_has_permissions(send_messages=True)
 @commands.has_permissions(manage_channels=True)
 async def config(ctx, log: str):
-    guild_config.setlog(ctx, log)
+    await guild_config.setlog(ctx, log)
 
 @config.error
 async def config_error(ctx, error):
@@ -264,7 +264,7 @@ async def channel_ban(ctx, member: dc.Member, *, flavor=''):
     if member.id == bot.user.id:
         await ctx.send('<:professionalism:778997791829000203>')
         return
-    if member.guild_permissions.manage_roles and not ctx.author.manage_channels:
+    if member.guild_permissions.manage_roles and not ctx.author.guild_permissions.manage_channels:
         await ctx.send('D--> Horizontal bans are disallowed. Be ashamed.')
         return
     # WE'RE GONNA FIND THE FIRST FUCKING ROLE THAT HAS NO PERMS IN THIS CHANNEL
@@ -290,12 +290,12 @@ async def channel_ban(ctx, member: dc.Member, *, flavor=''):
             icon_url=ctx.author.avatar_url,
             )
         await guild_config.log(ctx.guild, 'modlog', embed=embed)
-        await ctx.message.delete()
-        await ctx.send(
-            f'D--> Abberant {member} has been CRUSHED by my STRONG hooves.\n\n'
-            f'Reason and/or Duration: {flavor or "None specified."}'
-            )
-        # BOOM! SUUUUUUUUCK - IT!
+    await ctx.message.delete()
+    await ctx.send(
+        f'D--> Abberant {member} has been CRUSHED by my STRONG hooves.\n\n'
+        f'Reason and/or Duration: {flavor or "None specified."}'
+        )
+    # BOOM! SUUUUUUUUCK - IT!
 
 @channel_ban.error
 async def channel_ban_error(ctx, error):
