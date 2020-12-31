@@ -167,8 +167,7 @@ async def flex(ctx):
             ).set_author(
             name='D--> I STRONGLY agree.', icon_url=bot.user.avatar_url
             ).set_image(
-            url='https://cdn.discordapp.com/attachments/'
-            '390337910244769792/704686351228076132/arquius_smooth.gif'
+            url=url_bank.flexing_bot
             ))
 
 @flex.error
@@ -188,8 +187,7 @@ async def deny_old_tags(ctx):
             ).set_author(
             name='D--> No.', icon_url=bot.user.avatar_url
             ).set_image(
-            url='https://cdn.discordapp.com/attachments/'
-            '152981670507577344/664624516370268191/arquius.gif'
+            url=url_bank.flexing_bot
             ))
 
 @deny_old_tags.error
@@ -206,11 +204,9 @@ async def post_fat_husky(ctx):
             color=ctx.guild.get_member(bot.user.id).color,
             ).set_author(
             name='D--> A corpulent canine.', 
-            icon_url='https://cdn.discordapp.com/attachments/'
-            '663453347763716110/773577148577480754/unknown.png',
+            icon_url=url_bank.husky_icon,
             ).set_image(
-            url='https://cdn.discordapp.com/attachments/'
-            '663453347763716110/773574707231457300/dogress.png',
+            url=url_bank.fat_husky,
             ))
 
 @post_fat_husky.error
@@ -275,8 +271,7 @@ async def dice_roller(ctx, *, args):
         )
     embed.set_author(
         name='Roll Statistics:',
-        icon_url='https://cdn.discordapp.com/attachments/'
-            '663453347763716110/711985889680818266/unknown.png',
+        icon_url=url_bank.roll_icon,
         )
     await ctx.send(msg, embed=embed)
 
