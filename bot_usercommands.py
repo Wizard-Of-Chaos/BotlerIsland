@@ -11,11 +11,25 @@ import aiohttp
 import discord as dc
 from discord.ext import commands
 
-from cogs_textbanks import query_bank, response_bank
+from cogs_textbanks import url_bank, query_bank, response_bank
 from bot_common import (
     bot, CONST_ADMINS, CONST_AUTHOR,
     guild_config, member_stalker, stored_suggestions,
     )
+
+suggest_chid = 777555413213642772
+
+consonants = "BCDFGHJKLMNPQRSTVXZ"
+vowels = "AEIOUWY"
+weights = ((7, 19), (3, 1), (7, 15), (2, 9), (7, 2), (3, 7))
+def generate_troll_name():
+    return ' '.join(
+        ''.join(
+            random.choice(random.choices((vowels, consonants), i)[0])
+            for i in weights
+            ).capitalize()
+        for _ in range(2)
+        )
 
 def get_name(member_id):
     return str(bot.get_user(int(member_id[1])))
@@ -23,14 +37,14 @@ def get_name(member_id):
 async def grab_latex(preamble, postamble, raw_latex):
     async with aiohttp.ClientSession() as session:
         resp = await session.post(
-            'https://rtex.probablyaweb.site/api/v2',
-            data={'format':'png','code':preamble+raw_latex+postamble},
+            url_bank.latex_parser,
+            data={'format': 'png', 'code': preamble+raw_latex+postamble},
             )
         resp = await resp.text() # Awaiting loading of the raw text data and unicode parsing
         resp = json.loads(resp)
         if (resp['status'] != 'success'):
             return None
-        return await session.get(f'https://rtex.probablyaweb.site/api/v2/{resp["filename"]}')
+        return await session.get(f'{url_bank.latex_parser}/{resp["filename"]}')
 
 @bot.command(name='help')
 @commands.bot_has_permissions(send_messages=True)
@@ -297,7 +311,7 @@ async def render_latex(ctx, *, raw_latex=''):
             )
         async for msg in latex_channel.history(limit=16):
             if msg.content.split()[-1] == msg_id:
-                latex_image_url = msg.attachments[0].url
+                latex_att = msg.attachments[0]
                 break
         embed = dc.Embed(
             color=ctx.author.color,
@@ -305,12 +319,11 @@ async def render_latex(ctx, *, raw_latex=''):
             )
         embed.set_author(
             name=f'D--> Latex render for {ctx.author}',
-            icon_url='https://cdn.discordapp.com/attachments/'
-            '663453347763716110/773600642752839700/stsmall507x507-pad600x600f8f8f8.png',
+            icon_url=url_bank.latex_icon,
             )
-        embed.set_image(url=latex_image_url)
+        embed.set_image(url=latex_att.url)
         await ctx.send(embed=embed)
-        await ctx.message.delete()
+    await ctx.message.delete()
 
 @render_latex.error
 async def render_latex_error(ctx, error):
@@ -327,16 +340,10 @@ async def magic_8ball(ctx, *, query=''):
         )
     embed.set_author(
         name=f'{admin.name if admin else "Linky"} says:',
-        icon_url=admin.avatar_url if admin else (
-            'https://cdn.discordapp.com/attachments/'
-            '663453347763716110/776420647625949214/Linky.gif'
-            ),
+        icon_url=admin.avatar_url if admin else url_bank.linky_icon,
         )
-    if random.random() < 0.001:
-        embed.set_image(
-            url='https://cdn.discordapp.com/attachments/'
-            '663453347763716110/778782271775178782/EXCEPTIONAL.png'
-            )
+    if random.randint(1, 500) == 1:
+        embed.set_image(url=url_bank.linky_rare)
         await ctx.send(embed=embed)
         return
     msg = re.sub(r'<@!(\d{18,})>', get_name, guild_config.random_linky(ctx.message.content))
@@ -352,7 +359,7 @@ async def magic_8ball_error(ctx, error):
 @bot.command(name='suggest')
 @commands.bot_has_permissions(send_messages=True)
 async def suggest_to_dev(ctx, *, suggestion: str):
-    suggestions = bot.get_channel(777555413213642772)
+    suggestions = bot.get_channel(suggest_chid)
     suggest_id = ctx.message.id
     embed = dc.Embed(
         color=dc.Color.red(),
@@ -385,7 +392,7 @@ async def response_from_dev(ctx, msg_id: int, *, response: str):
     except KeyError:
         await ctx.send('D--> Suggestion does not exist.')
         return
-    async for msg in bot.get_channel(777555413213642772).history(limit=None):
+    async for msg in bot.get_channel(suggest_chid).history(limit=None):
         if msg.author.id != bot.user.id:
             continue
         if not msg.embeds:
@@ -396,6 +403,10 @@ async def response_from_dev(ctx, msg_id: int, *, response: str):
             continue
         if embed.fields[0].value == f'`{msg_id}`':
             break
+    else:
+        await ctx.send('D--> Suggestion does not exist.')
+        stored_suggestions.remove_suggestion(msg_id)
+        return
     embed = dc.Embed(
         color=member.color,
         description=response,

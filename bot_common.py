@@ -15,6 +15,8 @@ random.seed(datetime.now())
 bot = commands.Bot(command_prefix='D--> ', intents=dc.Intents.all())
 bot.remove_command('help')
 
+help_data = []
+
 guild_config = GuildConfig(bot, 'config.pkl')
 member_stalker = MemberStalker('members.pkl')
 stats_tracker = StatsTracker('stats.pkl')

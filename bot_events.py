@@ -1,10 +1,10 @@
 from datetime import datetime
-import asyncio as aio
 
+import asyncio as aio
 import discord as dc
 from discord.ext import commands
 
-from cogs_textbanks import query_bank, response_bank
+from cogs_textbanks import url_bank, query_bank, response_bank
 from cogs_dailycounts import post_dailies, daily_usr, daily_msg
 from bot_common import (
     bot, guild_whitelist, CONST_ADMINS, CONST_AUTHOR,
@@ -13,17 +13,16 @@ from bot_common import (
     )
 
 image_exts = ('png', 'gif', 'jpg', 'jpeg', 'jpe', 'jfif')
+avy_chid = 664541525350547496
+att_chid = 696209752434278400
 
 async def grab_avatar(user):
-    avy_channel = bot.get_channel(664541525350547496)
+    avy_channel = bot.get_channel(avy_chid)
     with open('avatar.png', mode='wb') as avatarfile:
         try:
             await user.avatar_url.save(avatarfile)
         except dc.NotFound:
-            return (
-                'https://cdn.discordapp.com/attachments/'
-                '663453347763716110/664578577479761920/unknown.png'
-                )
+            return url_bank.null_avatar
     msg_id = hex(member_stalker.member_data['avatar_count'])[2:]
     member_stalker.member_data['avatar_count'] += 1
     with open('avatar.png', mode='rb') as avatarfile:
@@ -40,7 +39,7 @@ async def grab_attachments(msg):
 
 @bot.event
 async def on_ready(): # Bot starts
-    print(response_bank.bot_startup.format(version='1.3.4'))
+    print(response_bank.bot_startup.format(version='1.3.5'))
     for guild in bot.guilds:
         if guild.id not in guild_whitelist:
             await guild.leave()
@@ -170,11 +169,14 @@ async def on_member_remove(member): # Log left/kicked/banned members
 async def on_member_ban(guild, user): # Log member full bans
     if not guild_config.getlog(guild, 'modlog'):
         return
-    async for entry in guild.audit_logs(limit=16, action=dc.AuditLogAction.ban):
+    async for entry in guild.audit_logs(limit=256, action=dc.AuditLogAction.ban):
         if entry.target.id == user.id:
             break
     else:
-        print(f'The last ban of {user.id} could not be found in the logs.')
+        await guild_config.log(
+            guild,
+            f'The last ban of {user} `{user.id}` could not be found in the audit log.',
+            )
         return
     author = entry.user
     embed = dc.Embed(
@@ -282,7 +284,9 @@ async def on_message(msg): # Message posted event
         await msg.add_reaction('❤️')
     elif ctx.author.id == CONST_ADMINS[1]:
         if ctx.channel.id == guild_config.getlog(msg.guild, 'modlog'):
-            return 
+            return
+        if ctx.channel.category_id == 360676396172836867:
+            return
         guild_config.log_linky(msg)
    
 @bot.event
@@ -342,7 +346,7 @@ async def on_message_delete(msg): # Log deleted messages
     embed.add_field(name='**Message ID:**', value=f'`{msg.id}`')
     embed.add_field(name='**User ID:**', value=f'`{msg.author.id}`')
     if msg.attachments:
-        # att_channel = bot.get_channel(696209752434278400)
+        # att_channel = bot.get_channel(att_chid)
         embed.add_field(
             name='**Attachments:**',
             value='\n'.join(att.url for att in msg.attachments),
