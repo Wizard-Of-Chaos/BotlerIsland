@@ -22,11 +22,11 @@ class BanManager(CogtextManager):
     async def prepare_mutelist(self):
         pass
 
-    @commands.Cogs.listener
+    @commands.Cog.listener()
     async def on_ready(self):
         self.manage_mutelist.start()
 
-    @commands.Cogs.listener
+    @commands.Cog.listener()
     async def on_message(self, msg):
         pass
 
