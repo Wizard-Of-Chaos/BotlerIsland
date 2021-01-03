@@ -24,3 +24,14 @@ stored_suggestions = Suggestions('suggestions.pkl')
 
 CONST_ADMINS = (120187484863856640, 148346796186271744) # Mac, Dirt
 CONST_AUTHOR = (125433170047795200, 257144766901256192) # 9, WoC
+
+
+def get_token() -> str:
+    with open('token.dat', 'r') as tokenfile:
+        raw = tokenfile.read().strip()
+        return ''.join(chr(int(''.join(c), 16)) for c in zip(*[iter(raw)]*2))
+
+
+def main(token):
+    with guild_config, member_stalker, stats_tracker, stored_suggestions:
+        bot.run(token)

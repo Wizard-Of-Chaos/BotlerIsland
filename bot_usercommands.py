@@ -103,6 +103,8 @@ async def userhelp_error(ctx, error):
         return
     raise error
 
+dt_format = '%d/%m/%Y at %H:%M:%S UTC'
+
 @bot.command()
 @commands.bot_has_permissions(send_messages=True)
 async def info(ctx, *, name=None):
@@ -120,26 +122,27 @@ async def info(ctx, *, name=None):
         lastseen = member_stalker.get('last_seen', member)
         if lastseen is not None:
             lastseenmsg = (
-                f'This user was last seen on `{lastseen.strftime("%d/%m/%Y %H:%M:%S")}` '
-                f'({max(0, (now-lastseen).days)} days ago)'
+                f'```{lastseen.strftime(dt_format)}\n'
+                f'{max(0, (now-lastseen).days)} day(s) ago```'
                 )
         else:
-            lastseenmsg = 'This user has not spoken to my knowledge!'
-        embed.add_field(name='Last Seen:', value=lastseenmsg, inline=False)
+            lastseenmsg = '```This user has not spoken to my knowledge!```'
+        embed.add_field(name='This user was last seen on:', value=lastseenmsg, inline=False)
     embed.add_field(
         name='Account Created On:',
-        value=f"`{member.created_at.strftime('%d/%m/%Y %H:%M:%S')}` "
-        f'({(now-member.created_at).days} days ago)'
+        value=f'```{member.created_at.strftime(dt_format)}\n'
+        f'{(now-member.created_at).days} day(s) ago```'
         )
     embed.add_field(
         name='Guild Last Joined On:',
-        value=f"`{member.joined_at.strftime('%d/%m/%Y %H:%M:%S')}` "
-        f'({(now-member.joined_at).days} days ago, {(now-firstjoin).days} days since first recorded join)'
+        value=f'```{member.joined_at.strftime(dt_format)}\n'
+        f'{(now-member.joined_at).days} day(s) ago,\n'
+        f'{(now-firstjoin).days} day(s) since first recorded join```'
         )
     embed.add_field(name='User ID:', value=f'`{member.id}`', inline=False)
     embed.add_field(
         name='Roles:',
-        value=', '.join(f'`{role.name}`' for role in member.roles[1:]) or None,
+        value='```'+(', '.join(role.name for role in member.roles[:0:-1]) or 'No roles.')+'```',
         inline=False
         )
     if bot.user == member:
