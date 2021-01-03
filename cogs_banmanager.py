@@ -30,10 +30,22 @@ class BanManager(CogtextManager):
     async def role_mute(self, ctx):
         pass
 
+    @role_mute.error
+    async def role_mute_error(self, error):
+        raise error
+
     @role_mute.command(name='ban')
     async def role_mute_apply(self, ctx, member: dc.Member, length, *, reason=''):
         pass
 
+    @role_mute_apply.error
+    async def role_mute_apply_error(self, error):
+        raise error
+
     @role_mute.command(name='unban')
     async def role_mute_revoke(self, ctx, member: dc.Member, *, reason=''):
         pass
+
+    @role_mute_revoke.error
+    async def role_mute_revoke_error(self, error):
+        raise error
