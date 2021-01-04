@@ -25,11 +25,13 @@ class CogtextManager(commands.Cog):
         self.data_load()
 
     def cleanup_on_save(self):
-        """This function is called to clean up empty entries."""
+        """
+        This function is called to clean up empty entries to minimize space.
+        """
 
     def cleanup_on_load(self):
         """
-        This function is called modify structure between refactors to ensure continuity.
+        This function is called to modify data structure between refactors to ensure continuity.
         """
 
     def data_save(self):

@@ -49,6 +49,7 @@ quirked_responses = {
         "`channel unban <user>`: Revoke lowest available channel mute role from user.\n"
         "<user> can be the user id, mention, or name."
         ),
+    "channel_member_error": "I could not find {member}. Do clarify.",
     "channel_ban_confirm": "Abberant {member} has been crushed by my strong hooves.",
     "role_usage_format": (
         'Usage of the role command: `role (subcommand) [args...]`\n\n'

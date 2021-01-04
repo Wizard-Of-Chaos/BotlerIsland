@@ -31,11 +31,23 @@ class BanManager(CogtextManager):
         pass
 
     @commands.group(name='channel')
+    @commands.has_guild_permissions(send_messages=True, manage_roles=True)
     async def role_mute(self, ctx):
-        pass
+        if ctx.invoked_subcommand is None:
+            await ctx.message.delete()
+            await ctx.send(response_bank.channel_usage)
+            await aio.sleep(4)
+            async for msg in ctx.channel.history(limit=128):
+                if msg.author.id == bot.user.id and msg.content == response_bank.channel_usage:
+                    await msg.delete()
+                    break
 
     @role_mute.error
-    async def role_mute_error(self, error):
+    async def role_mute_error(self, ctx, error):
+        if isinstance(error,
+            (commands.MissingPermissions, commands.BotMissingPermissions)
+            ):
+            return
         raise error
 
     @role_mute.command(name='ban')
@@ -43,7 +55,12 @@ class BanManager(CogtextManager):
         pass
 
     @role_mute_apply.error
-    async def role_mute_apply_error(self, error):
+    async def role_mute_apply_error(self, ctx, error):
+        if isinstance(error, commands.BadArgument):
+            await ctx.send(response_bank.channel_member_error.format(
+                member=error.args[0].split()[1]
+                ))
+            return
         raise error
 
     @role_mute.command(name='unban')
@@ -51,5 +68,10 @@ class BanManager(CogtextManager):
         pass
 
     @role_mute_revoke.error
-    async def role_mute_revoke_error(self, error):
+    async def role_mute_revoke_error(self, ctx, error):
+        if isinstance(error, commands.BadArgument):
+            await ctx.send(response_bank.channel_member_error.format(
+                member=error.args[0].split()[1]
+                ))
+            return
         raise error
