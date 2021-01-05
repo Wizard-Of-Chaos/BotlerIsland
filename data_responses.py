@@ -10,12 +10,15 @@ queries = {
     }
 
 quirked_responses = {
-    "bot_startup": "ArquiusBot verision {version} started, beginning startup tasks...\n",
-    "ready_prompt": "At your command.\n",
+    "bot_startup": "ArquiusBot verision {version} started.",
     "verify_whitelist_complete": "Whitelist verified.",
-    "tasks_started": "All continuous tasks started.",
+    "tasks_started": "All continuous tasks started; I am at your command.",
+    "process_dailies": "Starting daily stats counter...",
+    "process_dailies_complete": "Daily statistics counter ready.",
+    "process_mutelist": "Starting mutelist manager...",
+    "process_mutelist_complete": "Mutelist manager started.",
     "process_reacts": "Handling leftover reactions...",
-    "process_reacts_complete": "Finished with leftover reactions.\n",
+    "process_reacts_complete": "Finished with leftover reactions.",
     "online_status": "A beautiful stallion.",
     "affirmation_response": "😎",
     "mention_self": "{ctx.author.mention}",
@@ -49,7 +52,18 @@ quirked_responses = {
         "`channel unban <user>`: Revoke lowest available channel mute role from user.\n"
         "<user> can be the user id, mention, or name."
         ),
-    "channel_ban_confirm": "Abberant {member} has been crushed by my strong hooves.",
+    "channel_member_error": "I could not find {member}. Do clarify.",
+    "channel_ban_duration_error": "Could not parse the ban duration {length}. Format: <duration>(h|d|w|m|y)",
+    "channel_ban_role_error": "This channel does not have a mute role.",
+    "channel_ban_deny_horizontal": "Horizontal bans are not allowed. Be ashamed of yourself.",
+    "channel_ban_confirm": (
+        "Abberant {member} has been crushed by my strong hooves.\n\n"
+        "Duration: {length}\n"
+        "Reason: {reason}"
+        ),
+    "channel_unban_role_error": "Are you a moron? This user is not muted here.",
+    "manage_mutelist_role_error": "Warning: {role} could not be found.",
+    "manage_mutelist_unban_error": "Warning: {member} could not be auto-unbanned from role {role}.",
     "role_usage_format": (
         'Usage of the role command: `role (subcommand) [args...]`\n\n'
         '`role list`: List all valid roles under their categories.\n'

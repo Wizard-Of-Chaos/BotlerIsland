@@ -19,18 +19,6 @@ from bot_common import (
 
 suggest_chid = 777555413213642772
 
-consonants = "BCDFGHJKLMNPQRSTVXZ"
-vowels = "AEIOUWY"
-weights = ((7, 19), (3, 1), (7, 15), (2, 9), (7, 2), (3, 7))
-def generate_troll_name():
-    return ' '.join(
-        ''.join(
-            random.choice(random.choices((vowels, consonants), i)[0])
-            for i in weights
-            ).capitalize()
-        for _ in range(2)
-        )
-
 def get_name(member_id):
     return str(bot.get_user(int(member_id[1])))
 
@@ -103,6 +91,8 @@ async def userhelp_error(ctx, error):
         return
     raise error
 
+dt_format = '%d/%m/%Y at %H:%M:%S UTC'
+
 @bot.command()
 @commands.bot_has_permissions(send_messages=True)
 async def info(ctx, *, name=None):
@@ -120,26 +110,27 @@ async def info(ctx, *, name=None):
         lastseen = member_stalker.get('last_seen', member)
         if lastseen is not None:
             lastseenmsg = (
-                f'This user was last seen on `{lastseen.strftime("%d/%m/%Y %H:%M:%S")}` '
-                f'({max(0, (now-lastseen).days)} days ago)'
+                f'```{lastseen.strftime(dt_format)}\n'
+                f'{max(0, (now-lastseen).days)} day(s) ago```'
                 )
         else:
-            lastseenmsg = 'This user has not spoken to my knowledge!'
-        embed.add_field(name='Last Seen:', value=lastseenmsg, inline=False)
+            lastseenmsg = '```This user has not spoken to my knowledge!```'
+        embed.add_field(name='This user was last seen on:', value=lastseenmsg, inline=False)
     embed.add_field(
         name='Account Created On:',
-        value=f"`{member.created_at.strftime('%d/%m/%Y %H:%M:%S')}` "
-        f'({(now-member.created_at).days} days ago)'
+        value=f'```{member.created_at.strftime(dt_format)}\n'
+        f'{(now-member.created_at).days} day(s) ago```'
         )
     embed.add_field(
         name='Guild Last Joined On:',
-        value=f"`{member.joined_at.strftime('%d/%m/%Y %H:%M:%S')}` "
-        f'({(now-member.joined_at).days} days ago, {(now-firstjoin).days} days since first recorded join)'
+        value=f'```{member.joined_at.strftime(dt_format)}\n'
+        f'{(now-member.joined_at).days} day(s) ago,\n'
+        f'{(now-firstjoin).days} day(s) since first recorded join```'
         )
     embed.add_field(name='User ID:', value=f'`{member.id}`', inline=False)
     embed.add_field(
         name='Roles:',
-        value=', '.join(f'`{role.name}`' for role in member.roles[1:]) or None,
+        value='```'+(', '.join(role.name for role in member.roles[:0:-1]) or 'No roles.')+'```',
         inline=False
         )
     if bot.user == member:
@@ -167,8 +158,7 @@ async def flex(ctx):
             ).set_author(
             name='D--> I STRONGLY agree.', icon_url=bot.user.avatar_url
             ).set_image(
-            url='https://cdn.discordapp.com/attachments/'
-            '390337910244769792/704686351228076132/arquius_smooth.gif'
+            url=url_bank.flexing_bot
             ))
 
 @flex.error
@@ -188,8 +178,7 @@ async def deny_old_tags(ctx):
             ).set_author(
             name='D--> No.', icon_url=bot.user.avatar_url
             ).set_image(
-            url='https://cdn.discordapp.com/attachments/'
-            '152981670507577344/664624516370268191/arquius.gif'
+            url=url_bank.flexing_bot
             ))
 
 @deny_old_tags.error
@@ -206,11 +195,9 @@ async def post_fat_husky(ctx):
             color=ctx.guild.get_member(bot.user.id).color,
             ).set_author(
             name='D--> A corpulent canine.', 
-            icon_url='https://cdn.discordapp.com/attachments/'
-            '663453347763716110/773577148577480754/unknown.png',
+            icon_url=url_bank.husky_icon,
             ).set_image(
-            url='https://cdn.discordapp.com/attachments/'
-            '663453347763716110/773574707231457300/dogress.png',
+            url=url_bank.fat_husky,
             ))
 
 @post_fat_husky.error
@@ -275,8 +262,7 @@ async def dice_roller(ctx, *, args):
         )
     embed.set_author(
         name='Roll Statistics:',
-        icon_url='https://cdn.discordapp.com/attachments/'
-            '663453347763716110/711985889680818266/unknown.png',
+        icon_url=url_bank.roll_icon,
         )
     await ctx.send(msg, embed=embed)
 

@@ -1,15 +1,20 @@
 # Initial setup for global variables. Import names from here for the main bot tasks.
 import random
+import logging
 from datetime import datetime
 
 import discord as dc
 from discord.ext import commands, tasks
 
 from cogs_modtools import (
-    guild_whitelist, GuildConfig, MemberStalker,
-    EmojiRoles, RoleCategories, Suggestions,
     )
 from cogs_statstracker import StatsTracker
+
+logger = logging.getLogger('discord')
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
 
 random.seed(datetime.now())
 bot = commands.Bot(command_prefix='D--> ', intents=dc.Intents.all())
@@ -33,3 +38,13 @@ async def process_role_grant(msg, react, role, members):
         if role not in member.roles:
             await member.add_roles(role)
         await msg.remove_reaction(react, member)
+
+def get_token() -> str:
+    with open('token.dat', 'r') as tokenfile:
+        raw = tokenfile.read().strip()
+        return ''.join(chr(int(''.join(c), 16)) for c in zip(*[iter(raw)]*2))
+
+
+def main(token):
+    with guild_config, member_stalker, stats_tracker, stored_suggestions, emoji_roles, role_categories:
+        bot.run(token)
