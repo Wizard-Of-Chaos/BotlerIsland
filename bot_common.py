@@ -7,8 +7,8 @@ import discord as dc
 from discord.ext import commands, tasks
 
 from cogs_modtools import (
-    guild_whitelist, GuildConfig, MemberStalker, Suggestions
-    RoleCategories, EmojiRoles
+    guild_whitelist, GuildConfig, MemberStalker, Suggestions,
+    RoleCategories, EmojiRoles, CogtextManager,
     )
 from cogs_statstracker import StatsTracker
 

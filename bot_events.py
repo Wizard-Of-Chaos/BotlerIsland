@@ -46,7 +46,6 @@ async def on_ready(): # Bot starts
     await bot.change_presence(
         activity=dc.Game(name=response_bank.online_status)
         )
-    post_dailies.start()
     print(response_bank.tasks_started)
     print(response_bank.process_reacts)
     # This is a horrible fucking way of granting all the pending roles. Too bad!
@@ -64,7 +63,6 @@ async def on_ready(): # Bot starts
                     members = [m async for m in react.users() if m.id != bot.user.id]
                     await process_role_grant(msg, react, role, members)
     print(response_bank.process_reacts_complete)
-    print(response_bank.ready_prompt)
 
 @bot.event
 async def on_guild_join(guild): # Bot joins guild
