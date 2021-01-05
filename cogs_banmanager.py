@@ -89,7 +89,7 @@ class BanManager(CogtextManager):
                     await guild_config.log(ctx.guild, 'modlog', embed=embed)
 
     @manage_mutelist.before_loop
-    async def on_ready(self):
+    async def prepare_mutelist(self):
         await self.bot.wait_until_ready()
         print(response_bank.process_mutelist_complete)
 
