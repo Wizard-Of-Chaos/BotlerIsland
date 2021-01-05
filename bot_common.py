@@ -7,6 +7,8 @@ import discord as dc
 from discord.ext import commands, tasks
 
 from cogs_modtools import (
+    guild_whitelist, GuildConfig, MemberStalker, Suggestions
+    RoleCategories, EmojiRoles
     )
 from cogs_statstracker import StatsTracker
 
@@ -38,6 +40,7 @@ async def process_role_grant(msg, react, role, members):
         if role not in member.roles:
             await member.add_roles(role)
         await msg.remove_reaction(react, member)
+
 
 def get_token() -> str:
     with open('token.dat', 'r') as tokenfile:
