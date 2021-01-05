@@ -19,18 +19,6 @@ from bot_common import (
 
 suggest_chid = 777555413213642772
 
-consonants = "BCDFGHJKLMNPQRSTVXZ"
-vowels = "AEIOUWY"
-weights = ((7, 19), (3, 1), (7, 15), (2, 9), (7, 2), (3, 7))
-def generate_troll_name():
-    return ' '.join(
-        ''.join(
-            random.choice(random.choices((vowels, consonants), i)[0])
-            for i in weights
-            ).capitalize()
-        for _ in range(2)
-        )
-
 def get_name(member_id):
     return str(bot.get_user(int(member_id[1])))
 
