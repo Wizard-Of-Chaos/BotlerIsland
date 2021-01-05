@@ -5,7 +5,6 @@ import discord as dc
 from discord.ext import commands
 
 from cogs_textbanks import url_bank, query_bank, response_bank
-from cogs_dailycounts import post_dailies, daily_usr, daily_msg
 from bot_common import (
     bot, guild_whitelist, CONST_ADMINS, CONST_AUTHOR,
     guild_config, member_stalker,
@@ -38,7 +37,7 @@ async def grab_attachments(msg):
 
 @bot.event
 async def on_ready(): # Bot starts
-    print(response_bank.bot_startup.format(version='1.3.5'))
+    print(response_bank.bot_startup.format(version='1.3.6'))
     for guild in bot.guilds:
         if guild.id not in guild_whitelist:
             await guild.leave()
@@ -46,9 +45,6 @@ async def on_ready(): # Bot starts
     await bot.change_presence(
         activity=dc.Game(name=response_bank.online_status)
         )
-    post_dailies.start()
-    print(response_bank.tasks_started)
-    print(response_bank.ready_prompt)
 
 @bot.event
 async def on_guild_join(guild): # Bot joins guild
@@ -58,8 +54,6 @@ async def on_guild_join(guild): # Bot joins guild
 @bot.event
 async def on_member_join(member): # Log joined members
     guild = member.guild
-    if guild.id in guild_whitelist:
-        daily_usr[guild.id]['join'] += 1
     if not guild_config.getlog(guild, 'usrlog'):
         return
     member_stalker.update('first_join', member)
@@ -114,8 +108,6 @@ async def on_member_update(bfr, aft): # Log role and nickname changes
 @bot.event
 async def on_member_remove(member): # Log left/kicked/banned members
     guild = member.guild
-    if guild.id in guild_whitelist:
-        daily_usr[guild.id]['leave'] += 1
     if not guild_config.getlog(guild, 'usrlog'):
         return
     member_stalker.update('first_join', member)
@@ -252,8 +244,6 @@ async def on_voice_state_update(member, bfr, aft): # Log when a member joins and
 async def on_message(msg): # Message posted event
     if msg.guild is None:
         return
-    if msg.guild.id in guild_whitelist:
-        daily_msg[msg.guild.id][msg.channel.id] += 1
     member_stalker.update('last_seen', msg)
     ctx = await bot.get_context(msg)
     if ctx.valid:

@@ -5,6 +5,7 @@ import bot_modcommands
 import bot_usercommands
 
 import cogs_dailycounts
+import cogs_banmanager
 import cogs_rolemanager
 import cogs_reactroletagger
 import stupid_arquius_tricks

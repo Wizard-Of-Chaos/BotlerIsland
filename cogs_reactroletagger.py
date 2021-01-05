@@ -30,7 +30,7 @@ async def get_msg_from_link(ctx, msglink: str) -> Optional[dc.Message]:
         await ctx.send(response_bank.message_error)
         return None
     except dc.Forbidden:
-        await ctx.send(response_bank.channel_perms_error)
+        await ctx.send(response_bank.channel_perms_error.format(ctx=ctx))
         return None
     except dc.HTTPException:
         await ctx.send(response_bank.unexpected_state)

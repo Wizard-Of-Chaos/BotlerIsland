@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from collections import defaultdict, deque
 from random import randrange
 from itertools import islice
+from contextlib import asynccontextmanager as acm
 
 import discord as dc
 from discord.ext import tasks, commands
@@ -17,7 +18,9 @@ guild_whitelist = (
     )
 
 class CogtextManager(commands.Cog):
-    _generate_empty = None
+    @staticmethod
+    def _generate_empty():
+        return None
 
     def __init__(self, bot):
         self._fname = os.path.join('data', self.__class__.__name__+'.pkl')
@@ -104,9 +107,8 @@ class GuildConfig(Singleton):
                     continue
 
     async def log(self, guild, log, *args, **kwargs):
-        await self.bot.get_channel(
-            self.mod_channels[guild.id][log]
-            ).send(*args, **kwargs)
+        channel_id = self.mod_channels[guild.id][log]
+        await self.bot.get_channel(channel_id).send(*args, **kwargs)
 
     def getlog(self, guild, log):
         return self.mod_channels[guild.id][log]

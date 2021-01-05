@@ -1,5 +1,6 @@
 # Initial setup for global variables. Import names from here for the main bot tasks.
 import random
+import logging
 from datetime import datetime
 
 import discord as dc
@@ -10,6 +11,12 @@ from cogs_modtools import (
     GuildConfig, MemberStalker, Suggestions,
     )
 from cogs_statstracker import StatsTracker
+
+logger = logging.getLogger('discord')
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
 
 random.seed(datetime.now())
 bot = commands.Bot(command_prefix='D--> ', intents=dc.Intents.all())
