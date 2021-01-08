@@ -36,9 +36,9 @@ class BanManager(CogtextManager):
         self.manage_mutelist.cancel()
 
     def push(self, id_tuple, unban_dt):
-        for idx, (_, ids) in enumerate(self.data):
-            if ids == id_tuple:
-                self.data[idx][0] = unban_dt
+        for entry in self.data:
+            if entry[1] == id_tuple:
+                entry[0] = unban_dt
                 heapify(self.data)
                 break
         else:
