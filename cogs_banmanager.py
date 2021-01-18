@@ -141,7 +141,7 @@ class BanManager(CogtextManager):
             self.push((ctx.guild.id, member.id, role.id), datetime.utcnow() + timedelta(hours=length))
         await ctx.message.delete()
         await ctx.send(response_bank.channel_ban_confirm.format(
-            member=member, length=lenstr, reason=reason,
+            member=member.mention, length=lenstr, reason=reason,
             ))
         # OH BUT NOW SOMEONES GONNA WHINE THAT WE DIDNT LOG IT? HOLD YOUR ASS TIGHT BECAUSE WE'RE ABOUT TO
         if guild_config.getlog(ctx.guild, 'modlog'): # OHHHHHHH! HE DID IT! THE FUCKING MADMAN!
