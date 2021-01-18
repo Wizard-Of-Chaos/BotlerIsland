@@ -124,7 +124,11 @@ class BanManager(CogtextManager):
         if member.id == bot.user.id:
             await ctx.send('<:professionalism:778997791829000203>')
             return
-        if member.guild_permissions.manage_roles and not ctx.author.guild_permissions.manage_channels:
+        src_perms = ctx.author.guild_permissions
+        tgt_perms = member.guild_permissions
+        if ((not src_perms.manage_nicknames and tgt_perms.manage_roles)
+            or (not src_perms.manage_channels and tgt_perms.manage_nicknames)
+            ):
             await ctx.send(response_bank.channel_ban_deny_horizontal)
             return
         # WE'RE GONNA FIND THE FIRST FUCKING ROLE THAT HAS NO PERMS IN THIS CHANNEL
