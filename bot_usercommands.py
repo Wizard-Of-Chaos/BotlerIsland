@@ -11,6 +11,8 @@ import aiohttp
 import discord as dc
 from discord.ext import commands
 
+from chainproofrhg import ChainProofRHG as RHG
+
 from cogs_textbanks import url_bank, query_bank, response_bank
 from bot_common import (
     bot, CONST_ADMINS, CONST_AUTHOR,
@@ -18,6 +20,7 @@ from bot_common import (
     )
 
 suggest_chid = 777555413213642772
+linky_rhg = RHG(2e-3)
 
 def get_name(member_id):
     return str(bot.get_user(int(member_id[1])))
@@ -328,7 +331,7 @@ async def magic_8ball(ctx, *, query=''):
         name=f'{admin.name if admin else "Linky"} says:',
         icon_url=admin.avatar_url if admin else url_bank.linky_icon,
         )
-    if random.randint(1, 500) == 1:
+    if linky_rhg:
         embed.set_image(url=url_bank.linky_rare)
         await ctx.send(embed=embed)
         return
