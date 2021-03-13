@@ -1,8 +1,8 @@
 # Ignore all pickle files, copies should work sterile.
-*.log
 *.pkl
 __pycache__
 avatar.png
+discord.log
 encrypttoken.py
 spat.txt
 tmpmsg.txt
