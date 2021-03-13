@@ -113,6 +113,48 @@ class BanManager(CogtextManager):
             return
         raise error
 
+    @role_mute.command(name='fakeban', aliases=['memeban', 'jokeban'])
+    async def role_mute_test(self, ctx, member: dc.Member, length: _parse_length, *, reason='None specified.'):
+        if not member:
+            return
+        if member.id == bot.user.id:
+            await ctx.send('<:professionalism:778997791829000203>')
+            return
+        src_perms = ctx.author.guild_permissions
+        tgt_perms = member.guild_permissions
+        if ((not src_perms.manage_nicknames and tgt_perms.manage_roles)
+            or (not src_perms.manage_channels and tgt_perms.manage_nicknames)
+            ):
+            await ctx.send(response_bank.channel_ban_deny_horizontal)
+            return
+        for role in ctx.guild.roles:
+            if ctx.channel.overwrites_for(role).pair()[1].send_messages:
+                break
+        else:
+            await ctx.send(response_bank.channel_ban_role_error)
+            return
+        lenstr = 'Until further notice.' if length is None else f'{length} hours.'
+        if length is not None:
+            self.push((ctx.guild.id, member.id, role.id), datetime.utcnow() + timedelta(hours=length))
+        await ctx.message.delete()
+        await ctx.send(response_bank.channel_ban_confirm.format(
+            member=member.mention, length=lenstr, reason=reason,
+            ))
+
+    @role_mute_test.error
+    async def role_mute_test_error(self, ctx, error):
+        if isinstance(error, commands.MemberNotFound):
+            await ctx.send(response_bank.channel_member_error.format(
+                member=error.args[0].split()[1]
+                ))
+            return
+        if isinstance(error, commands.BadArgument):
+            await ctx.send(response_bank.channel_ban_duration_error.format(
+                length=error.args[0].split()[-1]
+                ))
+            return
+        raise error
+
     @role_mute.command(name='ban')
     async def role_mute_apply(self, ctx, member: dc.Member, length: _parse_length, *, reason='None specified.'):
         # ALRIGHT HUNGOVER WIZARD OF CHAOS CODE IN THE HIZ-OUSE
