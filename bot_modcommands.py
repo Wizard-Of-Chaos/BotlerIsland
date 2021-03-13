@@ -229,7 +229,7 @@ async def raidban(ctx, *args):
         name=f'{ctx.author} used raidban command in #{ctx.channel}:',
         icon_url=ctx.author.avatar_url,
         )
-    await guild_config.log(ctx.guild, 'modlog', embed=embed, desc)
+    await guild_config.log(ctx.guild, 'modlog', desc, embed=embed)
     await ctx.message.delete()
     if ctx.channel.id != guild_config.getlog('modlog'):
         await ctx.send(desc)
