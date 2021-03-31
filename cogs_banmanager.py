@@ -14,6 +14,8 @@ from bot_common import bot, CogtextManager, guild_config
 
 _unit_dict = {'h': 1, 'd': 24, 'w': 168, 'm': 732, 'y': 8766}
 def _parse_length(length):
+    if length == 'perma':
+        return None
     if (match := re.match(r'(\d+)([hdwmy])$', length)):
         return int(match[1]) * _unit_dict[match[2]]
     raise commands.BadArgument(f'Invalid duration argument: "{length}"')
@@ -34,9 +36,9 @@ class BanManager(CogtextManager):
         self.manage_mutelist.cancel()
 
     def push(self, id_tuple, unban_dt):
-        for idx, (_, ids) in enumerate(self.data):
-            if ids == id_tuple:
-                self.data[idx][0] = unban_dt
+        for entry in self.data:
+            if entry[1] == id_tuple:
+                entry[0] = unban_dt
                 heapify(self.data)
                 break
         else:
@@ -46,7 +48,7 @@ class BanManager(CogtextManager):
         for idx, (_, ids) in enumerate(self.data):
             if ids == id_tuple:
                 self.data[idx], self.data[-1] = self.data[-1], self.data[idx]
-                self.data.pop()
+                del self.data[-1]
                 heapify(self.data)
                 break
 
@@ -164,7 +166,11 @@ class BanManager(CogtextManager):
         if member.id == bot.user.id:
             await ctx.send('<:professionalism:778997791829000203>')
             return
-        if member.guild_permissions.manage_roles and not ctx.author.guild_permissions.manage_channels:
+        src_perms = ctx.author.guild_permissions
+        tgt_perms = member.guild_permissions
+        if ((not src_perms.manage_nicknames and tgt_perms.manage_roles)
+            or (not src_perms.manage_channels and tgt_perms.manage_nicknames)
+            ):
             await ctx.send(response_bank.channel_ban_deny_horizontal)
             return
         # WE'RE GONNA FIND THE FIRST FUCKING ROLE THAT HAS NO PERMS IN THIS CHANNEL
@@ -176,11 +182,13 @@ class BanManager(CogtextManager):
         else:
             await ctx.send(response_bank.channel_ban_role_error)
             return
+        lenstr = 'Until further notice.' if length is None else f'{length} hours.'
+        if length is not None:
+            self.push((ctx.guild.id, member.id, role.id), datetime.utcnow() + timedelta(hours=length))
         await ctx.message.delete()
         await ctx.send(response_bank.channel_ban_confirm.format(
-            member=member, length=f'{length} hours.', reason=reason,
+            member=member.mention, length=lenstr, reason=reason,
             ))
-        self.push((ctx.guild.id, member.id, role.id), datetime.utcnow() + timedelta(hours=length))
         # OH BUT NOW SOMEONES GONNA WHINE THAT WE DIDNT LOG IT? HOLD YOUR ASS TIGHT BECAUSE WE'RE ABOUT TO
         if guild_config.getlog(ctx.guild, 'modlog'): # OHHHHHHH! HE DID IT! THE FUCKING MADMAN!
             embed = dc.Embed(
@@ -189,7 +197,7 @@ class BanManager(CogtextManager):
                 description=f'{member.mention} has been banned in **#{ctx.channel}**'
                 )
             embed.add_field(name='**Role Granted:**', value=f'`{role}`')
-            embed.add_field(name='**Duration:**', value=f'{length} hours.')
+            embed.add_field(name='**Duration:**', value=lenstr)
             embed.add_field(name='**Reason:**', value=reason)
             embed.add_field(name='**User ID:**', value=member.id, inline=False)
             embed.set_author(

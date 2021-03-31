@@ -84,7 +84,7 @@ async def userhelp(ctx):
         inline=False,
         ).add_field(
         name='`linky`',
-        value='<:drewkas:814402277447041044>',
+        value='<:drewkas:684981372678570023>',
         inline=False,
         ))
 
