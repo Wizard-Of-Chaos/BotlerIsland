@@ -87,7 +87,7 @@ class ReactRoleTagger(CogtextManager):
             for msg_id, emoji_dict in msg_dict.items():
                 try:
                     msg = await channel.fetch_message(msg_id)
-                except dc.NotFound: # This message entry will be cleared when the bot closes.
+                except (AttributeError, dc.NotFound): # This message entry will be cleared when the bot closes.
                     emoji_dict.clear()
                     continue
                 for react in msg.reactions:
@@ -96,6 +96,15 @@ class ReactRoleTagger(CogtextManager):
                         members = [m async for m in react.users() if m.id != bot.user.id]
                         await process_role_grant(self.bot, msg, react, role, members)
         print(response_bank.process_reacts_complete)
+
+    @commands.Cog.listener()
+    async def on_message_delete(self, msg):
+        # If a message with a react is removed, remove associated data if it exists.
+        try:
+            del self.data[msg.channel.id][msg.id]
+        except KeyError:
+            return
+        self.data_save()
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload): # Reaction is added to message
@@ -124,7 +133,7 @@ class ReactRoleTagger(CogtextManager):
             # Toggle role addition/removal.
             msg = await guild.get_channel(chn_id).fetch_message(msg_id)
             if (last_react := react_timetable.get(member.id)) is not None:
-                if (datetime.utcnow() - last_react).seconds < 5*60:
+                if (datetime.utcnow() - last_react).seconds < 2*60:
                     await msg.remove_reaction(emoji, member)
                     return
             react_timetable[member.id] = datetime.utcnow()

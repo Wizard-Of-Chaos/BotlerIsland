@@ -38,7 +38,9 @@ class StatsTracker(object):
             self.stats = defaultdict(callback, self.stats)
         except (OSError, EOFError):
             self.stats = defaultdict(callback, defaultdict(dict, {}))
-            self.save()
+        else:
+            self.stats.default_factory = callback
+        self.save()
 
     async def take(self, stat, ctx, args):
         if self.locked:

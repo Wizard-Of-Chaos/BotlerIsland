@@ -1,14 +1,6 @@
 # Bot URL bank
 
 urls = {
-    'husky_icon': (
-        'https://cdn.discordapp.com/attachments/'
-        '663453347763716110/773577148577480754/unknown.png'
-        ),
-    'fat_husky': (
-        'https://cdn.discordapp.com/attachments/'
-        '663453347763716110/773574707231457300/dogress.png'
-        ),
     'flexing_bot': (
         'https://cdn.discordapp.com/attachments/'
         '390337910244769792/704686351228076132/arquius_smooth.gif'
@@ -49,5 +41,21 @@ urls = {
     'za_hando': (
         'https://cdn.discordapp.com/attachments/'
         '663453347763716110/667117626128072714/ZAHANDO.gif'
+        ),
+    }
+
+huskies = {
+    'icon': (
+        'https://cdn.discordapp.com/attachments/'
+        '663453347763716110/773577148577480754/unknown.png'
+        ),
+    'body': (
+        'https://cdn.discordapp.com/attachments/663453347763716110/821071889841127454/Cg3A2pOUcAAGOw8.png',
+        'https://cdn.discordapp.com/attachments/663453347763716110/821071990337175652/Cg3A2pmU8AAvmkH.png',
+        'https://cdn.discordapp.com/attachments/663453347763716110/821072102639140894/Cg3A2qGU8AEBdh9.png',
+        'https://cdn.discordapp.com/attachments/663453347763716110/821072168955412510/Cg3A2toU0AEyyiT.png',
+        'https://cdn.discordapp.com/attachments/663453347763716110/821072334878277642/Fasky.png',
+        'https://cdn.discordapp.com/attachments/663453347763716110/821072412795207690/PotatoHusky.png',
+        'https://cdn.discordapp.com/attachments/663453347763716110/821072362845503559/Hugsky.png',
         ),
     }

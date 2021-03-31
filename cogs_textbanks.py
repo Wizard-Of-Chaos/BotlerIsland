@@ -4,7 +4,7 @@ import random
 import functools
 from typing import Callable
 
-from data_urls import urls
+from data_urls import urls, huskies
 from data_responses import (
     queries, quirked_responses, unquirked_responses, apply_quirk
     )
@@ -15,7 +15,14 @@ class AttrDict(dict):
 
     __getattr__ = __getitem__
 
-class ResponseBank(AttrDict):
+class ResponsePool(AttrDict):
+    def __getitem__(self, resp_id: str) -> str:
+        resp = super().__getitem__(resp_id)
+        return resp if isinstance(resp, str) else random.choice(resp)
+
+    __getattr__ = __getitem__
+
+class ResponseBank(ResponsePool):
     __slots__ = ('quirk_func',)
 
     def __init__(self, qresps: dict, uresps: dict, quirk_func: Callable[[str], str]) -> None:
@@ -27,10 +34,6 @@ class ResponseBank(AttrDict):
                 self[resp_id] = quirk_func(resp)
             else:
                 self[resp_id] = tuple(map(quirk_func, resp))
-
-    def __getitem__(self, resp_id: str) -> str:
-        resp = super().__getitem__(resp_id)
-        return resp if isinstance(resp, str) else random.choice(resp)
 
     @staticmethod
     def _quirk_wrapper(quirk_func: Callable[[str], str]) -> Callable[[str], str]:
@@ -46,4 +49,5 @@ class ResponseBank(AttrDict):
 
 url_bank = AttrDict(urls)
 query_bank = AttrDict(queries)
+husky_bank = ResponsePool(huskies)
 response_bank = ResponseBank(quirked_responses, unquirked_responses, apply_quirk)

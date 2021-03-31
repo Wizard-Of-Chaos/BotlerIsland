@@ -306,7 +306,6 @@ async def on_message_delete(msg): # Log deleted messages
     guild = msg.channel.guild
     if not guild_config.getlog(guild, 'msglog'):
         return
-    emoji_roles.remove_message(msg)
     embed = dc.Embed(
         color=dc.Color.darker_grey(),
         timestamp=msg.created_at,

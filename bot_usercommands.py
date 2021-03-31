@@ -13,7 +13,7 @@ from discord.ext import commands
 
 from chainproofrhg import ChainProofRHG as RHG
 
-from cogs_textbanks import url_bank, query_bank, response_bank
+from cogs_textbanks import url_bank, query_bank, husky_bank, response_bank
 from bot_common import (
     bot, CONST_ADMINS, CONST_AUTHOR,
     guild_config, member_stalker, stored_suggestions,
@@ -21,6 +21,7 @@ from bot_common import (
 
 suggest_chid = 777555413213642772
 linky_rhg = RHG(2e-3)
+# print(linky_rhg.base_proc)
 
 def get_name(member_id):
     return str(bot.get_user(int(member_id[1])))
@@ -96,7 +97,7 @@ async def userhelp_error(ctx, error):
 
 dt_format = '%d/%m/%Y at %H:%M:%S UTC'
 
-@bot.command()
+@bot.command(aliases=['peek'])
 @commands.bot_has_permissions(send_messages=True)
 async def info(ctx, *, name=None):
     if name is None:
@@ -150,7 +151,7 @@ async def info_error(ctx, error):
         return
     raise error
 
-@bot.command(name='fle%')
+@bot.command(aliases=['fle%', 'pose'])
 @commands.bot_has_permissions(send_messages=True)
 async def flex(ctx):
     await ctx.send(
@@ -198,9 +199,9 @@ async def post_fat_husky(ctx):
             color=ctx.guild.get_member(bot.user.id).color,
             ).set_author(
             name='D--> A corpulent canine.', 
-            icon_url=url_bank.husky_icon,
+            icon_url=husky_bank.icon,
             ).set_image(
-            url=url_bank.fat_husky,
+            url=husky_bank.body,
             ))
 
 @post_fat_husky.error

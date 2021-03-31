@@ -76,6 +76,13 @@ class ChainProofRHG(object):
         self._base_proc = mean_to_base(mean_proc, epsilon) # Initialize the base probability value.
         self._procnow = self._base_proc
 
+    @classmethod
+    def from_base_proc(cls, base_proc, epsilon=EPSILON):
+        rhg = cls(1)
+        rhg._procnow = rhg._base_proc = base_proc # Initialize the base probability value.
+        rhg._mean_proc = round(base_to_mean(base_proc), rhg.round_places) # Initialize the average probability value.
+        return rhg
+
     def __getattr__(self, name):
         if name in ('p', 'mean_proc'):
             # The average probability for a test to hit.

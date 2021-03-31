@@ -231,7 +231,7 @@ async def raidban(ctx, *args):
         )
     await guild_config.log(ctx.guild, 'modlog', desc, embed=embed)
     await ctx.message.delete()
-    if ctx.channel.id != guild_config.getlog('modlog'):
+    if ctx.channel.id != guild_config.getlog(ctx.guild, 'modlog'):
         await ctx.send(desc)
 
 @raidban.error

@@ -101,10 +101,12 @@ class GuildConfig(Singleton):
             self.mod_channels = defaultdict(callback)
             self.save()
         else:
+            self.mod_channels.default_factory = callback
             for guild_id, config in self.mod_channels.copy().items():
                 if guild_id not in guild_whitelist:
                     del self.mod_channels[guild_id]
                     continue
+            self.save()
 
     async def log(self, guild, log, *args, **kwargs):
         channel_id = self.mod_channels[guild.id][log]
@@ -188,7 +190,9 @@ class MemberStalker(Singleton):
                 self.member_data = pickle.load(member_file)
         except (OSError, EOFError):
             self.member_data = defaultdict(member_callback, {'avatar_count': 0, 'latex_count': 0})
-            self.save()
+        else:
+            self.member_data.default_factory = member_callback
+        self.save()
 
     def get(self, field, member):
         return self.member_data[member.id][member.guild.id][field]

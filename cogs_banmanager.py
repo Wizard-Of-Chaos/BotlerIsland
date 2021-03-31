@@ -88,7 +88,7 @@ class BanManager(CogtextManager):
                         name=f'@{bot.user} Undid Channel Ban:',
                         icon_url=bot.user.avatar_url,
                         )
-                    await guild_config.log(ctx.guild, 'modlog', embed=embed)
+                    await guild_config.log(guild, 'modlog', embed=embed)
 
     @manage_mutelist.before_loop
     async def prepare_mutelist(self):
@@ -116,7 +116,7 @@ class BanManager(CogtextManager):
         raise error
 
     @role_mute.command(name='fakeban', aliases=['memeban', 'jokeban'])
-    async def role_mute_test(self, ctx, member: dc.Member, length: _parse_length, *, reason='None specified.'):
+    async def role_mute_test(self, ctx, member: dc.Member, length: _parse_length=None, *, reason='None specified.'):
         if not member:
             return
         if member.id == bot.user.id:
@@ -135,9 +135,7 @@ class BanManager(CogtextManager):
         else:
             await ctx.send(response_bank.channel_ban_role_error)
             return
-        lenstr = 'Until further notice.' if length is None else f'{length} hours.'
-        if length is not None:
-            self.push((ctx.guild.id, member.id, role.id), datetime.utcnow() + timedelta(hours=length))
+        lenstr = 'Until further notice.' if length is None else f'{length} hour(s).'
         await ctx.message.delete()
         await ctx.send(response_bank.channel_ban_confirm.format(
             member=member.mention, length=lenstr, reason=reason,
@@ -158,7 +156,7 @@ class BanManager(CogtextManager):
         raise error
 
     @role_mute.command(name='ban')
-    async def role_mute_apply(self, ctx, member: dc.Member, length: _parse_length, *, reason='None specified.'):
+    async def role_mute_apply(self, ctx, member: dc.Member, length: _parse_length=None, *, reason='None specified.'):
         # ALRIGHT HUNGOVER WIZARD OF CHAOS CODE IN THE HIZ-OUSE
         # WE GONNA WRITE SOME MOTHERFUCKING BAN COMMANDS; INITIALIZE THAT SHIT
         if not member: # WE'RE GRABBING A MEMBER WE GIVE NO SHITS
@@ -182,7 +180,7 @@ class BanManager(CogtextManager):
         else:
             await ctx.send(response_bank.channel_ban_role_error)
             return
-        lenstr = 'Until further notice.' if length is None else f'{length} hours.'
+        lenstr = 'Until further notice.' if length is None else f'{length} hour(s).'
         if length is not None:
             self.push((ctx.guild.id, member.id, role.id), datetime.utcnow() + timedelta(hours=length))
         await ctx.message.delete()
@@ -243,7 +241,7 @@ class BanManager(CogtextManager):
                 )
             embed.add_field(name='**Role Revoked:**', value=f'`{role}`')
             embed.add_field(name='**Reason:**', value=reason or 'None specified.')
-            embed.add_field(name='**User ID:**', value=member.id)
+            embed.add_field(name='**User ID:**', value=member.id, inline=False)
             embed.set_author(
                 name=f'@{ctx.author} Undid Channel Ban:',
                 icon_url=ctx.author.avatar_url,

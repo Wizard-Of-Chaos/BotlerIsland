@@ -7,7 +7,7 @@ import discord as dc
 from discord.ext import commands, tasks
 
 from cogs_textbanks import url_bank, query_bank, response_bank
-from bot_common import bot, guild_whitelist, CONST_ADMINS, CONST_AUTHOR
+from bot_common import bot, guild_whitelist, guild_config, CONST_ADMINS, CONST_AUTHOR
 
 class DailyCounter(commands.Cog):
     def __init__(self, bot):
@@ -104,7 +104,7 @@ class DailyCounter(commands.Cog):
         await guild_config.log(ctx.guild, 'modlog', embed=embed)
 
     @force_daily_post.error
-    async def force_daily_post_error(ctx, error):
+    async def force_daily_post_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send(response_bank.perms_error)
             return
