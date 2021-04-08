@@ -119,15 +119,13 @@ class BanManager(CogtextManager):
     async def role_mute_test(self, ctx, member: dc.Member, length: _parse_length=None, *, reason='None specified.'):
         if not member:
             return
-        if member.id == bot.user.id:
-            await ctx.send('<:professionalism:778997791829000203>')
-            return
         src_perms = ctx.author.guild_permissions
         tgt_perms = member.guild_permissions
-        if ((not src_perms.manage_nicknames and tgt_perms.manage_roles)
+        if (member.id == bot.user.id
+            or (not src_perms.manage_nicknames and tgt_perms.manage_roles)
             or (not src_perms.manage_channels and tgt_perms.manage_nicknames)
             ):
-            await ctx.send(response_bank.channel_ban_deny_horizontal)
+            await ctx.send('<:professionalism:778997791829000203>')
             return
         for role in ctx.guild.roles:
             if ctx.channel.overwrites_for(role).pair()[1].send_messages:
