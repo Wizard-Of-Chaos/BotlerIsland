@@ -50,25 +50,13 @@ async def process_role_grant(bot, msg, react, role, members) -> None:
 class ReactRoleTagger(CogtextManager):
     @staticmethod
     def _generate_empty():
-        return defaultdict(dict)
+        return dict
 
     def cleanup_before_save(self):
         for chn_id, msg_dict in self.data.items():
             for msg_id in list(msg_dict):
                 if not msg_dict[msg_id]:
                     del msg_dict[msg_id]
-
-    def data_load(self):
-        oldname = os.path.join('data', 'roles.pkl')
-        if os.path.isfile(oldname):
-            with open(oldname, 'rb') as data_file:
-                self.data = pickle.load(data_file)
-            if self.data.default_factory != self._generate_empty:
-                self.data.default_factory = self._generate_empty
-            self.data_save()
-            os.remove(oldname)
-        else:
-            super().data_load()
     
     def remove_reaction(self, msg, react):
         try:

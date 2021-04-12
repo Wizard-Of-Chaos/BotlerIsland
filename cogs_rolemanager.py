@@ -14,18 +14,6 @@ class RoleManager(CogtextManager):
     def _generate_empty():
         return defaultdict(set)
 
-    def data_load(self):
-        oldname = os.path.join('data', 'rolecats.pkl')
-        if os.path.isfile(oldname):
-            with open(oldname, 'rb') as data_file:
-                self.data = pickle.load(data_file)
-            if self.data.default_factory != self._generate_empty:
-                self.data.default_factory = self._generate_empty
-            self.data_save()
-            os.remove(oldname)
-        else:
-            super().data_load()
-
     async def purge_category(self, role: dc.Role, member: dc.Member) -> bool:
         """
         Removes all roles from a guild member that are in the same category as the given role.
