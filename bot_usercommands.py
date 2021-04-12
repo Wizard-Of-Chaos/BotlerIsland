@@ -20,7 +20,7 @@ from bot_common import (
     )
 
 suggest_chid = 777555413213642772
-linky_rhg = RHG(2e-3)
+linky_rhg = RHG(1/250)
 # print(linky_rhg.base_proc)
 
 def get_name(member_id):

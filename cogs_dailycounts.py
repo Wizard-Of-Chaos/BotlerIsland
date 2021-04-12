@@ -14,11 +14,14 @@ class DailyCounter(commands.Cog):
         self.bot = bot
         self.daily_msg = {guild_id: Counter() for guild_id in guild_whitelist}
         self.daily_usr = {guild_id: Counter({'join': 0, 'leave': 0}) for guild_id in guild_whitelist}
-        print(response_bank.process_dailies)
-        self.post_dailies.start()
 
     def cog_unload(self):
         self.post_dailies.cancel()
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        print(response_bank.process_dailies)
+        self.post_dailies.start()
 
     @commands.Cog.listener()
     async def on_member_join(self, member):

@@ -49,8 +49,11 @@ async def process_role_grant(bot, msg, react, role, members) -> None:
 
 class ReactRoleTagger(CogtextManager):
     @staticmethod
-    def _generate_empty():
-        return {}
+    def _generate_msg_dict():
+        return defaultdict(dict)
+
+    def _generate_empty(self):
+        return defaultdict(self._generate_msg_dict)
 
     def cleanup_before_save(self):
         for chn_id, msg_dict in self.data.items():
