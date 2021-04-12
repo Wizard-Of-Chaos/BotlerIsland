@@ -12,7 +12,7 @@ from bot_common import bot, CogtextManager
 class RoleManager(CogtextManager):
     @staticmethod
     def _generate_empty():
-        return defaultdict(set)
+        return defaultdict(dict)
 
     async def purge_category(self, role: dc.Role, member: dc.Member) -> bool:
         """
