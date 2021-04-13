@@ -167,12 +167,13 @@ unquirked_responses = {
         '`role delcategory <category>`: Delete a category and related role data.\n'
         ),
     "generator_extension": (
-        'Generates fortunes, names for your tabletop games, stands, and ships. \n'
-        '`generate fortune`: A fortune, just for you. \n'
-        '`generate stand`: Your personal STAND! \n'
+        'Generates a whole lot of names for your various needs. \n'
         '`generate dungeon`: A dungeon name. \n'
         '`generate ryder`: A Dave Ryder name, MST3K style. \n'
-        '`generate orcname`: Gibberish. Actual gibberish. \n'
+        '`generate tavern`: Welcome to the Verbing Animal. \n'
+        '`generate group`: The new antagonist for your tabletop. \n'
+        '`generate actionmovie`: Damn if this ain\'t the perfect movie. \n'
+        '`generate trollname`: Perfect troll names, you piece of shit Homestuck. \n'
         ),
 
     }

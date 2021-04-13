@@ -1,0 +1,27 @@
+Dungeon
+Temple
+Cave
+Ravine
+Tent
+Church
+Shrine
+Sanctum
+Cavern
+Castle
+Lookout
+Prison
+Hole
+Ruin
+Wyvern-Infested Mountains
+Mountains
+Desert
+Forest
+Mountain
+Cliffs
+Crypt
+Burrow
+Tower
+Vault
+Cloister
+Clown Pit
+Lair
