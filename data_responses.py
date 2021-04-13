@@ -174,21 +174,7 @@ unquirked_responses = {
         '`generate ryder`: A Dave Ryder name, MST3K style. \n'
         '`generate orcname`: Gibberish. Actual gibberish. \n'
         ),
-    "dungeons": (
-        'Dungeon', 'Temple', 'Cave', 'Ravine', 'Tent', 'Church', 'Shrine', 'Sanctum', 'Cavern', 'Castle',
-        'Lookout', 'Prison', 'Hole', 'Ruin', 'Wyvern-Infested Mountains', 'Mountains', 'Desert', 'Forest',
-        'Mountain', 'Cliffs',' Crypt', 'Burrow', 'Tower', 'Vault', 'Cloister', 'Clown Pit', 'Lair',
-        ),
-    "descriptors": (
-        'Doom', 'Rage', 'Hate', 'Horror', 'Terror', 'Vile Things', 'Death', 'Life', 'Toil', 'Despair',
-        'Hardships', 'Trials', 'Punching', 'Unholy Beings', 'Battle', 'Darkness', 'Bad', 'Evil', 'Neutrality',
-        'Knives', 'Chains', 'Fire', 'Blood', 'Tentacles', 'Ice', 'Lacerations', 'Bones', 'Flesh', 'Hell',
-        'Hatred', 'Screaming', 'Blades', 'Arrows', 'the Hunter', 'He-Who-Rends-And-Tears', 'Ancient Gods',
-        ),
-    "daves": (
-        ),
-    "ryders": (
-        ),
+
     }
 
 
