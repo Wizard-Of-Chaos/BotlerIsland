@@ -66,7 +66,7 @@ quirked_responses = {
     "manage_mutelist_unban_error": "Warning: {member} could not be auto-unbanned from role {role}.",
     "role_usage_format": (
         'Usage of the role command: `role (subcommand) [args...]`\n\n'
-        '`role list`: List all valid roles under their categories.\n'
+        '`role list <category>`: List all valid roles under their categories.\n'
         '`role add <role_name>`: Adds a specified role if valid.\n'
         '`role del <role_name>`: Removes a specified role if valid.\n'
         ),
