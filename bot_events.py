@@ -255,12 +255,6 @@ async def on_message(msg): # Message posted event
         and any(any(map(att.url.lower().endswith, image_exts)) for att in msg.attachments)
         ):
         await msg.add_reaction('❤️')
-    elif ctx.author.id == CONST_ADMINS[1]:
-        if ctx.channel.id == guild_config.getlog(msg.guild, 'modlog'):
-            return
-        if ctx.channel.category_id == 360676396172836867:
-            return
-        guild_config.log_linky(msg)
    
 @bot.event
 async def on_message_edit(bfr, aft): # Log edited messages

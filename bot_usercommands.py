@@ -11,8 +11,6 @@ import aiohttp
 import discord as dc
 from discord.ext import commands
 
-from chainproofrhg import ChainProofRHG as RHG
-
 from cogs_textbanks import url_bank, query_bank, husky_bank, response_bank
 from bot_common import (
     bot, CONST_ADMINS, CONST_AUTHOR,
@@ -20,8 +18,6 @@ from bot_common import (
     )
 
 suggest_chid = 777555413213642772
-linky_rhg = RHG(1/250)
-# print(linky_rhg.base_proc)
 
 def get_name(member_id):
     return str(bot.get_user(int(member_id[1])))
@@ -317,31 +313,6 @@ async def render_latex(ctx, *, raw_latex=''):
 
 @render_latex.error
 async def render_latex_error(ctx, error):
-    if isinstance(error, commands.BotMissingPermissions):
-        return
-    raise error
-
-@bot.command(name='linky', aliases=['8ball'])
-@commands.bot_has_permissions(send_messages=True)
-async def magic_8ball(ctx, *, query=''):
-    admin = ctx.guild.get_member(CONST_ADMINS[1])
-    embed = dc.Embed(
-        color=admin.color if admin else dc.Color.green(),
-        )
-    embed.set_author(
-        name=f'{admin.name if admin else "Linky"} says:',
-        icon_url=admin.avatar_url if admin else url_bank.linky_icon,
-        )
-    if linky_rhg:
-        embed.set_image(url=url_bank.linky_rare)
-        await ctx.send(embed=embed)
-        return
-    msg = re.sub(r'<@!(\d{18,})>', get_name, guild_config.random_linky(ctx.message.content))
-    embed.description = re.sub(r'(?<!<)(https?://[^\s]+)(?!>)', r'<\1>', msg)
-    await ctx.send(embed=embed)
-
-@magic_8ball.error
-async def magic_8ball_error(ctx, error):
     if isinstance(error, commands.BotMissingPermissions):
         return
     raise error

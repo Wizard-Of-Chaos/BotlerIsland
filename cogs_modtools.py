@@ -146,21 +146,6 @@ class GuildConfig(Singleton):
         else:
             config.add(channel_id)
             return True
-        
-    def log_linky(self, msg):
-        with open('spat.txt', 'a', encoding='utf-8') as lfile:
-            lfile.write(msg.content.strip() + '\n')
-    
-    def random_linky(self, msg):
-        try:
-            with open('spat.txt', 'r', encoding='utf-8') as lfile:
-                lcount = sum(1 for _ in lfile)
-                lfile.seek(0)
-                return next(islice(lfile, randrange(lcount), None))
-        except FileNotFoundError:
-            with open('spat.txt', 'w', encoding='utf-8') as lfile:
-                lfile.write('i love dirt so much\n')
-            return 'i love dirt so much\n'
 
 
 def guild_callback():

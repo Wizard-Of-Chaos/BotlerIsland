@@ -9,6 +9,7 @@ import cogs_dailycounts
 import cogs_banmanager
 import cogs_rolemanager
 import cogs_reactroletagger
+import cogs_linkyaicore
 import stupid_arquius_tricks
 
 if __name__ == '__main__':
