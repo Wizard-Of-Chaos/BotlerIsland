@@ -55,7 +55,7 @@ class LinkyBotAI(commands.Cog):
             with open(_response_pool, 'a', encoding='utf-8') as respfile:
                 respfile.write(msg.clean_content.strip() + '\n')
 
-    @tasks.loop(hours=1.5)
+    @tasks.loop(minutes=45)
     async def gen_laws(self):
         law_count = choices(range(10), self.countfreq)[0]
         if law_count == 0:
