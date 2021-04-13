@@ -66,7 +66,7 @@ class LinkyBotAI(commands.Cog):
             extras = randrange(2, 4)
             laws.extend(sample(['0. ', '@#$# ', '@#!# '], extras))
         elif law_count > 3:
-            extras = min(2, max(law_count - 3, choices(range(3), self.extrafreq)[0]))
+            extras = min(law_count - 3, choices(range(3), self.extrafreq)[0])
             laws.extend(sample(['0. ', '@#$# ', '@#!# '], extras))
         else:
             extras = 0
