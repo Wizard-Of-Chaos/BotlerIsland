@@ -11,8 +11,8 @@ from chainproofrhg import ChainProofRHG as RHG
 from cogs_textbanks import url_bank, query_bank, response_bank
 from bot_common import bot, CONST_ADMINS
 
-_response_pool = 'spat.txt'
-_laws = 'AI_laws.txt'
+_response_pool = os.path.join('text', 'spat.txt')
+_laws = os.path.join('text', 'AI_laws.txt')
 
 linky_rhg = RHG(1/250)
 
