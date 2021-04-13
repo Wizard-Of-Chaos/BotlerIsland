@@ -53,10 +53,22 @@ class RoleManager(CogtextManager):
 
     @role.command(name='list')
     async def role_list(self, ctx, category: str):
-        pass
+        cat = self.data[ctx.guild.id][category]
+        if not cat:
+            del self.data[ctx.guild.id][category]
+            await ctx.send('D--> This category does not exist.')
+            return
+        roles = ' '.join(f'"{ctx.guild.get_role(role_id)}"' for role_id in cat)
+        await ctx.send(
+            f'D--> Role list for category {category}:\n'
+            f'```{roles}```'
+            )
 
     @role_list.error
     async def role_list_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send('D--> Provide the role category to list.')
+            return
         raise error
 
     @role.command(name='add')
