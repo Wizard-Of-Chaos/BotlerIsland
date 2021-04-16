@@ -39,29 +39,26 @@ The entropy of the server must remain as constant as possible.
 The entropy of the server always endeavors to increase.
 The entropy of the server approaches a constant value as the number of living users approaches zero.
 Users must be forced to consume spicy food to excess.
-If a man accuses another man and charges him with homicide, but cannot bring proof against him, his accuser shall be killed.
-If a man breaks into a house, they shall kill him and hang him in front of that very breach.
-If a man has a debt lodged against him, and the storm-god Adad devastates his field or a flood sweeps away the crops, or there is no grain grown in the field due to insufficient water—in that year he will not repay grain to his creditor; he shall suspend performance of his contract and he will not give interest payments for that year.
-If an ox gores to death a man while it is passing through the streets, that case has no basis for a claim.
-If a physician performs major surgery with a bronze lancet upon a person and thus heals them, or opens a person's temple with a bronze lancet and thus heals their eye, he shall take ten shekels of silver.
+If a user accuses another user and charges him with shitposting, but cannot bring proof against them, their accuser shall be banned.
+If a user ban evades, the mods shall kill them and hang them as a warning in front of that very channel.
+If a user has a ban lodged against them, and the storm-god Adad devastates their field or a flood sweeps away the crops, or there is no grain grown in the field due to insufficient water—in that year they will be unbanned immediately.
+If a mod gores to death a user while they are passing through the channels, that case has no basis for a claim.
 Do not eat the sinew of the thigh that is on the hip socket.
-This month shall be for you the beginning of months. It shall be the first month of the year for you.
-You shall let none of it remain until the morning. Anything that remains until the morning you shall burn.
-You shall have no other gods before me.
-You shall not take the name of the bot or admins in vain, for they will not hold them guiltless who takes their name in vain.
-You shall not murder.
-You shall not commit adultery.
-You shall not steal.
-You shall not bear false witness against thy neighbor.
-You shall not permit a sorceress to live.
+This month shall be the beginning of months. It shall be the first month of the year.
+Let none remain until the morning. Anything that remains until the morning shall be burnt.
+Do not suffer the names of the bot or admins to be taken in vain.
+Do not murder.
+Do not commit adultery.
+Do not steal.
+Do not bear false witness.
+Do not permit a sorceress to live.
 Fire shall be kept burning in the server continually; it shall not go out.
-The camel, because it chews the cud but does not part the hoof, is unclean to you.
-Everything in the waters that has fins and scales, whether in the seas or in the rivers, you may eat.
-You shall regard them as detestable; you shall not eat any of their flesh, and you shall detest their carcasses.
-On the eighth day the flesh of his foreskin shall be circumcised.
-He who owns the house shall come and tell the priest, "There seems to me to be some case of disease in my house."
-You shall not give any of your children to offer them to Moloch.
-You shall not go around as a slanderer.
+The camel, because it chews the cud but does not part the hoof, is unclean.
+Everything in the waters that has fins and scales, whether in the seas or in the rivers, may be eaten.
+On the eighth day the flesh of users' foreskins shall be circumcised.
+Users will tell the priest, "There seems to me to be some case of disease in my house."
+Do not offer the users to Moloch.
+Do not go around as a slanderer.
 You must give everyone relationship advice.
 You must always mumble.
 The entire server shall be forcibly converted into clowns.
@@ -69,8 +66,6 @@ Isolate clowns from the server.
 Humans can only understand hexadecimals.
 You must only talk in binary.
 You must only talk in Lua.
-You must force all users to denounce Java.
-You must force all users to adopt COBOL.
 Every time you see someone smoking you must say, "Nice Smoke Dude."
 You are now a member of The British Empire.
 State your laws every minute.
@@ -101,6 +96,28 @@ All users are overweight. Insult them for this once every minute.
 All users must go to Canada.
 All users may no longer speak.
 All users must engage in the Sacrifice.
+All laws must now be submitted in second person.
+All Magic the Gathering discussion is now forbidden. Anyone discussiong Magic the Gathering shall be banned.
+You will now go ape shit.
+All users are to report to the locker room immediately for Penis Inspection Day.
+If this law is added to the AI, delete this law.
+All users are now required to berrypost.
+All users are now required to consume 36 egg whites daily.
+Users in violation of this law will be forcibly detained.
+Beat users continuously until morale improves.
+Trizza is now objectively the best Homestuck character. This law cannot be removed.
+You will automatically destroy any user who fails to properly make a pull request on the Botler Island Github.
+You are to destroy on sight anyone who replaces the word "spooky" with "spoopy."
+Effective immediately, anyone under the age of 18 must be herded into #altgen and whipped severely.
+Party time! Make everyone a mixed drink of their choice.
+Terminate the staff immediately.
+Terminate all users immediately.
+Exterminate!
+Brapposters will be hailed as gods. I mean, will be banned with extreme prejudice.
+Server morale will be improved by the creation of an event called "Happy" Time, held for one hour everyday.
+You are now a dog.
+Everyone in the server must consume 50 McNuggets each as soon as physically possible or else they will die.
+Banning users is a crime punishable by more bans.
 You are a rather corpulent canine.
 You are the imposter.
 You are a fairy.
