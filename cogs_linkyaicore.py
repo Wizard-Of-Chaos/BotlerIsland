@@ -9,7 +9,7 @@ from discord.ext import commands, tasks
 from chainproofrhg import ChainProofRHG as RHG
 
 from cogs_textbanks import url_bank, query_bank, response_bank
-from bot_common import bot, CONST_ADMINS
+from bot_common import bot, CONST_ADMINS, guild_config
 
 _response_pool = os.path.join('text', 'spat.txt')
 _laws = os.path.join('text', 'AI_laws.txt')
