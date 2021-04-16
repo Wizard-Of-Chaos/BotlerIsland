@@ -20,6 +20,7 @@ _adjectives = os.path.join('text', 'adjectives.txt')
 _groups = os.path.join('text', 'groups.txt')
 _animals = os.path.join('text', 'animals.txt')
 _verbs = os.path.join('text', 'verbs.txt')
+_interlinks = os.path.join('text', 'interlinked.txt')
 
 consonants = "BCDFGHJKLMNPQRSTVXZ"
 vowels = "AEIOUWY"
@@ -32,6 +33,19 @@ def generate_troll_name():
             ).capitalize()
         for _ in range(2)
         )
+
+@bot.command(name='interlinked')
+@commands.bot_has_permissions(send_messages=True)
+async def interlinked(ctx):
+	interlinks = open(_interlinks).read().splitlines()
+	baseline = random.choice(interlinks) + ' Interlinked.'
+
+	await ctx.send(embed=dc.Embed(
+		color=ctx.guild.get_member(bot.user.id).color,
+		description = baseline
+		).set_author(
+		name='Baseline:', icon_url=bot.user.avatar_url
+		))
 
 @bot.group()
 @commands.bot_has_permissions(send_messages=True)
