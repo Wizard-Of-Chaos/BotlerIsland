@@ -1,15 +1,12 @@
-#Really, really stupid commands.
+# Really, really stupid commands.
+import os
 import random
+
 import discord as dc
 from discord.ext import commands
-import os
 
 from cogs_textbanks import query_bank, response_bank
 from bot_common import bot
-
-class BullshitGenerator(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
 
 _daves = os.path.join('text', 'daves.txt')
 _ryders = os.path.join('text', 'ryders.txt')
@@ -32,6 +29,10 @@ def generate_troll_name():
             ).capitalize()
         for _ in range(2)
         )
+
+class BullshitGenerator(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
 
 @bot.group()
 @commands.bot_has_permissions(send_messages=True)

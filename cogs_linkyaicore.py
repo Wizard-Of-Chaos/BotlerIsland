@@ -76,7 +76,10 @@ class LinkyBotAI(commands.Cog):
             for i, l in enumerate(law_pool):
                 laws[i] = laws[i] + next(islice(lawfile, l, None)).strip()
                 lawfile.seek(0)
-        self.laws = '\n\n'.join([l for l in laws if l.startswith('@')] + [l for l in laws if not l.startswith('@')])
+        self.laws = '\n\n'.join(
+            [l for l in laws if l.startswith('@')]
+            + [l for l in laws if not l.startswith('@')]
+            )
 
     @commands.command(name='linky')
     @commands.bot_has_permissions(send_messages=True)
