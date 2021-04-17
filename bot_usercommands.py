@@ -317,6 +317,23 @@ async def render_latex_error(ctx, error):
         return
     raise error
 
+@bot.command(name='github')
+@commands.bot_has_permissions(send_messages=True)
+async def pull_request(ctx):
+    await ctx.send(embed=dc.Embed(
+        color=ctx.guild.get_member(bot.user.id).color,
+        description=(
+            'Do you have a friend or a relative who would '
+            'make a valuable contribution to the bot?\n'
+            'In that case, tell them to submit a pull request '
+            'for their new feature to: <https://github.com/Wizard-Of-Chaos/BotlerIsland>.\n'
+            'Botler Island is the beta version of Arquius. '
+            'If you want us to include your feature in the bot, send it there.\n'
+        )).set_author(
+        name='Got a feature?',
+        icon_url=bot.user.avatar_url,
+        ))
+
 @bot.command(name='suggest')
 @commands.bot_has_permissions(send_messages=True)
 async def suggest_to_dev(ctx, *, suggestion: str):

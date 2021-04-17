@@ -166,16 +166,15 @@ unquirked_responses = {
         '`role addcategory <category> [<role_name1> <role_name2> ...]`: Add roles to a category.\n'
         '`role delcategory <category>`: Delete a category and related role data.\n'
         ),
-    "generator_extension": (
-        'Generates a whole lot of names for your various needs. \n'
-        '`generate dungeon`: A dungeon name. \n'
-        '`generate ryder`: A Dave Ryder name, MST3K style. \n'
-        '`generate tavern`: Welcome to the Verbing Animal. \n'
-        '`generate group`: The new antagonist for your tabletop. \n'
-        '`generate actionmovie`: Damn if this ain\'t the perfect movie. \n'
-        '`generate trollname`: Perfect troll names, you piece of shit Homestuck. \n'
+    "generator_usage_format": (
+        "Generates a whole lot of names for your various needs.\n"
+        "`generate dungeon`: A dungeon name.\n"
+        "`generate ryder`: A Dave Ryder name, MST3K style.\n"
+        "`generate tavern`: Welcome to the Verbing Animal.\n"
+        "`generate group`: The new antagonist for your tabletop.\n"
+        "`generate actionmovie`: Damn if this ain't the perfect movie.\n"
+        "`generate trollname`: Perfect troll names, you piece of shit Homestuck.\n"
         ),
-
     }
 
 
