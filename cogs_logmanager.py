@@ -14,7 +14,7 @@ log_chid = 830752125998596126
 logger = logging.getLogger('discord')
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='r+')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-handler.setLevel(logging.DEBUG)
+handler.setLevel(logging.WARNING)
 logger.addHandler(handler)
 
 
