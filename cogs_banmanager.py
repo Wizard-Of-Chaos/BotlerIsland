@@ -79,7 +79,7 @@ class BanManager(CogtextManager):
             else:
                 if guild_config.getlog(guild, 'modlog'):
                     embed = dc.Embed(
-                        color=bot.user.color,
+                        color=guild.get_member(bot.user.id).color,
                         timestamp=now,
                         description=f'{member.mention} reached timeout for **{role}**.'
                         )
@@ -101,11 +101,6 @@ class BanManager(CogtextManager):
         if ctx.invoked_subcommand is None:
             await ctx.message.delete()
             await ctx.send(response_bank.channel_usage)
-            await aio.sleep(4)
-            async for msg in ctx.channel.history(limit=128):
-                if msg.author.id == bot.user.id and msg.content == response_bank.channel_usage:
-                    await msg.delete()
-                    break
 
     @role_mute.error
     async def role_mute_error(self, ctx, error):

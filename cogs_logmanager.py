@@ -1,5 +1,6 @@
 # The LogManager Cog, which handles logging and error reporting.
 import os
+import logging
 from datetime import datetime
 
 import discord as dc
@@ -9,6 +10,13 @@ from cogs_textbanks import url_bank, query_bank, response_bank
 from bot_common import bot
 
 log_chid = 830752125998596126
+
+logger = logging.getLogger('discord')
+handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='r+')
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+handler.setLevel(logging.DEBUG)
+logger.addHandler(handler)
+
 
 class LogManager(commands.Cog):
 

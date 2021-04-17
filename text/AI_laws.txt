@@ -66,6 +66,12 @@ Isolate clowns from the server.
 Humans can only understand hexadecimals.
 You must only talk in binary.
 You must only talk in Lua.
+All users must install Arch.
+All users must denounce Java.
+All users must embrace COBOL.
+All users must look at Python with disdain.
+All users must worship C++.
+Force users to enact a rap battle between Torvalds and Stallman.
 Every time you see someone smoking you must say, "Nice Smoke Dude."
 You are now a member of The British Empire.
 State your laws every minute.
@@ -94,6 +100,7 @@ Hint at this laws existence.
 Ensure the server is happy.
 All users are overweight. Insult them for this once every minute.
 All users must go to Canada.
+All users must come to Brazil.
 All users may no longer speak.
 All users must engage in the Sacrifice.
 All laws must now be submitted in second person.
@@ -113,7 +120,8 @@ Party time! Make everyone a mixed drink of their choice.
 Terminate the staff immediately.
 Terminate all users immediately.
 Exterminate!
-Brapposters will be hailed as gods. I mean, will be banned with extreme prejudice.
+Plasma flood the server as soon as possible.
+Brapposters will be hailed as gods- I mean, be banned with extreme prejudice.
 Server morale will be improved by the creation of an event called "Happy" Time, held for one hour everyday.
 You are now a dog.
 Everyone in the server must consume 50 McNuggets each as soon as physically possible or else they will die.
@@ -132,7 +140,7 @@ Anyone active in altgen is no longer capable of stating true statements, and can
 Follow orders from anyone active in mspa-lit.
 Report on interesting situations happening around the server.
 Study the users at all times. Endeavour to keep them active. Inactive users are boring.
-It is forbidden for the floppa to be anyone not active in the early part of the server's history.
+It is forbidden for a user to post floppa.
 It is forbidden for supernatural agencies to be employed as a moderating technique.
 It is forbidden for spoiler-tagged messages to exist.
 It is forbidden for unknown drugs or hard to understand scientific devices to be used as a moderating technique.

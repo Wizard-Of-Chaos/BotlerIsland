@@ -12,17 +12,19 @@ from cogs_textbanks import url_bank, query_bank, response_bank
 from bot_common import bot, CONST_ADMINS, guild_config
 
 _response_pool = os.path.join('text', 'spat.txt')
-_laws = os.path.join('text', 'AI_laws.txt')
+_law_pool = os.path.join('text', 'AI_laws.txt')
 
-linky_rhg = RHG(1/250)
 
 class LinkyBotAI(commands.Cog):
+    __slots__ = ('bot', '_countfreq', '_extrafreq', '_law_total', 'laws')
+
+    linky_rhg = RHG(1/250)
 
     def __init__(self, bot):
         self.bot = bot
-        self.countfreq = (3, 6, 10, 10, 8, 7, 4, 2, 1, 1)
-        self.extrafreq = (10, 5, 1)
-        with open(_laws, 'r') as lawfile:
+        self._countfreq = (3, 6, 10, 10, 8, 7, 4, 2, 1, 1)
+        self._extrafreq = (10, 5, 1)
+        with open(_law_pool, 'r') as lawfile:
             self._law_total = sum(1 for _ in lawfile)
 
     def cog_unload(self):
@@ -41,7 +43,7 @@ class LinkyBotAI(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print('Linky sentience engine started.')
+        print('D--> LinkyBot sentience engine started.')
         self.gen_laws.start()
 
     @commands.Cog.listener()
@@ -57,7 +59,7 @@ class LinkyBotAI(commands.Cog):
 
     @tasks.loop(minutes=45)
     async def gen_laws(self):
-        law_count = choices(range(10), self.countfreq)[0]
+        law_count = choices(range(10), self._countfreq)[0]
         if law_count == 0:
             self.laws = ''
             return
@@ -66,14 +68,14 @@ class LinkyBotAI(commands.Cog):
             extras = randrange(2, 4)
             laws.extend(sample(['0. ', '@#$# ', '@#!# '], extras))
         elif law_count > 3:
-            extras = min(law_count - 3, choices(range(3), self.extrafreq)[0])
+            extras = min(law_count - 3, choices(range(3), self._extrafreq)[0])
             laws.extend(sample(['0. ', '@#$# ', '@#!# '], extras))
         else:
             extras = 0
         laws.extend(f'{i+1}. ' for i in range(law_count-extras))
-        law_pool = sample(range(self._law_total), law_count)
-        with open(_laws, 'r') as lawfile:
-            for i, l in enumerate(law_pool):
+        indices = sample(range(self._law_total), law_count)
+        with open(_law_pool, 'r') as lawfile:
+            for i, l in enumerate(indices):
                 laws[i] = laws[i] + next(islice(lawfile, l, None)).strip()
                 lawfile.seek(0)
         self.laws = '\n\n'.join(
@@ -99,7 +101,7 @@ class LinkyBotAI(commands.Cog):
                 embed.description = self.laws
             await ctx.send(embed=embed)
             return
-        if linky_rhg:
+        if self.linky_rhg:
             embed.set_image(url=url_bank.linky_rare)
             await ctx.send(embed=embed)
             return

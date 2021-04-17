@@ -10,7 +10,7 @@ import cogs_banmanager
 import cogs_rolemanager
 import cogs_reactroletagger
 import cogs_linkyaicore
-import stupid_arquius_tricks
+import cogs_bullshitgenerator
 
 if __name__ == '__main__':
     main(get_token())

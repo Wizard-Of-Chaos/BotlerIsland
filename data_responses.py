@@ -47,9 +47,9 @@ quirked_responses = {
         "or a few too large a die. I strongly recommend smaller values."
         ),
     "channel_usage": (
-        "Usage of the channel command: `channel (ban|unban) <user>`\n\n"
-        "`channel ban <user>`: Apply lowest available channel mute role to user.\n"
-        "`channel unban <user>`: Revoke lowest available channel mute role from user.\n"
+        "Usage of the channel command: `channel (ban|unban) <duration> <user>`\n\n"
+        "`channel ban <duration> <user>`: Apply lowest available channel mute role to user.\n"
+        "`channel unban <duration> <user>`: Revoke lowest available channel mute role from user.\n"
         "<user> can be the user id, mention, or name."
         ),
     "channel_member_error": "I could not find {member}. Do clarify.",
@@ -172,8 +172,8 @@ unquirked_responses = {
         "`generate ryder`: A Dave Ryder name, MST3K style.\n"
         "`generate tavern`: Welcome to the Verbing Animal.\n"
         "`generate group`: The new antagonist for your tabletop.\n"
-        "`generate actionmovie`: Damn if this ain't the perfect movie.\n"
-        "`generate trollname`: Perfect troll names, you piece of shit Homestuck.\n"
+        "`generate movies`: Damn if this ain't the perfect movie.\n"
+        "`generate trolls`: Perfect troll names, you piece of shit Homestuck.\n"
         ),
     }
 
