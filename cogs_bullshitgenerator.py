@@ -153,10 +153,7 @@ class BullshitGenerator(commands.Cog):
     @generate.command(name='actionmovie', aliases=['movie', 'movies', 'movietitle'])
     @commands.bot_has_permissions(send_messages=True)
     async def generate_movie(self, ctx, total: limit_pulls()=DEFAULT_TOTAL):
-        with (
-            open(_dungeons) as names, open(_descriptors) as descriptors,
-            open(_daves) as firsts, open(_ryders) as lasts,
-            ):
+        with open(_dungeons) as names, open(_descriptors) as descriptors, open(_daves) as firsts, open(_ryders) as lasts:
             pools = self.sample((names, descriptors, firsts, lasts), total)
             embed_desc = '\n'.join(
                 f'{f} {l} in the {n} of {d}{"! "[random.randrange(2)]}'
