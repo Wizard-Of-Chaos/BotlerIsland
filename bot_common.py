@@ -27,8 +27,6 @@ CONST_AUTHOR = (125433170047795200, 257144766901256192) # 9, WoC
 
 
 def main():
-    with (open('token.dat', 'r') as tokenfile,
-        guild_config, member_stalker, stats_tracker, stored_suggestions,
-        ):
+    with open('token.dat', 'r') as tokenfile, guild_config, member_stalker, stats_tracker, stored_suggestions:
         raw = tokenfile.read().strip()
         bot.run(''.join(chr(int(''.join(c), 16)) for c in zip(*[iter(raw)]*2)))
