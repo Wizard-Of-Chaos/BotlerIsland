@@ -144,6 +144,7 @@ class BanManager(CogtextManager):
         raise error
 
     @role_mute.command(name='ban')
+    @commands.has_guild_permissions(manage_messages=True)
     async def role_mute_apply(self, ctx, member: dc.Member, length: _parse_length=None, *, reason='None specified.'):
         # ALRIGHT HUNGOVER WIZARD OF CHAOS CODE IN THE HIZ-OUSE
         # WE GONNA WRITE SOME MOTHERFUCKING BAN COMMANDS; INITIALIZE THAT SHIT
@@ -204,6 +205,9 @@ class BanManager(CogtextManager):
             await ctx.send(response_bank.channel_ban_duration_error.format(
                 length=error.args[0].split()[-1]
                 ))
+            return
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send('D--> Missing perm(s): `manage_messages`')
             return
         raise error
 

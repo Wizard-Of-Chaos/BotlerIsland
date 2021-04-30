@@ -1,15 +1,11 @@
 # Moderation data classes
-import re
 import os
 import pickle
-from datetime import datetime, timedelta
-from collections import defaultdict, deque
-from random import randrange
-from itertools import islice
-from contextlib import asynccontextmanager as acm
+from datetime import datetime
+from collections import defaultdict
 
 import discord as dc
-from discord.ext import tasks, commands
+from discord.ext import commands
 
 from cogs_textbanks import query_bank, response_bank
 

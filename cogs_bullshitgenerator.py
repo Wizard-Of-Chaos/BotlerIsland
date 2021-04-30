@@ -158,7 +158,10 @@ class BullshitGenerator(commands.Cog):
             open(_daves) as firsts, open(_ryders) as lasts,
             ):
             pools = self.sample((names, descriptors, firsts, lasts), total)
-            embed_desc = '\n'.join(f'{f} {l} in the {n} of {d}{"! "[random.randrange(2)]}' for n, d, f, l in pools)
+            embed_desc = '\n'.join(
+                f'{f} {l} in the {n} of {d}{"! "[random.randrange(2)]}'
+                for n, d, f, l in pools
+                )
         await self.send(ctx, 'Your sick movie names:', embed_desc)
 
     @generate_movie.error
