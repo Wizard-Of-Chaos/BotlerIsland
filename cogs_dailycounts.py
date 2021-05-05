@@ -32,10 +32,11 @@ class DailyCounter(commands.Cog):
             timestamp=datetime.utcnow(),
             description=f'**Message counts since midnight UTC or bot start:**\n{msg_counts}',
             )
+        guild_data = self.daily_usr[guild_id]
         embed.set_author(name=f'Daily counts for {author}', icon_url=author.avatar_url)
-        embed.add_field(name='Users Gained:', value=self.daily_usr[guild_id]['join'])
-        embed.add_field(name='Users Lost:', value=self.daily_usr[guild_id]['leave'])
-        embed.add_field(name='Users Banned:', value=self.daily_usr[guild_id]['ban'])
+        embed.add_field(name='Users Gained:', value=guild_data['join'])
+        embed.add_field(name='Users Lost:', value=guild_data['leave']-guild_data['ban'])
+        embed.add_field(name='Users Banned:', value=guild_data['ban'])
         embed.add_field(name='**DISCLAIMER**:', value=msg, inline=False)
         return embed
 
