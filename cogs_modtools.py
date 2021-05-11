@@ -73,6 +73,11 @@ def callback(): # Lambdas can't be pickled, but named functions can.
     'autoreact': set(), 'ignoreplebs': set(), 'enablelatex': set(),
     }
 
+modref = dc.Permissions(
+    administrator=True, manage_channels=True,
+    manage_roles=True, manage_nicknames=True,
+    )
+
 class GuildConfig(Singleton):
     def __init__(self, bot, fname):
         self.bot = bot
@@ -113,15 +118,13 @@ class GuildConfig(Singleton):
 
     def getcmd(self, ctx):
         perms = ctx.author.guild_permissions
-        return (
-            perms.administrator or perms.manage_channels or perms.manage_guild or perms.manage_roles
+        return ((perms.value & modref.value)
             or ctx.channel.id not in self.mod_channels[ctx.guild.id]['ignoreplebs']
             )
 
     def getltx(self, ctx):
         perms = ctx.author.guild_permissions
-        return (
-            perms.administrator or perms.manage_channels or perms.manage_guild or perms.manage_roles
+        return ((perms.value & modref.value)
             or ctx.channel.id in self.mod_channels[ctx.guild.id]['enablelatex']
             )
 

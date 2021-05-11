@@ -10,6 +10,7 @@ from cogs_textbanks import url_bank, query_bank, response_bank
 from bot_common import bot, guild_whitelist, guild_config, CONST_ADMINS, CONST_AUTHOR
 
 class DailyCounter(commands.Cog):
+    
     def __init__(self, bot):
         self.bot = bot
         self.daily_msg = {guild_id: Counter() for guild_id in guild_whitelist}

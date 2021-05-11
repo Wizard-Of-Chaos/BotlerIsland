@@ -5,4 +5,4 @@ __pycache__
 avatar.png
 encrypttoken.py
 spat.txt
-token.dat
+*token.dat
