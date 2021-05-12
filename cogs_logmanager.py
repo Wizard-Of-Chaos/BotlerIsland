@@ -18,9 +18,12 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(me
 handler.setLevel(logging.WARNING)
 logger.addHandler(handler)
 
-def get_token():
-    with open('pbtoken.dat', 'r') as tokenfile:
-        return tokenfile.read().strip()
+def get_dev_key():
+    try:
+        with open('pbtoken.dat', 'r') as tokenfile:
+            return tokenfile.read().strip()
+    except FileNotFoundError:
+        return ''
 
 
 class LoggingError(Exception):
@@ -30,7 +33,7 @@ class LoggingError(Exception):
 class LogManager(commands.Cog):
     _post_data = {
         'api_option': 'paste',
-        'api_dev_key': get_token(),
+        'api_dev_key': get_dev_key(),
         'api_paste_private': '1',
         'api_paste_expire_date': '1M',
         }
