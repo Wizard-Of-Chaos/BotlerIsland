@@ -47,9 +47,9 @@ quirked_responses = {
         "or a few too large a die. I strongly recommend smaller values."
         ),
     "channel_usage": (
-        "Usage of the channel command: `channel (ban|unban) <duration> <user>`\n\n"
-        "`channel ban <duration> <user>`: Apply lowest available channel mute role to user.\n"
-        "`channel unban <duration> <user>`: Revoke lowest available channel mute role from user.\n"
+        "Usage of the channel command: `channel (ban|unban) <user> <duration> [reason]`\n\n"
+        "`channel ban`: Apply lowest available channel mute role to user.\n"
+        "`channel unban`: Revoke lowest available channel mute role from user.\n"
         "<user> can be the user id, mention, or name."
         ),
     "channel_member_error": "I could not find {member}. Do clarify.",
