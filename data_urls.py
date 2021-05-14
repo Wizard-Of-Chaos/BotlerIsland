@@ -58,5 +58,7 @@ huskies = {
         'https://cdn.discordapp.com/attachments/663453347763716110/821072412795207690/PotatoHusky.png',
         'https://cdn.discordapp.com/attachments/663453347763716110/821072362845503559/Hugsky.png',
         'https://cdn.discordapp.com/attachments/663453347763716110/841760984724537414/Husko.png',
+        'https://cdn.discordapp.com/attachments/663453347763716110/842369221669421106/Ballonsky.png',
+        'https://cdn.discordapp.com/attachments/663453347763716110/842369264341876776/twosky.png',
         ),
     }
