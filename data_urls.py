@@ -32,7 +32,7 @@ urls = {
         ),
     'za_warudo': (
         'https://cdn.discordapp.com/attachments/'
-        '663453347763716110/667117771099734052/ZAWARUDO.gif'
+        '663453347763716110/845161781806366721/zawarudo.gif'
         ),
     'okuyasu_icon': (
         'https://cdn.discordapp.com/attachments/'

@@ -140,12 +140,26 @@ class BullshitGenerator(commands.Cog):
     @commands.bot_has_permissions(send_messages=True)
     async def generate_tavern(self, ctx, total: limit_pulls()=DEFAULT_TOTAL):
         with open(_animals) as animals, open(_verbs) as verbs:
+            pools = self.sample((verbs, animals), total)
+            embed_desc = '\n'.join(f'{v}ing {a}' for v, a in pools)
+        await self.send(ctx, 'Your tavern names:', embed_desc)
+
+    @generate_tavern.error
+    async def generate_tavern_error(self, ctx, error):
+        if isinstance(error, commands.BotMissingPermissions):
+            return
+        raise error
+
+    @generate.command(name='nrevat', aliases=['rtavern', 'revtavern', 'reversetavern'])
+    @commands.bot_has_permissions(send_messages=True)
+    async def generate_reverse_tavern(self, ctx, total: limit_pulls()=DEFAULT_TOTAL):
+        with open(_animals) as animals, open(_verbs) as verbs:
             pools = self.sample((animals, verbs), total)
             embed_desc = '\n'.join(f'{a}ing {v}' for a, v in pools)
         await self.send(ctx, 'Your tavern names:', embed_desc)
 
     @generate_tavern.error
-    async def generate_tavern_error(self, ctx, error):
+    async def generate_reverse_tavern_error(self, ctx, error):
         if isinstance(error, commands.BotMissingPermissions):
             return
         raise error

@@ -72,16 +72,14 @@ class LinkyBotAI(commands.Cog):
             laws.extend(sample(['0. ', '@#$# ', '@#!# '], extras))
         else:
             extras = 0
+        laws = sorted(laws, reverse=True)
         laws.extend(f'{i+1}. ' for i in range(law_count-extras))
         indices = sample(range(self._law_total), law_count)
         with open(_law_pool, 'r') as lawfile:
             for i, l in enumerate(indices):
                 laws[i] = laws[i] + next(islice(lawfile, l, None)).strip()
                 lawfile.seek(0)
-        self.laws = '\n\n'.join(
-            [l for l in laws if l.startswith('@')]
-            + [l for l in laws if not l.startswith('@')]
-            )
+        self.laws = '\n\n'.join(laws)
 
     @commands.command(name='linky')
     @commands.bot_has_permissions(send_messages=True)
