@@ -42,6 +42,10 @@ urls = {
         'https://cdn.discordapp.com/attachments/'
         '663453347763716110/667117626128072714/ZAHANDO.gif'
         ),
+    'index_icon': (
+        'https://cdn.discordapp.com/attachments/'
+        '663453347763716110/846354994428772362/index.png'
+        ),
     }
 
 huskies = {

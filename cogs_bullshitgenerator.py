@@ -5,41 +5,24 @@ import random
 import discord as dc
 from discord.ext import commands
 
-from cogs_textbanks import query_bank, response_bank
+from cogs_textbanks import query_bank, response_bank, url_bank
 from bot_common import bot
 
-_daves = os.path.join('text', 'daves.txt')
-_ryders = os.path.join('text', 'ryders.txt')
-_dungeons = os.path.join('text', 'dungeons.txt')
-_descriptors = os.path.join('text', 'descriptors.txt')
-_figures = os.path.join('text', 'figures.txt')
-_adjectives = os.path.join('text', 'adjectives.txt')
-_groups = os.path.join('text', 'groups.txt')
-_animals = os.path.join('text', 'animals.txt')
-_verbs = os.path.join('text', 'verbs.txt')
-_interlinks = os.path.join('text', 'interlinked.txt')
+_addpath = lambda f: os.path.join('text', f)
+
+_daves = _addpath('daves.txt')
+_ryders = _addpath('ryders.txt')
+_dungeons = _addpath('dungeons.txt')
+_descriptors = _addpath('descriptors.txt')
+_figures = _addpath('figures.txt')
+_adjectives = _addpath('adjectives.txt')
+_groups = _addpath('groups.txt')
+_animals = _addpath('animals.txt')
+_verbs = _addpath('verbs.txt')
+_interlinks = _addpath('interlinked.txt')
+_prescripts = _addpath('prescripts.txt')
 
 DEFAULT_TOTAL = 8
-
-
-@bot.command(name='interlinked')
-@commands.bot_has_permissions(send_messages=True)
-async def interlinked(ctx):
-    with open(_interlinks) as respfile:
-        interlinks = random.choice(list(respfile)).strip()
-        await ctx.send(embed=dc.Embed(
-            color=ctx.guild.get_member(bot.user.id).color,
-            description=f'{interlinks}\n\n**Interlinked.**',
-            ).set_author(
-            name='Baseline:',
-            icon_url=bot.user.avatar_url,
-            ))
-
-@interlinked.error
-async def interlinked_error(ctx, error):
-    if isinstance(error, commands.BotMissingPermissions):
-        return
-    raise error
 
 
 def limit_pulls(limit=DEFAULT_TOTAL):
@@ -81,6 +64,19 @@ class BullshitGenerator(commands.Cog):
     async def on_ready(self):
         print('D--> READY TO SHIT.')
         # self.embed = dc.Embed().set_author(icon_url=bot.user.avatar_url)
+
+    @commands.command(name='interlinked')
+    @commands.bot_has_permissions(send_messages=True)
+    async def interlinked(self, ctx):
+        with open(_interlinks) as respfile:
+            interlinks = random.choice(list(respfile)).strip()
+            await self.send(ctx, 'Baseline:', interlinks)
+
+    @interlinked.error
+    async def interlinked_error(ctx, error):
+        if isinstance(error, commands.BotMissingPermissions):
+            return
+        raise error
 
     @commands.group()
     @commands.bot_has_permissions(send_messages=True)
@@ -190,6 +186,26 @@ class BullshitGenerator(commands.Cog):
 
     @generate_troll_names.error
     async def generate_troll_names_error(self, ctx, error):
+        if isinstance(error, commands.BotMissingPermissions):
+            return
+        raise error
+
+    @generate.command(name='prescript')
+    @commands.bot_has_permissions(send_messages=True)
+    async def generate_prescript(self, ctx):
+        with open(_prescripts) as loom:
+            weave = random.choice([p.strip() for p in loom])
+        weave = 'Tell Nat to finish this prescript feature.'
+        await ctx.send(embed=dc.Embed(
+            color=dc.Color(0x51ABFF),
+            description=weave,
+            ).set_author(
+            name='Messenger Yan provides you this prescript:',
+            icon_url=url_bank.index_icon,
+            ))
+
+    @generate_prescript.error
+    async def generate_prescript_error(self, ctx, error):
         if isinstance(error, commands.BotMissingPermissions):
             return
         raise error
