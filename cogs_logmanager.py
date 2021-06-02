@@ -53,6 +53,10 @@ class LogManager(commands.Cog):
     @tasks.loop(hours=1)
     async def report_log(self):
         now = datetime.utcnow()
+        with open('discord.log', 'rb') as logfile:
+            if (code:=logfile.read()):
+                logfile.seek(0)
+                await self.log_channel.send(f'ArquiusBot Log @ {now}', file=dc.File(logfile, f'errors.log'))
         with open('discord.log', 'r+') as logfile:
             if not (code:=logfile.read()): return
             logfile.truncate(0)
