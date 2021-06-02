@@ -269,7 +269,7 @@ if __name__ == '__main__':
     assert cprhg.mean_proc == 0.17
     assert cprhg.procnow == cprhg.base_proc
     print(cprhg.procnow)
-    print(' '.join(str(i) for i in cprhg), '|', cprhg.last_count)
+    print(' '.join(map(str, cprhg)), '|', cprhg.last_count)
     a = ChainProofRHG(0.1)
     assert a == 0.1 == ChainProofRHG(0.1)
     assert 0 < a < 1

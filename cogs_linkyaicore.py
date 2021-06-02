@@ -18,7 +18,7 @@ _law_pool = os.path.join('text', 'AI_laws.txt')
 class LinkyBotAI(commands.Cog):
     __slots__ = ('bot', '_countfreq', '_extrafreq', '_law_total', 'laws')
 
-    linky_rhg = RHG(1/250)
+    linky_rhg = RHG(1/90)
 
     def __init__(self, bot):
         self.bot = bot

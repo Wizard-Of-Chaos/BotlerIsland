@@ -69,7 +69,7 @@ class BullshitGenerator(commands.Cog):
     @commands.bot_has_permissions(send_messages=True)
     async def interlinked(self, ctx):
         with open(_interlinks) as respfile:
-            interlinks = random.choice(list(respfile)).strip()
+            interlinks = random.choice(list(respfile)).strip() + '\n\n**Interlinked.**'
             await self.send(ctx, 'Baseline:', interlinks)
 
     @interlinked.error
