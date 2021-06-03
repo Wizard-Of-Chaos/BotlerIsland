@@ -26,6 +26,10 @@ urls = {
         'https://cdn.discordapp.com/attachments/'
         '663453347763716110/778782271775178782/EXCEPTIONAL.png'
         ),
+    'tensei_icon': (
+        'https://cdn.discordapp.com/attachments/'
+        '663453347763716110/850013696875954176/babyvore.gif'
+        ),
     'dio_icon': (
         'https://cdn.discordapp.com/attachments/'
         '663453347763716110/667117484612124694/DIOICON.png'
