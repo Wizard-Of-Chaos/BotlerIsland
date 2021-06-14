@@ -4,7 +4,7 @@ import random
 import functools
 from typing import Callable
 
-from data_urls import urls, huskies
+from data_urls import urls, huskies, beegers
 from data_responses import (
     queries, quirked_responses, unquirked_responses, apply_quirk
     )
@@ -50,4 +50,5 @@ class ResponseBank(ResponsePool):
 url_bank = AttrDict(urls)
 query_bank = AttrDict(queries)
 husky_bank = ResponsePool(huskies)
+beeger_bank = ResponsePool(beegers)
 response_bank = ResponseBank(quirked_responses, unquirked_responses, apply_quirk)

@@ -11,7 +11,7 @@ import aiohttp
 import discord as dc
 from discord.ext import commands
 
-from cogs_textbanks import url_bank, query_bank, husky_bank, response_bank
+from cogs_textbanks import url_bank, query_bank, husky_bank, response_bank, beeger_bank
 from bot_common import (
     bot, CONST_ADMINS, CONST_AUTHOR,
     guild_config, member_stalker, stored_suggestions,
@@ -200,8 +200,27 @@ async def post_fat_husky(ctx):
             url=husky_bank.body,
             ))
 
+@bot.command(name='beeger', aliases=['ups to beeger', 'big ups to beeger'])
+@commands.bot_has_permissions(send_messages=True)
+async def ups_to_beeger(ctx):
+    await ctx.send(
+        embed=dc.Embed(
+            color=ctx.guild.get_member(bot.user.id).color,
+            ).set_author(
+            name='D--> Big ups to Beeger.', 
+            icon_url=beeger_bank.icon,
+            ).set_image(
+            url=beeger_bank.body,
+            ))
+
 @post_fat_husky.error
 async def post_fat_husky_error(ctx, error):
+    if isinstance(error, commands.BotMissingPermissions):
+        return
+    raise error
+
+@ups_to_beeger.error
+async def ups_to_beeger_error(ctx, error):
     if isinstance(error, commands.BotMissingPermissions):
         return
     raise error

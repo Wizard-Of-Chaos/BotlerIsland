@@ -70,3 +70,18 @@ huskies = {
         'https://cdn.discordapp.com/attachments/663453347763716110/842369264341876776/twosky.png',
         ),
     }
+
+beegers = {
+    'icon': (
+        'https://cdn.discordapp.com/attachments/'
+	'592897033040429063/854073526255484988/beeg.png'
+        ),
+    'body': (
+        'https://cdn.discordapp.com/attachments/184908151185866752/854071106013233253/received_485362185275869.jpeg',
+        'https://cdn.discordapp.com/attachments/184908151185866752/854070896477995008/received_310960779486343.jpeg',
+        'https://cdn.discordapp.com/attachments/184908151185866752/854070811664187392/received_1830201510428634.jpeg',
+        'https://cdn.discordapp.com/attachments/184908151185866752/854070527638241340/20210326_183938.jpg',
+        'https://cdn.discordapp.com/attachments/184908151185866752/854070464434667600/20210325_230944.jpg',
+        'https://cdn.discordapp.com/attachments/184908151185866752/854069845073854464/Snapchat-144092863.jpg',
+        ),
+    }
