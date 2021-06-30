@@ -8,18 +8,7 @@ import discord as dc
 from discord.ext import commands
 
 from cogs_textbanks import url_bank, query_bank, response_bank
-from bot_common import bot, CONST_ADMINS, CONST_AUTHOR, guild_config, stats_tracker
-
-def user_or_perms(user_id, **perms):
-    perm_check = commands.has_permissions(**perms).predicate
-    async def extended_check(ctx):
-        if ctx.guild is None:
-            return False
-        try:
-            return ctx.author.id in user_id or await perm_check(ctx)
-        except TypeError:
-            return ctx.author.id == user_id or await perm_check(ctx)
-    return commands.check(extended_check)
+from bot_common import bot, CONST_ADMINS, CONST_AUTHOR, guild_config, stats_tracker, user_or_perms
 
 # INFOHELP COMMANDS
 
@@ -219,7 +208,7 @@ async def raidban(ctx, *args):
             reason='Banned by anti-raid command.',
             delete_message_days=1,
             )
-    desc = f'D--> The abbreants listed below have been STRONGLY executed:\n{", ".join(members)}'
+    desc = f'D--> The aberrants listed below have been STRONGLY executed:\n{", ".join(members)}'
     embed = dc.Embed(
         color=ctx.author.color,
         timestamp=ctx.message.created_at,

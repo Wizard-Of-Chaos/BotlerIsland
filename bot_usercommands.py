@@ -304,7 +304,7 @@ async def render_latex(ctx, *, raw_latex=''):
             timestamp=datetime.utcnow(),
             )
         embed.set_author(
-            name=f'D--> Latex render for {ctx.author}',
+            name=f'Latex render for {ctx.author}',
             icon_url=url_bank.latex_icon,
             )
         embed.set_image(url=latex_att.url)

@@ -104,21 +104,6 @@ async def on_member_update(bfr, aft): # Log role and nickname changes
             )
         embed.add_field(name='**User ID:**', value=f'`{aft.id}`', inline=False)
         await guild_config.log(guild, 'msglog', embed=embed)
-        # if (newroles := rolesnext - rolesprev):
-        #     count = 0
-        #     async for entry in guild.audit_logs(
-        #         limit=256,
-        #         user=guild.get_member(207991389613457408),
-        #         action=dc.AuditLogAction.member_role_update
-        #         ):
-        #         if count > 5: break
-        #         target = entry.target
-        #         if target.id != bfr.id: continue
-        #         if not target.guild_permissions.manage_roles: return
-        #         for role in entry.after.roles:
-        #             if role in newroles and not role.name.endswith('-ban'):
-        #                 await target.remove_roles(role)
-        #         count += 1
 
 @bot.event
 async def on_member_remove(member): # Log left/kicked/banned members
