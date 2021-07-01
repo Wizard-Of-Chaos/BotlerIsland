@@ -185,7 +185,7 @@ unquirked_responses = {
         "`generate dungeon`: A dungeon name.\n"
         "`generate ryder`: A Dave Ryder name, MST3K style.\n"
         "`generate tavern`: Welcome to the Verbing Animal.\n"
-        "`generate navert`: Welcome to the Animaling Verb.\n"
+        "`generate nrevat`: Welcome to the Animaling Verb.\n"
         "`generate group`: The new antagonist for your tabletop.\n"
         "`generate movies`: Damn if this ain't the perfect movie.\n"
         "`generate trolls`: Perfect troll names, you piece of shit Homestuck.\n"

@@ -41,7 +41,7 @@ class BullshitGenerator(commands.Cog):
         self.bot = bot
 
     def sample(self, pools, total):
-        return zip(*(random.sample([l.strip() for l in pool], total) for pool in pools))
+        return zip(*(random.sample(map(str.strip, pool), total) for pool in pools))
 
     @classmethod
     def troll_name(cls):
@@ -152,7 +152,7 @@ class BullshitGenerator(commands.Cog):
         with open(_animals) as animals, open(_verbs) as verbs:
             pools = self.sample((animals, verbs), total)
             embed_desc = '\n'.join(f'{a}ing {v}' for a, v in pools)
-        await self.send(ctx, 'Your tavern names:', embed_desc)
+        await self.send(ctx, 'Your nrevat names:', embed_desc)
 
     @generate_tavern.error
     async def generate_reverse_tavern_error(self, ctx, error):
@@ -194,11 +194,11 @@ class BullshitGenerator(commands.Cog):
     @commands.bot_has_permissions(send_messages=True)
     async def generate_prescript(self, ctx):
         with open(_prescripts) as loom:
-            weave = random.choice([p.strip() for p in loom])
+            weave = random.choice(loom)
         weave = 'Tell Nat to finish this prescript feature.'
         await ctx.send(embed=dc.Embed(
             color=dc.Color(0x51ABFF),
-            description=weave,
+            description=weave.strip(),
             ).set_author(
             name='Messenger Yan provides you this prescript:',
             icon_url=url_bank.index_icon,
@@ -207,6 +207,7 @@ class BullshitGenerator(commands.Cog):
     @generate_prescript.error
     async def generate_prescript_error(self, ctx, error):
         if isinstance(error, commands.BotMissingPermissions):
+            await ctx.send(f'Missing Permissions: {''.join(error.args)}')
             return
         raise error
 

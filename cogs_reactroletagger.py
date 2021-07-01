@@ -287,7 +287,7 @@ class ReactRoleTagger(CogtextManager):
     @reactrole_del.error
     async def reactrole_del_error(self, ctx, error):
         if isinstance(error, commands.BotMissingPermissions):
-            print(response_bank.channel_perms_error.format(ctx=ctx))
+            await ctx.send(response_bank.channel_perms_error.format(ctx=ctx))
             return
         elif isinstance(error, commands.MissingPermissions):
             await ctx.send(response_bank.perms_error)
