@@ -77,13 +77,27 @@ quirked_responses = {
     "role_delcategory_error": "Unable to remove category. Perhaps... it was never there?",
     "reactrole_usage_format": (
         'Usage of the reactrole command: `reactrole (subcommand) [args...]`\n\n'
-        '`reactrole grant <message_link> <emoji> <role>`: Add roles from a message manually.\n'
-        '`reactrole add <message_link> <emoji> <role>`: Add a role-bound reaction to a message to toggle a role.\n'
-        '`reactrole del <message_link> <emoji>`: Delete a role-bound reaction and associated data.\n'
+        '`reactrole grant all`: Add roles from all stored associations.\n'
+        '`reactrole grant msg <message> <emoji> <role>`: Add roles from a message manually.\n'
+        '`reactrole add <message> <emoji> <role>`: Add a role-bound reaction to a message to toggle a role.\n'
+        '`reactrole del <message> <emoji>`: Delete a role-bound reaction and associated data.\n'
         ),
     "reactrole_grant_confirm": "I have successfully granted the roles.",
     "reactrole_add_confirm": "I have successfully added the react for the {role.name} role.",
     "reactrole_add_error": "I was unable to react to the specified message. Try again.",
+    "reactrole_del_confirm": "I have successfully removed the react(s) from the message.",
+    "batch_cog_ready": "Command recursion started.",
+    "batch_usage_format": (
+        'Usage of the batch command: `batch (save|exec) <name>`\n\n'
+        '`batch save <name>`: Save a batch command file attached to the message as a batch command.\n'
+        '`batch exec <name>`: Execute a previously saved batch command.\n'
+        ),
+    "batch_save_name_error": "Command names only support alphanumeric characters and underscores.",
+    "batch_save_missing_file": "Missing batch command file.",
+    "batch_save_ambiguous_file": "Only one file may be assigned to any one batch command.",
+    "batch_save_confirm": "Batch command `{name}` saved.",
+    "batch_exec_name_error": "Batch command `{name}` does not exist.",
+    "batch_exec_start": "Executing batch command `{name}`:",
     "fat_husky_head": "A corpulent canine.",
     "positive_flex_head": "I strongly agree.",
     "positive_flex_desc": (

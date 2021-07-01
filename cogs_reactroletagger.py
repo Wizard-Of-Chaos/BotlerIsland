@@ -27,10 +27,12 @@ async def process_role_grant(bot, msg, react, role, members) -> None:
     if role_manager is None:
         raise RuntimeError(response_bank.unexpected_state)
     for member in members:
+        await msg.remove_reaction(react, member)
+        if member is None or msg.guild.get_member(member.id) is None:
+            continue
         await role_manager.purge_category(role, member)
         if role not in member.roles:
             await member.add_roles(role)
-        await msg.remove_reaction(react, member)
 
 
 class ReactRoleTagger(CogtextManager):
@@ -152,7 +154,6 @@ class ReactRoleTagger(CogtextManager):
         if react_map := self.data[chn_id][msg_id]:
             # Find the reaction with matching emoji, then prune all further reacts.
             msg = await guild.get_channel(chn_id).fetch_message(msg_id)
-            self.remove_reaction(msg, emoji)
 
     @commands.Cog.listener()
     async def on_raw_reaction_clear(self, payload): # All reacts cleared from message
@@ -184,7 +185,7 @@ class ReactRoleTagger(CogtextManager):
     @commands.bot_has_guild_permissions(manage_roles=True, manage_messages=True)
     @commands.has_permissions(manage_roles=True)
     async def reactrole_grant(self, ctx):
-        if ctx.invokes_subcommand is None:
+        if ctx.invoked_subcommand is None:
             await ctx.send(response_bank.reactrole_usage_format)
 
     @reactrole_grant.error
@@ -241,7 +242,9 @@ class ReactRoleTagger(CogtextManager):
         # Add a reaction to a message that will be attached to a toggleable role when reacted to.
         try:
             await msg.add_reaction(emoji)
-        except dc.HTTPException:
+        except dc.HTTPException as exc:
+            if exc.args and exc.args[0].endswith('Unknown Emoji'):
+                raise commands.EmojiNotFound('invalid emoji argument')
             await ctx.send(response_bank.reactrole_add_error)
             return
         self.data[msg.channel.id][msg.id][get_react_id(emoji)] = role.id
@@ -259,13 +262,27 @@ class ReactRoleTagger(CogtextManager):
         elif isinstance(error, commands.RoleNotFound):
             await ctx.send(response_bank.role_error)
             return
+        elif isinstance(error, commands.EmojiNotFound):
+            await ctx.send(response_bank.react_error)
+            return
         raise error
 
     @reactrole.command(name='del')
     @commands.bot_has_permissions(manage_messages=True, read_message_history=True)
     @commands.has_permissions(manage_roles=True)
-    async def reactrole_del(self, ctx, msglink: str, emoji: EmojiUnion):
-        pass
+    async def reactrole_del(self, ctx, msg: dc.Message, emoji: Optional[EmojiUnion]=None):
+        if not emoji:
+            try:
+                del self.data[msg.channel.id][msg.id]
+            except KeyError:
+                await ctx.send(response_bank.react_error)
+                return
+            self.data_save()
+            await msg.clear_reactions()
+        elif self.data[msg.channel.id][msg.id]:
+            self.remove_reaction(msg, emoji)
+            await msg.clear_reaction(emoji)
+        await ctx.send(response_bank.reactrole_del_confirm)
 
     @reactrole_del.error
     async def reactrole_del_error(self, ctx, error):
