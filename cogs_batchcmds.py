@@ -41,7 +41,7 @@ class BatchCommands(commands.Cog):
         if not (atts := ctx.message.attachments):
             await ctx.send(response_bank.batch_save_missing_file)
             return
-        if len(atts := ctx.message.attachments) > 1:
+        if len(atts) > 1:
             await ctx.send(response_bank.batch_save_ambiguous_file)
             return
         await atts[0].save(os.path.join(_cmd_dir, f'{name}.txt'))
@@ -61,7 +61,11 @@ class BatchCommands(commands.Cog):
             msg = ctx.message
             for line in cmdfile:
                 msg.content = line.strip()
-                await self.bot.process_commands(msg)
+                try:
+                    await self.bot.process_commands(msg)
+                except Exception as exc:
+                    await ctx.send(f'{type(exc).__name__}: {''.join(exc.args)}')
+                    raise
 
     @batch_exec.error
     async def batch_exec_error(self, ctx, error):
