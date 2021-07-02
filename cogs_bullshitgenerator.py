@@ -207,7 +207,7 @@ class BullshitGenerator(commands.Cog):
     @generate_prescript.error
     async def generate_prescript_error(self, ctx, error):
         if isinstance(error, commands.BotMissingPermissions):
-            await ctx.send(f'Missing Permissions: {''.join(error.args)}')
+            await ctx.send(f'Missing Permissions: {"".join(error.args)}')
             return
         raise error
 

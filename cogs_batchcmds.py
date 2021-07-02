@@ -64,7 +64,7 @@ class BatchCommands(commands.Cog):
                 try:
                     await self.bot.process_commands(msg)
                 except Exception as exc:
-                    await ctx.send(f'{type(exc).__name__}: {''.join(exc.args)}')
+                    await ctx.send(f'{type(exc).__name__}: {"".join(exc.args)}')
                     raise
 
     @batch_exec.error
