@@ -168,7 +168,9 @@ class ReactRoleTagger(CogtextManager):
         self.data_save()
 
     @commands.group()
-    @commands.bot_has_permissions(send_messages=True, manage_roles=True)
+    @commands.bot_has_permissions(send_messages=True, read_message_history=True)
+    @commands.bot_has_guild_permissions(manage_roles=True)
+    @commands.has_guild_permissions(manage_roles=True)
     async def reactrole(self, ctx):
         if ctx.invoked_subcommand is None:
             await ctx.send(response_bank.reactrole_usage_format)
@@ -181,9 +183,7 @@ class ReactRoleTagger(CogtextManager):
         raise error
 
     @reactrole.group(name='grant')
-    @commands.bot_has_permissions(send_messages=True, read_message_history=True)
-    @commands.bot_has_guild_permissions(manage_roles=True, manage_messages=True)
-    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_messages=True)
     async def reactrole_grant(self, ctx):
         if ctx.invoked_subcommand is None:
             await ctx.send(response_bank.reactrole_usage_format)
@@ -234,10 +234,7 @@ class ReactRoleTagger(CogtextManager):
         raise error
 
     @reactrole.command(name='add')
-    @commands.bot_has_permissions(
-        send_messages=True, read_message_history=True, add_reactions=True
-        )
-    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(add_reactions=True)
     async def reactrole_add(self, ctx, msg: dc.Message, emoji: EmojiUnion, role: dc.Role):
         # Add a reaction to a message that will be attached to a toggleable role when reacted to.
         try:
@@ -268,8 +265,7 @@ class ReactRoleTagger(CogtextManager):
         raise error
 
     @reactrole.command(name='del')
-    @commands.bot_has_permissions(manage_messages=True, read_message_history=True)
-    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(read_message_history=True)
     async def reactrole_del(self, ctx, msg: dc.Message, emoji: Optional[EmojiUnion]=None):
         if not emoji:
             try:
