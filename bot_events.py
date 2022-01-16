@@ -68,6 +68,14 @@ async def on_member_join(member): # Log joined members
     embed.set_author(name=f'A user has joined the server!')
     embed.set_thumbnail(url=member.avatar_url)
     embed.add_field(name='**User ID**', value=f'`{member.id}`')
+    # TODO: make extensible
+    banfield = "<:tereziGun:334848458940874752>"
+    if ("RTFKT" in member.name):
+        embed.add_field(name=banfield,value="banned for nft")
+        await member.ban()
+    else:
+        embed.add_field(name=banfield,value="passed checks")
+
     await guild_config.log(guild, 'usrlog', embed=embed)
 
 @bot.event
