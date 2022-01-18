@@ -7,12 +7,13 @@ import discord as dc
 from discord.ext import commands, tasks
 
 from cogs_textbanks import url_bank, query_bank, response_bank
-from bot_common import bot, guild_whitelist, guild_config, CONST_ADMINS, CONST_AUTHOR
+from bot_common import bot, guild_whitelist, CONST_ADMINS, CONST_AUTHOR
 
 class DailyCounter(commands.Cog):
     
     def __init__(self, bot):
         self.bot = bot
+        self.guild_config = bot.get_cog('GuildConfiguration')
         self.daily_msg = {guild_id: Counter() for guild_id in guild_whitelist}
         self.daily_usr = {
             guild_id: Counter({'join': 0, 'leave': 0, 'ban': 0})
@@ -80,7 +81,7 @@ class DailyCounter(commands.Cog):
                 )
             self.daily_msg[guild_id].clear()
             self.daily_usr[guild_id].clear()
-            await guild_config.log(
+            await self.guild_config.log(
                 guild, 'modlog',
                 admin.mention if admin_id == CONST_ADMINS[1] else '',
                 embed=embed,
@@ -98,7 +99,7 @@ class DailyCounter(commands.Cog):
     @commands.command(name='daily')
     @commands.has_guild_permissions(manage_roles=True)
     async def force_daily_post(self, ctx):
-        await guild_config.log(
+        await self.guild_config.log(
             ctx.guild, 'modlog', ctx.author.mention,
             embed=self.create_embed(ctx.guild, ctx.author,
                 'Counts may not be accurate if the bot has been stopped at any point during the day.\n'

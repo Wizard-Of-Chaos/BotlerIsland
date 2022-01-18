@@ -41,7 +41,7 @@ class BullshitGenerator(commands.Cog):
         self.bot = bot
 
     def sample(self, pools, total):
-        return zip(*(random.sample([l.strip() for l in pool], total) for pool in pools))
+        return zip(*(random.sample(map(str.strip, pool), total) for pool in pools))
 
     @classmethod
     def troll_name(cls):
@@ -91,7 +91,6 @@ class BullshitGenerator(commands.Cog):
         raise error
 
     @generate.command(name='ryder')
-    @commands.bot_has_permissions(send_messages=True)
     async def generate_ryder(self, ctx, total: limit_pulls()=DEFAULT_TOTAL):
         with open(_daves) as daves, open(_ryders) as ryders:
             pools = self.sample((daves, ryders), total)
@@ -105,7 +104,6 @@ class BullshitGenerator(commands.Cog):
         raise error
 
     @generate.command(name='dungeon')
-    @commands.bot_has_permissions(send_messages=True)
     async def generate_dungeon(self, ctx, total: limit_pulls()=DEFAULT_TOTAL):
         with open(_dungeons) as dungeons, open(_descriptors) as descriptors:
             pools = self.sample((dungeons, descriptors), total)
@@ -118,8 +116,7 @@ class BullshitGenerator(commands.Cog):
             return
         raise error
             
-    @generate.command(name='group', aliases=['cult'])
-    @commands.bot_has_permissions(send_messages=True)        
+    @generate.command(name='group', aliases=['cult'])        
     async def generate_cult(self, ctx, total: limit_pulls()=DEFAULT_TOTAL):
         with open(_adjectives) as adjectives, open(_groups) as groups, open(_figures) as figures:
             pools = self.sample((adjectives, groups, figures), total)
@@ -133,7 +130,6 @@ class BullshitGenerator(commands.Cog):
         raise error
 
     @generate.command(name='tavern')
-    @commands.bot_has_permissions(send_messages=True)
     async def generate_tavern(self, ctx, total: limit_pulls()=DEFAULT_TOTAL):
         with open(_animals) as animals, open(_verbs) as verbs:
             pools = self.sample((verbs, animals), total)
@@ -147,12 +143,11 @@ class BullshitGenerator(commands.Cog):
         raise error
 
     @generate.command(name='nrevat', aliases=['rtavern', 'revtavern', 'reversetavern'])
-    @commands.bot_has_permissions(send_messages=True)
     async def generate_reverse_tavern(self, ctx, total: limit_pulls()=DEFAULT_TOTAL):
         with open(_animals) as animals, open(_verbs) as verbs:
             pools = self.sample((animals, verbs), total)
             embed_desc = '\n'.join(f'{a}ing {v}' for a, v in pools)
-        await self.send(ctx, 'Your tavern names:', embed_desc)
+        await self.send(ctx, 'Your nrevat names:', embed_desc)
 
     @generate_tavern.error
     async def generate_reverse_tavern_error(self, ctx, error):
@@ -161,7 +156,6 @@ class BullshitGenerator(commands.Cog):
         raise error
 
     @generate.command(name='actionmovie', aliases=['movie', 'movies', 'movietitle'])
-    @commands.bot_has_permissions(send_messages=True)
     async def generate_movie(self, ctx, total: limit_pulls()=DEFAULT_TOTAL):
         with open(_dungeons) as names, open(_descriptors) as descriptors, open(_daves) as firsts, open(_ryders) as lasts:
             pools = self.sample((names, descriptors, firsts, lasts), total)
@@ -177,8 +171,7 @@ class BullshitGenerator(commands.Cog):
             return
         raise error
 
-    @generate.command(name='trollname', aliases=['trollnames', 'troll', 'trolls'])
-    @commands.bot_has_permissions(send_messages=True) 
+    @generate.command(name='trollname', aliases=['trollnames', 'troll', 'trolls']) 
     async def generate_troll_names(self, ctx, total: limit_pulls(12)=12):
         names = (self.troll_name() for _ in range(2*total))
         embed_desc = '\n'.join(f'{f} {l}' for f, l in zip(*[names] * 2))
@@ -191,14 +184,13 @@ class BullshitGenerator(commands.Cog):
         raise error
 
     @generate.command(name='prescript')
-    @commands.bot_has_permissions(send_messages=True)
     async def generate_prescript(self, ctx):
         with open(_prescripts) as loom:
-            weave = random.choice([p.strip() for p in loom])
+            weave = random.choice(loom)
         weave = 'Tell Nat to finish this prescript feature.'
         await ctx.send(embed=dc.Embed(
             color=dc.Color(0x51ABFF),
-            description=weave,
+            description=weave.strip(),
             ).set_author(
             name='Messenger Yan provides you this prescript:',
             icon_url=url_bank.index_icon,
@@ -207,6 +199,7 @@ class BullshitGenerator(commands.Cog):
     @generate_prescript.error
     async def generate_prescript_error(self, ctx, error):
         if isinstance(error, commands.BotMissingPermissions):
+            await ctx.send(f'Missing Permissions: {"".join(error.args)}')
             return
         raise error
 

@@ -9,7 +9,7 @@ from discord.ext import commands, tasks
 from chainproofrhg import ChainProofRHG as RHG
 
 from cogs_textbanks import url_bank, query_bank, response_bank
-from bot_common import bot, CONST_ADMINS, guild_config
+from bot_common import bot, CONST_ADMINS
 
 _response_pool = os.path.join('text', 'spat.txt')
 _law_pool = os.path.join('text', 'AI_laws.txt')
@@ -22,6 +22,7 @@ class LinkyBotAI(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.guild_config = bot.get_cog('GuildConfiguration')
         self._countfreq = (3, 6, 10, 10, 8, 7, 4, 2, 1, 1)
         self._extrafreq = (10, 5, 1)
         with open(_law_pool, 'r') as lawfile:
@@ -50,7 +51,7 @@ class LinkyBotAI(commands.Cog):
     async def on_message(self, msg):
         if msg.author.id == CONST_ADMINS[1]:
             channel = msg.channel
-            if (channel.id == guild_config.getlog(msg.guild, 'modlog')
+            if (channel.id == self.guild_config.getlog(msg.guild, 'modlog')
                 or channel.category_id == 360676396172836867
                 ):
                 return

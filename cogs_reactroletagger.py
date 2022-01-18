@@ -22,30 +22,18 @@ def get_react_id(react: Union[dc.Reaction, EmojiUnion]) -> int:
         return react.id
     return hash(react)
 
-async def get_msg_from_link(ctx, msglink: str) -> Optional[dc.Message]:
-    *_, chn_id, msg_id = msglink.split('/')
-    try:
-        msg = await ctx.guild.get_channel(int(chn_id)).fetch_message(int(msg_id))
-    except dc.NotFound:
-        await ctx.send(response_bank.message_error)
-        return None
-    except dc.Forbidden:
-        await ctx.send(response_bank.channel_perms_error.format(ctx=ctx))
-        return None
-    except dc.HTTPException:
-        await ctx.send(response_bank.unexpected_state)
-        return None
-    return msg
-
 async def process_role_grant(bot, msg, react, role, members) -> None:
     role_manager = bot.get_cog('RoleManager')
     if role_manager is None:
         raise RuntimeError(response_bank.unexpected_state)
     for member in members:
+        await msg.remove_reaction(react, member)
+        if member is None or msg.guild.get_member(member.id) is None:
+            continue
         await role_manager.purge_category(role, member)
         if role not in member.roles:
             await member.add_roles(role)
-        await msg.remove_reaction(react, member)
+
 
 class ReactRoleTagger(CogtextManager):
     @staticmethod
@@ -69,9 +57,7 @@ class ReactRoleTagger(CogtextManager):
             return
         self.data_save()
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        print(response_bank.process_reacts)
+    async def force_grant_all(self):
         # This is a horrible fucking way of granting all the pending roles. Too bad!
         for chn_id, msg_dict in self.data.items():
             channel = bot.get_channel(chn_id)
@@ -86,6 +72,11 @@ class ReactRoleTagger(CogtextManager):
                         role = msg.guild.get_role(emoji_dict[emoji_id])
                         members = [m async for m in react.users() if m.id != bot.user.id]
                         await process_role_grant(self.bot, msg, react, role, members)
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        print(response_bank.process_reacts)
+        await self.force_grant_all()
         print(response_bank.process_reacts_complete)
 
     @commands.Cog.listener()
@@ -163,7 +154,6 @@ class ReactRoleTagger(CogtextManager):
         if react_map := self.data[chn_id][msg_id]:
             # Find the reaction with matching emoji, then prune all further reacts.
             msg = await guild.get_channel(chn_id).fetch_message(msg_id)
-            self.remove_reaction(msg, emoji)
 
     @commands.Cog.listener()
     async def on_raw_reaction_clear(self, payload): # All reacts cleared from message
@@ -178,7 +168,9 @@ class ReactRoleTagger(CogtextManager):
         self.data_save()
 
     @commands.group()
-    @commands.bot_has_permissions(send_messages=True, manage_roles=True)
+    @commands.bot_has_permissions(send_messages=True, read_message_history=True)
+    @commands.bot_has_guild_permissions(manage_roles=True)
+    @commands.has_guild_permissions(manage_roles=True)
     async def reactrole(self, ctx):
         if ctx.invoked_subcommand is None:
             await ctx.send(response_bank.reactrole_usage_format)
@@ -190,16 +182,34 @@ class ReactRoleTagger(CogtextManager):
             return
         raise error
 
-    @reactrole.command(name='grant')
-    @commands.bot_has_permissions(
-        send_messages=True, read_message_history=True,
-        manage_roles=True, manage_messages=True,
-        )
-    @commands.has_permissions(manage_roles=True)
-    async def reactrole_grant(self, ctx, msglink: str, emoji: EmojiUnion, role: dc.Role):
-        # Force all who reacted with the specified emoji in the given message link to be granted a role.
-        if (msg := await get_msg_from_link(ctx, msglink)) is None:
+    @reactrole.group(name='grant')
+    @commands.bot_has_permissions(manage_messages=True)
+    async def reactrole_grant(self, ctx):
+        if ctx.invoked_subcommand is None:
+            await ctx.send(response_bank.reactrole_usage_format)
+
+    @reactrole_grant.error
+    async def reactrole_grant_error(self, ctx, error):
+        if isinstance(error, commands.BotMissingPermissions):
+            print(response_bank.channel_perms_error.format(ctx=ctx))
             return
+        elif isinstance(error, commands.MissingPermissions):
+            await ctx.send(response_bank.perms_error)
+            return
+        raise error
+
+    @reactrole_grant.command(name='all')
+    async def reactrole_grant_all(self, ctx):
+        await self.force_grant_all()
+        await ctx.send(response_bank.reactrole_grant_confirm)
+
+    @reactrole_grant_all.error
+    async def reactrole_grant_all_error(self, ctx, error):
+        raise error
+
+    @reactrole_grant.command(name='msg')
+    async def reactrole_grant_msg(self, ctx, msg: dc.Message, emoji: EmojiUnion, role: dc.Role):
+        # Force all who reacted with the specified emoji in the given message link to be granted a role.
         try:
             react = next(
                 r for r in msg.reactions
@@ -213,13 +223,10 @@ class ReactRoleTagger(CogtextManager):
         await process_role_grant(self.bot, msg, react, role, members)
         await ctx.send(response_bank.reactrole_grant_confirm)
 
-    @reactrole_grant.error
-    async def reactrole_grant_error(self, ctx, error):
-        if isinstance(error, commands.BotMissingPermissions):
-            print(response_bank.channel_perms_error.format(ctx=ctx))
-            return
-        elif isinstance(error, commands.MissingPermissions):
-            await ctx.send(response_bank.perms_error)
+    @reactrole_grant_msg.error
+    async def reactrole_grant_msg_error(self, ctx, error):
+        if isinstance(error, commands.MessageNotFound):
+            await ctx.send(response_bank.message_error)
             return
         elif isinstance(error, commands.RoleNotFound):
             await ctx.send(response_bank.role_error)
@@ -227,17 +234,14 @@ class ReactRoleTagger(CogtextManager):
         raise error
 
     @reactrole.command(name='add')
-    @commands.bot_has_permissions(
-        send_messages=True, read_message_history=True, add_reactions=True
-        )
-    @commands.has_permissions(manage_roles=True)
-    async def reactrole_add(self, ctx, msglink: str, emoji: EmojiUnion, role: dc.Role):
+    @commands.bot_has_permissions(add_reactions=True)
+    async def reactrole_add(self, ctx, msg: dc.Message, emoji: EmojiUnion, role: dc.Role):
         # Add a reaction to a message that will be attached to a toggleable role when reacted to.
-        if (msg := await get_msg_from_link(ctx, msglink)) is None:
-            return
         try:
             await msg.add_reaction(emoji)
-        except dc.HTTPException:
+        except dc.HTTPException as exc:
+            if exc.args and exc.args[0].endswith('Unknown Emoji'):
+                raise commands.EmojiNotFound('invalid emoji argument')
             await ctx.send(response_bank.reactrole_add_error)
             return
         self.data[msg.channel.id][msg.id][get_react_id(emoji)] = role.id
@@ -255,18 +259,31 @@ class ReactRoleTagger(CogtextManager):
         elif isinstance(error, commands.RoleNotFound):
             await ctx.send(response_bank.role_error)
             return
+        elif isinstance(error, commands.EmojiNotFound):
+            await ctx.send(response_bank.react_error)
+            return
         raise error
 
     @reactrole.command(name='del')
-    @commands.bot_has_permissions(manage_messages=True, read_message_history=True)
-    @commands.has_permissions(manage_roles=True)
-    async def reactrole_del(self, ctx, msglink: str, emoji: EmojiUnion):
-        pass
+    @commands.bot_has_permissions(read_message_history=True)
+    async def reactrole_del(self, ctx, msg: dc.Message, emoji: Optional[EmojiUnion]=None):
+        if not emoji:
+            try:
+                del self.data[msg.channel.id][msg.id]
+            except KeyError:
+                await ctx.send(response_bank.react_error)
+                return
+            self.data_save()
+            await msg.clear_reactions()
+        elif self.data[msg.channel.id][msg.id]:
+            self.remove_reaction(msg, emoji)
+            await msg.clear_reaction(emoji)
+        await ctx.send(response_bank.reactrole_del_confirm)
 
     @reactrole_del.error
     async def reactrole_del_error(self, ctx, error):
         if isinstance(error, commands.BotMissingPermissions):
-            print(response_bank.channel_perms_error.format(ctx=ctx))
+            await ctx.send(response_bank.channel_perms_error.format(ctx=ctx))
             return
         elif isinstance(error, commands.MissingPermissions):
             await ctx.send(response_bank.perms_error)

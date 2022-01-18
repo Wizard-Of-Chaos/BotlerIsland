@@ -107,7 +107,7 @@ class RoleManager(CogtextManager):
         raise error
 
     @role.command('addcategory')
-    @commands.has_permissions(manage_roles=True)
+    @commands.has_guild_permissions(manage_roles=True)
     async def role_addcategory(self, ctx, category: str, *roles):
         # I'm going full mONKE!!!!
         converter = commands.RoleConverter().convert
@@ -134,7 +134,7 @@ class RoleManager(CogtextManager):
         raise error
 
     @role.command('delcategory')
-    @commands.has_permissions(manage_roles=True)
+    @commands.has_guild_permissions(manage_roles=True)
     async def role_delcategory(self, ctx, category: str):
         try:
             del self.data[ctx.guild.id][category]
