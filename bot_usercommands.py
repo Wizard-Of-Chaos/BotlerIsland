@@ -1,7 +1,5 @@
 # For most public commands.
-import io
 import re
-import json
 import random
 from datetime import datetime
 
@@ -12,27 +10,12 @@ import discord as dc
 from discord.ext import commands
 
 from cogs_textbanks import url_bank, query_bank, husky_bank, response_bank
-from bot_common import (
-    bot, CONST_ADMINS, CONST_AUTHOR,
-    guild_config, member_stalker, stored_suggestions,
-    )
+from bot_common import bot, CONST_ADMINS, CONST_AUTHOR, member_stalker, stored_suggestions
 
 suggest_chid = 777555413213642772
 
 def get_name(member_id):
     return str(bot.get_user(int(member_id[1])))
-
-async def grab_latex(preamble, postamble, raw_latex):
-    async with aiohttp.ClientSession() as session:
-        resp = await session.post(
-            url_bank.latex_parser,
-            data={'format': 'png', 'code': preamble+raw_latex+postamble},
-            )
-        resp = await resp.text() # Awaiting loading of the raw text data and unicode parsing
-        resp = json.loads(resp)
-        if (resp['status'] != 'success'):
-            return None
-        return await session.get(f'{url_bank.latex_parser}/{resp["filename"]}')
 
 @bot.command(name='help')
 @commands.bot_has_permissions(send_messages=True)
@@ -268,51 +251,6 @@ async def dice_roller(ctx, *, args):
 
 @dice_roller.error
 async def dice_roller_error(ctx, error):
-    if isinstance(error, commands.BotMissingPermissions):
-        return
-    raise error
-
-default_preamble = (
-    r'\documentclass{standalone}\usepackage{color}\usepackage{amsmath}'
-    r'\color{white}\begin{document}\begin{math}\displaystyle '
-    )
-default_postamble = r'\end{math}\end{document}'
-
-@bot.command(name='latex', aliases=['l'])
-@commands.bot_has_permissions(send_messages=True)
-async def render_latex(ctx, *, raw_latex=''):
-    if not guild_config.getltx(ctx) or not raw_latex:
-        return
-    with ctx.channel.typing():
-        if (image := await grab_latex(default_preamble, default_postamble, raw_latex)) is None:
-            await ctx.send('D--> Your latex code is beneighth contempt. Try again.')
-            return
-        # Send the image to the latex channel and embed.
-        latex_channel = bot.get_channel(773594582175973376)
-        msg_id = hex(member_stalker.member_data['latex_count'])[2:]
-        member_stalker.member_data['latex_count'] += 1
-        await latex_channel.send(
-            f'`@{ctx.author}`: UID {ctx.author.id}: MID {msg_id}',
-            file=dc.File(io.BytesIO(await image.read()), 'latex.png')
-            )
-        async for msg in latex_channel.history(limit=16):
-            if msg.content.split()[-1] == msg_id:
-                latex_att = msg.attachments[0]
-                break
-        embed = dc.Embed(
-            color=ctx.author.color,
-            timestamp=datetime.utcnow(),
-            )
-        embed.set_author(
-            name=f'Latex render for {ctx.author}',
-            icon_url=url_bank.latex_icon,
-            )
-        embed.set_image(url=latex_att.url)
-        await ctx.send(embed=embed)
-    await ctx.message.delete()
-
-@render_latex.error
-async def render_latex_error(ctx, error):
     if isinstance(error, commands.BotMissingPermissions):
         return
     raise error

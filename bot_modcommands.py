@@ -1,6 +1,6 @@
 # For most moderation commands.
 from datetime import datetime
-from collections import Counter
+# from collections import Counter
 
 import asyncio as aio
 
@@ -8,7 +8,7 @@ import discord as dc
 from discord.ext import commands
 
 from cogs_textbanks import url_bank, query_bank, response_bank
-from bot_common import bot, CONST_ADMINS, CONST_AUTHOR, guild_config, stats_tracker, user_or_perms
+from bot_common import bot, CONST_ADMINS, CONST_AUTHOR, stats_tracker, user_or_perms
 
 # INFOHELP COMMANDS
 
@@ -81,7 +81,7 @@ async def modhelp(ctx):
             )
         embed.add_field(
             name='`ZA (WARUDO|HANDO)`',
-            value='(Manage Channels Only) Utilizes highly dangerous Stand power to moderate the server.',
+            value='(Manage Channels only) Utilizes highly dangerous Stand power to moderate the server.',
             inline=False
             )
     await ctx.send(embed=embed)
@@ -120,77 +120,6 @@ async def modperms_error(ctx, error):
     raise error
 
 # END OF INFOHELP COMMANDS
-# CONFIG COMMANDS
-
-@bot.command()
-@commands.bot_has_permissions(send_messages=True)
-@commands.has_permissions(manage_channels=True)
-async def config(ctx, log: str):
-    await guild_config.setlog(ctx, log)
-
-@config.error
-async def config_error(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send(response_bank.perms_error)
-        return
-    elif isinstance(error, commands.BotMissingPermissions):
-        return
-    raise error
-
-# END OF CONFIG
-# TOGGLE COMMANDS
-
-@bot.command()
-@commands.bot_has_permissions(add_reactions=True, read_message_history=True)
-@commands.has_guild_permissions(manage_roles=True)
-async def autoreact(ctx):
-    if guild_config.toggle(ctx, 'autoreact'):
-        await ctx.send('D--> ❤️')
-    else:
-        await ctx.send('D--> 💔')
-
-@autoreact.error
-async def autoreact_error(ctx, error):
-    if isinstance(error, BotMissingPermissions):
-        return
-    elif isinstance(error, MissingPermissions):
-        await ctx.send('D--> Neigh.')
-        return
-    raise error
-
-@bot.command()
-@commands.bot_has_permissions(send_messages=True)
-@commands.has_guild_permissions(manage_roles=True)
-async def ignoreplebs(ctx):
-    if guild_config.toggle(ctx, 'ignoreplebs'):
-        await ctx.send('D--> I shall listen only to b100 b100ded commands.')
-    else:
-        await ctx.send('D--> Unfortunately, I must now listen to the lower classes.')
-
-@ignoreplebs.error
-async def ignoreplebs_error(ctx, error):
-    if isinstance(error, MissingPermissions):
-        await ctx.send('D--> Neigh, plebian.')
-        return
-    raise error
-
-@bot.command()
-@commands.bot_has_permissions(send_messages=True)
-@commands.has_permissions(manage_roles=True)
-async def togglelatex(ctx):
-    if guild_config.toggle(ctx, 'enablelatex'):
-        await ctx.send('D--> Latex functions have been enabled.')
-    else:
-        await ctx.send('D--> Latex functions have been disabled.')
-        
-@togglelatex.error
-async def togglelatex_error(ctx, error):
-    if isinstance(error, MissingPermissions):
-        await ctx.send('D--> Neigh.')
-        return
-    raise error
-    
-# END OF TOGGLE COMMANDS
 # BAN COMMANDS
 
 @bot.command()
@@ -218,6 +147,9 @@ async def raidban(ctx, *args):
         name=f'{ctx.author} used raidban command in #{ctx.channel}:',
         icon_url=ctx.author.avatar_url,
         )
+    guild_config = bot.get_cog('GuildConfiguration')
+    if guild_config is None:
+        raise RuntimeError(response_bank.unexpected_state)
     await guild_config.log(ctx.guild, 'modlog', desc, embed=embed)
     await ctx.message.delete()
     if ctx.channel.id != guild_config.getlog(ctx.guild, 'modlog'):
@@ -251,11 +183,10 @@ async def special_mod_command_freeze(ctx):
     embed = dc.Embed(
         color=dc.Color(0xE4E951),
         timestamp=ctx.message.created_at,
-        description=f'D--> The time is neigh; your foolish actions shall face STRONG '
-        f'consequences, **#{ctx.channel}**! It is __***USELESS***__ to resist!'
+        description=response_bank.freeze_channel_desc.format(ctx=ctx),
         )
     embed.set_author(
-        name='D--> 「ザ・ワールド」!!',
+        name=response_bank.freeze_channel_head,
         icon_url=url_bank.dio_icon,
         )
     embed.set_image(url=url_bank.za_warudo)
@@ -277,20 +208,23 @@ async def special_mod_command_freeze_error(ctx, error):
 async def special_mod_command_purge(ctx, limit: int=10):
     await ctx.message.delete()
     if limit < 1:
-        await ctx.send('D--> You foolish creature.')
+        await ctx.send(response_bank.purge_channel_zero_arg_error)
         return
     msgs = await ctx.channel.purge(limit=limit)
     embed = dc.Embed(
         color=dc.Color(0x303EBB),
         timestamp=ctx.message.created_at,
-        description=f'D--> I shall show you my magneighficent STRENGTH, **#{ctx.channel}**!'
+        description=response_bank.purge_channel_desc.format(ctx=ctx),
         )
     embed.set_author(
-        name='D--> 「ザ・ハンド」!!',
+        name=response_bank.purge_channel_head,
         icon_url=url_bank.okuyasu_icon,
         )
     embed.set_image(url=url_bank.za_hando)
     await ctx.channel.send(embed=embed)
+    guild_config = bot.get_cog('GuildConfiguration')
+    if guild_config is None:
+        raise RuntimeError(response_bank.unexpected_state)
     if not guild_config.getlog(ctx.guild, 'msglog'): # Log immediately after.
         return
     user_msgs = Counter(msg.author for msg in msgs)
@@ -326,10 +260,10 @@ async def special_mod_command_unfreeze(ctx, *, args=''):
         embed = dc.Embed(
             color=dc.Color(0xE4E951),
             timestamp=ctx.message.created_at,
-            description=f'D--> Time has resumed in **#{ctx.channel}**.'
+            description=response_bank.unfreeze_channel_desc.format(ctx=ctx),
             )
         embed.set_author(
-            name='D--> 時は動きです。',
+            name=response_bank.unfreeze_channel_head,
             icon_url=url_bank.dio_icon,
             )
         await ctx.channel.send(embed=embed)
@@ -343,38 +277,38 @@ async def special_mod_command_unfreeze_error(ctx, error):
 # <== To Be Continued...
 # STATS COMMANDS
 
-@bot.group(name='stats')
-@commands.has_permissions(manage_roles=True)
-async def statistics_beta(ctx):
-    if ctx.invoked_subcommand is None:
-        await ctx.send(
-            'D--> It seems that you have attempted to run a nonexistent command.'
-            'Would you like to try again? Redos are free, you know.'
-            )
+# @bot.group(name='stats')
+# @commands.has_permissions(manage_roles=True)
+# async def statistics_beta(ctx):
+#     if ctx.invoked_subcommand is None:
+#         await ctx.send(
+#             'D--> It seems that you have attempted to run a nonexistent command.'
+#             'Would you like to try again? Redos are free, you know.'
+#             )
 
-@statistics_beta.error
-async def statistics_beta_error(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send(
-            f'D--> It seems that you don\'t have the appropriate permissions for this command. '
-            f'I STRONGLY recommend you back off or get bucked off, {ctx.author.name}.'
-            )
-        return
-    elif isinstance(error, commands.BotMissingPermissions):
-        return
-    raise error
+# @statistics_beta.error
+# async def statistics_beta_error(ctx, error):
+#     if isinstance(error, commands.MissingPermissions):
+#         await ctx.send(
+#             f'D--> It seems that you don\'t have the appropriate permissions for this command. '
+#             f'I STRONGLY recommend you back off or get bucked off, {ctx.author.name}.'
+#             )
+#         return
+#     elif isinstance(error, commands.BotMissingPermissions):
+#         return
+#     raise error
         
-@statistics_beta.command()
-async def woc_counter(ctx): # Beta statistic feature: Woc's Tard Counter!
-    if ctx.author.id == CONST_ADMINS[1]:
-        await ctx.send(
-            'D--> Are you sure you want to know that, Master Linky? '
-            'Regardless of your answer, I shall tell you, though I STRONGLY suggest you wait.'
-            )
-    tards = await stats_tracker.take('woc_counter', ctx, None)
-    if tards is not None:
-        await ctx.send(
-            f'D--> Wizard of Chaos has slurred {tards} times in this server, {ctx.author.mention}.'
-            )
+# @statistics_beta.command()
+# async def woc_counter(ctx): # Beta statistic feature: Woc's Tard Counter!
+#     if ctx.author.id == CONST_ADMINS[1]:
+#         await ctx.send(
+#             'D--> Are you sure you want to know that, Master Linky? '
+#             'Regardless of your answer, I shall tell you, though I STRONGLY suggest you wait.'
+#             )
+#     tards = await stats_tracker.take('woc_counter', ctx, None)
+#     if tards is not None:
+#         await ctx.send(
+#             f'D--> Wizard of Chaos has slurred {tards} times in this server, {ctx.author.mention}.'
+#             )
 
 # END OF STATS

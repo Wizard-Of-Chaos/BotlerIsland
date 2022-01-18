@@ -14,6 +14,7 @@ guild_whitelist = (
     )
 
 class CogtextManager(commands.Cog):
+
     @staticmethod
     def _generate_empty():
         return None
@@ -69,83 +70,9 @@ class Singleton(object):
 
 def callback(): # Lambdas can't be pickled, but named functions can.
     return {
-    'usrlog': None, 'msglog': None, 'modlog': None,
-    'autoreact': set(), 'ignoreplebs': set(), 'enablelatex': set(),
-    }
-
-modref = dc.Permissions(
-    administrator=True, manage_channels=True,
-    manage_roles=True, manage_nicknames=True,
-    )
-
-class GuildConfig(Singleton):
-    def __init__(self, bot, fname):
-        self.bot = bot
-        self.fname = os.path.join('data', fname)
-        self.load()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, etype, evalue, etrace):
-        self.save()
-
-    def save(self):
-        with open(self.fname, 'wb') as config_file:
-            pickle.dump(self.mod_channels, config_file)
-
-    def load(self):
-        try:
-            with open(self.fname, 'rb') as config_file:
-                self.mod_channels = pickle.load(config_file)
-        except (OSError, EOFError):
-            self.mod_channels = defaultdict(callback)
-            self.save()
-        else:
-            self.mod_channels.default_factory = callback
-            for guild_id, config in self.mod_channels.copy().items():
-                if guild_id not in guild_whitelist:
-                    del self.mod_channels[guild_id]
-                    continue
-            self.save()
-
-    async def log(self, guild, log, *args, **kwargs):
-        channel_id = self.mod_channels[guild.id][log]
-        await self.bot.get_channel(channel_id).send(*args, **kwargs)
-
-    def getlog(self, guild, log):
-        return self.mod_channels[guild.id][log]
-
-    def getcmd(self, ctx):
-        perms = ctx.author.guild_permissions
-        return ((perms.value & modref.value)
-            or ctx.channel.id not in self.mod_channels[ctx.guild.id]['ignoreplebs']
-            )
-
-    def getltx(self, ctx):
-        perms = ctx.author.guild_permissions
-        return ((perms.value & modref.value)
-            or ctx.channel.id in self.mod_channels[ctx.guild.id]['enablelatex']
-            )
-
-    async def setlog(self, ctx, log):
-        if log not in ('usrlog', 'msglog', 'modlog'):
-            await ctx.send(response_bank.config_args_error.format(log=log))
-            return
-        self.mod_channels[ctx.guild.id][log] = ctx.channel.id
-        self.save()
-        await ctx.send(response_bank.config_completion.format(log=log))
-
-    def toggle(self, ctx, field):
-        config = self.mod_channels[ctx.guild.id][field]
-        channel_id = ctx.channel.id
-        if channel_id in config:
-            config.remove(channel_id)
-            return False
-        else:
-            config.add(channel_id)
-            return True
-
+        'usrlog': None, 'msglog': None, 'modlog': None,
+        'autoreact': set(), 'ignoreplebs': set(), 'enablelatex': set(),
+        }
 
 def guild_callback():
     return {'first_join': None, 'last_seen': None, 'last_roles': ()}
