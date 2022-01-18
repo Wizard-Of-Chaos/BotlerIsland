@@ -45,7 +45,7 @@ async def grab_attachments(msg):
     pass
 
 
-class GuildConfiguration(CogtextManager):
+class GuildConfiguration(commands.Cog):
 
     log_map = {
         'usrlog': 'UsrLogChanId',
@@ -64,13 +64,12 @@ class GuildConfiguration(CogtextManager):
         'enablelatex': 'LatexConfig',
         }
 
-
-    def data_save(self):
-        self.dbcon.commit()
+    def __init__(self, bot):
+        self.bot = bot
+        self.data_load()
 
     def data_load(self):
         is_new_style = True
-        sql_metadata.reflect(bind=sql_engine)
         try:
             self.guild_config = sql_metadata.tables['GuildConfig']
         except KeyError:

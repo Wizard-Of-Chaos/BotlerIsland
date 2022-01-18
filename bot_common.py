@@ -21,6 +21,7 @@ help_data = []
 
 sql_engine = sql.create_engine('sqlite+pysqlite:///aqbot.db', echo=True, future=True)
 sql_metadata = sql.MetaData()
+sql_metadata.reflect(bind=sql_engine)
 
 member_stalker = MemberStalker('members.pkl')
 stats_tracker = StatsTracker('stats.pkl')
