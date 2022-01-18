@@ -124,6 +124,7 @@ quirked_responses = {
     "purge_channel_desc": (
         "I shall show you the magnificent strength of my hand, **#{ctx.channel}**!"
         ),
+    "purge_channel_zero_arg_error": "You foolish creature.",
     "star_wars_punish_confirm": "It will be done, my lord.",
     "star_wars_punish_args_error": "Vocalize your command strongly, my lord.",
     "star_wars_punish_perms_error": "Only the senate may execute this order, {ctx.author.name}.",

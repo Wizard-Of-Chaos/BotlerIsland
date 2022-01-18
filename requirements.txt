@@ -1,0 +1,4 @@
+aiohttp==3.7.4.post0
+certifi==2021.10.8
+discord.py==1.7.3
+SQLAlchemy==1.4.29
