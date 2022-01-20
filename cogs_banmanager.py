@@ -1,6 +1,5 @@
 # The BanManager Cog, which handles channel mute functions.
 import re
-import os
 import pickle
 from datetime import datetime, timedelta
 from collections import defaultdict
@@ -22,7 +21,7 @@ def _parse_length(length):
 
 
 class BanManager(CogtextManager):
-    
+
     @staticmethod
     def _generate_empty():
         return []

@@ -4,5 +4,6 @@ data
 __pycache__
 avatar.png
 encrypttoken.py
+cogs_tenseibot.py
 spat.txt
 *token.dat

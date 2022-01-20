@@ -1,5 +1,5 @@
 # The MetaCommand Cog, which handles all batch commands.
-import os
+from pathlib import Path
 
 import discord as dc
 from discord.ext import commands
@@ -7,7 +7,8 @@ from discord.ext import commands
 from cogs_textbanks import url_bank, query_bank, response_bank
 from bot_common import bot, CONST_AUTHOR, user_or_perms
 
-_cmd_dir = 'cmd'
+_CMD_DIR = Path('cmd')
+
 
 class BatchCommands(commands.Cog):
 
@@ -16,8 +17,6 @@ class BatchCommands(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        if bot.get_cog('ReactRoleTagger'):
-            pass
         print(response_bank.batch_cog_ready)
 
     @commands.group(name='batch')
@@ -44,7 +43,7 @@ class BatchCommands(commands.Cog):
         if len(atts) > 1:
             await ctx.send(response_bank.batch_save_ambiguous_file)
             return
-        await atts[0].save(os.path.join(_cmd_dir, f'{name}.txt'))
+        await atts[0].save(_CMD_DIR / f'{name}.txt')
         await ctx.send(response_bank.batch_save_confirm.format(name=name))
 
     @batch_save.error
@@ -53,12 +52,13 @@ class BatchCommands(commands.Cog):
 
     @batch.command(name='exec')
     async def batch_exec(self, ctx, name):
-        if not os.path.exists(fp := os.path.join(_cmd_dir, f'{name}.txt')):
+        if not (fp := _CMD_DIR / f'{name}.txt').exists():
             await ctx.send(response_bank.batch_exec_name_error.format(name=name))
             return
         await ctx.send(response_bank.batch_exec_start.format(name=name))
-        with open(fp, 'r') as cmdfile:
+        with fp.open('r') as cmdfile:
             msg = ctx.message
+            msg.author = bot.user
             for line in cmdfile:
                 msg.content = line.strip()
                 try:

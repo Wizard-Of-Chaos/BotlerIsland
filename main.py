@@ -13,7 +13,6 @@ import cogs_rolemanager
 import cogs_reactroletagger
 import cogs_batchcmds
 import cogs_linkyaicore
-# import cogs_tenseibot
 import cogs_bullshitgenerator
 
 if __name__ == '__main__':

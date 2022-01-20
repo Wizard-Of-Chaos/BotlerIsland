@@ -1,5 +1,4 @@
 # Guild Configuration Cog, for managing guild settings and bot features.
-import os
 import pickle
 from datetime import datetime
 from collections import defaultdict
