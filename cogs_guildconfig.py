@@ -1,4 +1,5 @@
 # Guild Configuration Cog, for managing guild settings and bot features.
+import os
 import pickle
 from datetime import datetime
 from collections import defaultdict
@@ -94,7 +95,7 @@ class GuildConfiguration(commands.Cog):
                 sql_metadata.create_all(sql_engine)
                 is_new_style = False
         if not is_new_style:
-            with open('config.pkl', 'rb') as config_file:
+            with open(os.path.join('data', 'config.pkl'), 'rb') as config_file:
                 data = pickle.load(config_file)
             with sql_engine.connect() as dbconn:
                 for guild_id, config in data.items():
