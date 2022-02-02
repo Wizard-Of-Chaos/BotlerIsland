@@ -7,11 +7,7 @@ from discord.ext import commands, tasks
 
 import sqlalchemy as sql
 
-from cogs_modtools import (
-    guild_whitelist, CogtextManager, 
-    MemberStalker, Suggestions,
-    )
-from cogs_statstracker import StatsTracker
+from cogs_modtools import CogtextManager, Suggestions
 
 random.seed(datetime.now())
 bot = commands.Bot(command_prefix='D--> ', intents=dc.Intents.all())
@@ -23,10 +19,11 @@ sql_engine = sql.create_engine('sqlite+pysqlite:///aqbot.db', echo=True, future=
 sql_metadata = sql.MetaData()
 sql_metadata.reflect(bind=sql_engine)
 
-member_stalker = MemberStalker('members.pkl')
-stats_tracker = StatsTracker('stats.pkl')
 stored_suggestions = Suggestions('suggestions.pkl')
 
+guild_whitelist = (
+    152981670507577344, 663452978237407262, 402880303065989121, 431698070510501891,
+    )
 CONST_ADMINS = (120187484863856640, 148346796186271744) # Mac, Dirt
 CONST_AUTHOR = (125433170047795200, 257144766901256192) # 9, WoC
 

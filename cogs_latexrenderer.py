@@ -1,4 +1,5 @@
 # Latex Rendering Cog.
+# GuildConfig contains channel metadata regarding which channels enable this feature to avoid spamming the server.
 import io
 import json
 import ssl
@@ -10,7 +11,8 @@ import discord as dc
 from discord.ext import commands, tasks
 
 from cogs_textbanks import url_bank, query_bank, response_bank
-from bot_common import bot, member_stalker, CogtextManager
+from bot_common import bot, CogtextManager
+import cogs_guildconfig
 
 
 class LatexRenderer(commands.Cog):
@@ -23,6 +25,9 @@ class LatexRenderer(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.guild_config = bot.get_cog('GuildConfiguration')
+        if self.guild_config is None:
+            print(response_bank.unexpected_state)
+        
         self.preamble = self.default_preamble
         self.postamble = self.default_postamble
 
@@ -45,7 +50,9 @@ class LatexRenderer(commands.Cog):
     @commands.command(name='latex', aliases=['l'])
     @commands.bot_has_permissions(send_messages=True)
     async def render_latex(self, ctx, *, raw_latex=''):
-        if not self.guild_config.check_enabled(ctx.message, 'enablelatex') or not raw_latex:
+        if not raw_latex:
+            return
+        if not self.guild_config.channel_toggles.check_enabled(ctx.message, 'enablelatex'):
             return
         with ctx.channel.typing():
             if (image := await self.grab_latex(raw_latex, self.preamble, self.postamble)) is None:
@@ -53,8 +60,8 @@ class LatexRenderer(commands.Cog):
                 return
             # Send the image to the latex channel and embed.
             latex_channel = bot.get_channel(773594582175973376)
-            msg_id = hex(member_stalker.member_data['latex_count'])[2:]
-            member_stalker.member_data['latex_count'] += 1
+            msg_id = f'{self.guild_config.latex_count:x}'
+            self.guild_config.latex_count = (self.guild_config.latex_count + 1) & 0xFFFFFFFF
             await latex_channel.send(
                 f'`@{ctx.author}`: UID {ctx.author.id}: MID {msg_id}',
                 file=dc.File(io.BytesIO(await image.read()), 'latex.png')

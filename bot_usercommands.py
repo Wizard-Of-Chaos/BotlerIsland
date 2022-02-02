@@ -10,7 +10,7 @@ import discord as dc
 from discord.ext import commands
 
 from cogs_textbanks import url_bank, query_bank, husky_bank, response_bank
-from bot_common import bot, CONST_ADMINS, CONST_AUTHOR, member_stalker, stored_suggestions
+from bot_common import bot, CONST_ADMINS, CONST_AUTHOR, stored_suggestions
 
 suggest_chid = 777555413213642772
 
@@ -85,13 +85,17 @@ async def info(ctx, *, name=None):
         await ctx.send('D--> It seems that user can\'t be found. Please check your spelling.')
         return
     now = datetime.utcnow()
-    firstjoin = member_stalker.get('first_join', member) or member.joined_at
+    user_datalogger = bot.get_cog('UserDataLogger')
+    if user_datalogger is not None:
+        firstjoin = user_datalogger.get_first_join(member)
+    else:
+        firstjoin = member.joined_at
     embed = dc.Embed(color=member.color, timestamp=now)
     embed.set_author(name=f'Information for {member}')
     embed.set_thumbnail(url=member.avatar_url)
     if ctx.author != member and ctx.author != bot.user:
-        lastseen = member_stalker.get('last_seen', member)
-        if lastseen is not None:
+        if user_datalogger is not None:
+            lastseen = user_datalogger.get_last_seen(member)
             lastseenmsg = (
                 f'```{lastseen.strftime(dt_format)}\n'
                 f'{max(0, (now-lastseen).days)} day(s) ago```'

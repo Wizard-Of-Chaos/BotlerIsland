@@ -10,6 +10,7 @@ from discord.ext import commands
 
 from cogs_textbanks import url_bank, query_bank, response_bank
 from bot_common import bot, CogtextManager
+import cogs_rolemanager
 
 EmojiUnion = Union[dc.Emoji, dc.PartialEmoji, str]
 

@@ -8,7 +8,7 @@ import discord as dc
 from discord.ext import commands
 
 from cogs_textbanks import url_bank, query_bank, response_bank
-from bot_common import bot, CONST_ADMINS, CONST_AUTHOR, stats_tracker, user_or_perms
+from bot_common import bot, CONST_ADMINS, CONST_AUTHOR, user_or_perms
 
 # INFOHELP COMMANDS
 
@@ -100,7 +100,7 @@ async def modhelp_error(ctx, error):
 @commands.bot_has_permissions(send_messages=True)
 async def modperms(ctx):
     # me and the boys using cursed if as a prototype
-    permlist = ', '.join(perm for perm, val in ctx.author.guild_permissions if val)
+    permlist = ', '.join(sorted(perm for perm, val in ctx.author.guild_permissions if val))
     embed = dc.Embed(
         color=ctx.author.color,
         timestamp=datetime.utcnow(),
@@ -137,18 +137,16 @@ async def raidban(ctx, *args):
             reason='Banned by anti-raid command.',
             delete_message_days=1,
             )
-    desc = f'D--> The aberrants listed below have been STRONGLY executed:\n{", ".join(members)}'
+    desc = 'D--> The aberrants listed below have been STRONGLY executed:\n' + ', '.join(members)
     embed = dc.Embed(
         color=ctx.author.color,
         timestamp=ctx.message.created_at,
-        # description=desc,
         )
     embed.set_author(
         name=f'{ctx.author} used raidban command in #{ctx.channel}:',
         icon_url=ctx.author.avatar_url,
         )
-    guild_config = bot.get_cog('GuildConfiguration')
-    if guild_config is None:
+    if (guild_config := bot.get_cog('GuildConfiguration')) is None:
         raise RuntimeError(response_bank.unexpected_state)
     await guild_config.log(ctx.guild, 'modlog', desc, embed=embed)
     await ctx.message.delete()
@@ -275,40 +273,3 @@ async def special_mod_command_unfreeze_error(ctx, error):
     raise error
 
 # <== To Be Continued...
-# STATS COMMANDS
-
-# @bot.group(name='stats')
-# @commands.has_permissions(manage_roles=True)
-# async def statistics_beta(ctx):
-#     if ctx.invoked_subcommand is None:
-#         await ctx.send(
-#             'D--> It seems that you have attempted to run a nonexistent command.'
-#             'Would you like to try again? Redos are free, you know.'
-#             )
-
-# @statistics_beta.error
-# async def statistics_beta_error(ctx, error):
-#     if isinstance(error, commands.MissingPermissions):
-#         await ctx.send(
-#             f'D--> It seems that you don\'t have the appropriate permissions for this command. '
-#             f'I STRONGLY recommend you back off or get bucked off, {ctx.author.name}.'
-#             )
-#         return
-#     elif isinstance(error, commands.BotMissingPermissions):
-#         return
-#     raise error
-        
-# @statistics_beta.command()
-# async def woc_counter(ctx): # Beta statistic feature: Woc's Tard Counter!
-#     if ctx.author.id == CONST_ADMINS[1]:
-#         await ctx.send(
-#             'D--> Are you sure you want to know that, Master Linky? '
-#             'Regardless of your answer, I shall tell you, though I STRONGLY suggest you wait.'
-#             )
-#     tards = await stats_tracker.take('woc_counter', ctx, None)
-#     if tards is not None:
-#         await ctx.send(
-#             f'D--> Wizard of Chaos has slurred {tards} times in this server, {ctx.author.mention}.'
-#             )
-
-# END OF STATS

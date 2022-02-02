@@ -9,10 +9,6 @@ from discord.ext import commands
 
 from cogs_textbanks import query_bank, response_bank
 
-guild_whitelist = (
-    152981670507577344, 663452978237407262, 402880303065989121, 431698070510501891,
-    )
-
 class CogtextManager(commands.Cog):
 
     @staticmethod
@@ -79,50 +75,6 @@ def guild_callback():
 
 def member_callback():
     return defaultdict(guild_callback)
-
-class MemberStalker(Singleton):
-    def __init__(self, fname):
-        self.fname = os.path.join('data', fname)
-        self.load()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, etype, evalue, etrace):
-        self.save()
-
-    def save(self):
-        with open(self.fname, 'wb') as member_file:
-            pickle.dump(self.member_data, member_file)
-
-    def load(self):
-        try:
-            with open(self.fname, 'rb') as member_file:
-                self.member_data = pickle.load(member_file)
-        except (OSError, EOFError):
-            self.member_data = defaultdict(member_callback, {'avatar_count': 0, 'latex_count': 0})
-        else:
-            self.member_data.default_factory = member_callback
-        self.save()
-
-    def get(self, field, member):
-        return self.member_data[member.id][member.guild.id][field]
-
-    def update(self, field, data):
-        if field == 'first_join': # data is a discord.Member instance
-            member_data = self.member_data[data.id][data.guild.id]
-            if not member_data[field]:
-                member_data[field] = data.joined_at
-        elif field == 'last_seen': # data is a discord.Message instance
-            self.member_data[data.author.id][data.guild.id][field] = data.created_at
-        elif field == 'last_roles': # data is a discord.Member instance
-            self.member_data[data.id][data.guild.id][field] = tuple(role.id for role in data.roles[1:])
-
-    async def load_roles(self, member):
-        await member.add_roles(
-            *map(member.guild.get_role, self.member_data[member.id][member.guild.id]['last_roles']),
-            reason='Restore last roles'
-            )
 
     
 class Suggestions(Singleton):

@@ -10,6 +10,8 @@ from discord.ext import commands, tasks
 
 from cogs_textbanks import url_bank, query_bank, response_bank
 from bot_common import bot, CogtextManager
+import cogs_guildconfig
+import cogs_chandatalogger
 
 _unit_dict = {'h': 1, 'd': 24, 'w': 168, 'm': 732, 'y': 8766}
 def _parse_length(length):
@@ -29,6 +31,7 @@ class BanManager(CogtextManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.guild_config = bot.get_cog('GuildConfiguration')
+        self.chan_datalogger = bot.get_cog('ChanDataLogger')
         print(response_bank.process_mutelist)
         self.manage_mutelist.start()
 
@@ -65,20 +68,20 @@ class BanManager(CogtextManager):
             except (dc.Forbidden, dc.HTTPException) as exc:
                 continue
             if (role := guild.get_role(role_id)) is None:
-                if self.guild_config.getlog(guild, 'modlog'):
-                    await self.guild_config.log(guild, 'modlog',
+                if self.guild_config.get_log_channel(guild, 'modlog'):
+                    await self.guild_config.send_to_log_channel(guild, 'modlog',
                         response_bank.manage_mutelist_role_error.format(role=role)
                         )
                 continue
             try:
                 await member.remove_roles(role, reason='Channel mute timeout')
             except (dc.Forbidden, dc.HTTPException) as exc:
-                if self.guild_config.getlog(guild, 'modlog'):
-                    await self.guild_config.log(guild, 'modlog',
+                if self.guild_config.get_log_channel(guild, 'modlog'):
+                    await self.guild_config.send_to_log_channel(guild, 'modlog',
                         response_bank.manage_mutelist_unban_error.format(member=member, role=role)
                         )
             else:
-                if self.guild_config.getlog(guild, 'modlog'):
+                if self.guild_config.get_log_channel(guild, 'modlog'):
                     embed = dc.Embed(
                         color=guild.get_member(bot.user.id).color,
                         timestamp=now,
@@ -89,7 +92,7 @@ class BanManager(CogtextManager):
                         name=f'@{bot.user} Undid Channel Ban:',
                         icon_url=bot.user.avatar_url,
                         )
-                    await self.guild_config.log(guild, 'modlog', embed=embed)
+                    await self.guild_config.send_to_log_channel(guild, 'modlog', embed=embed)
 
     @manage_mutelist.before_loop
     async def prepare_mutelist(self):
@@ -177,8 +180,9 @@ class BanManager(CogtextManager):
         await ctx.send(response_bank.channel_ban_confirm.format(
             member=member.mention, length=lenstr, reason=reason,
             ))
+        self.chan_datalogger.log_channel_mute(ctx)
         # OH BUT NOW SOMEONES GONNA WHINE THAT WE DIDNT LOG IT? HOLD YOUR ASS TIGHT BECAUSE WE'RE ABOUT TO
-        if self.guild_config.getlog(ctx.guild, 'modlog'): # OHHHHHHH! HE DID IT! THE FUCKING MADMAN!
+        if self.guild_config.get_log_channel(ctx.guild, 'modlog'): # OHHHHHHH! HE DID IT! THE FUCKING MADMAN!
             embed = dc.Embed(
                 color=ctx.author.color,
                 timestamp=ctx.message.created_at,
@@ -192,7 +196,7 @@ class BanManager(CogtextManager):
                 name=f'@{ctx.author} Issued Channel Ban:',
                 icon_url=ctx.author.avatar_url,
                 )
-            await self.guild_config.log(ctx.guild, 'modlog', embed=embed)
+            await self.guild_config.send_to_log_channel(ctx.guild, 'modlog', embed=embed)
             # BOOM! SUUUUUUUUCK - IT!
 
     @role_mute_apply.error
@@ -226,7 +230,7 @@ class BanManager(CogtextManager):
             await ctx.send(response_bank.channel_unban_role_error)
             return
         self.remove((ctx.guild.id, member.id, role.id))
-        if self.guild_config.getlog(ctx.guild, 'modlog'):
+        if self.guild_config.get_log_channel(ctx.guild, 'modlog'):
             embed = dc.Embed(
                 color=ctx.author.color,
                 timestamp=ctx.message.created_at,
@@ -239,7 +243,7 @@ class BanManager(CogtextManager):
                 name=f'@{ctx.author} Undid Channel Ban:',
                 icon_url=ctx.author.avatar_url,
                 )
-            await self.guild_config.log(ctx.guild, 'modlog', embed=embed)
+            await self.guild_config.send_to_log_channel(ctx.guild, 'modlog', embed=embed)
 
     @role_mute_revoke.error
     async def role_mute_revoke_error(self, ctx, error):

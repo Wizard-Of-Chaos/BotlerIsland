@@ -7,38 +7,43 @@ import discord as dc
 from discord.ext import commands, tasks
 
 from cogs_textbanks import url_bank, query_bank, response_bank
-from bot_common import bot, guild_whitelist, CONST_ADMINS, CONST_AUTHOR
+from bot_common import bot, sql_engine, sql_metadata, guild_whitelist, CONST_ADMINS, CONST_AUTHOR
 
 class DailyCounter(commands.Cog):
     
     def __init__(self, bot):
         self.bot = bot
         self.guild_config = bot.get_cog('GuildConfiguration')
-        self.daily_msg = {guild_id: Counter() for guild_id in guild_whitelist}
-        self.daily_usr = {
-            guild_id: Counter({'join': 0, 'leave': 0, 'ban': 0})
-            for guild_id in guild_whitelist
-            }
+        self.user_datalogger = bot.get_cog('UserDataLogger')
+        self.chan_datalogger = bot.get_cog('ChanDataLogger')
+        if not (self.guild_config and self.user_datalogger and self.chan_datalogger):
+            print(response_bank.unexpected_state)
+            raise SystemExit
 
     def cog_unload(self):
         self.post_dailies.cancel()
 
-    def create_embed(self, guild, author, msg):
-        guild_id = guild.id
+    def create_embed(self, guild_data, guild, author, msg):
         msg_counts = "\n".join(
-            f'`{guild.get_channel(chan_id)}:` **{count}**'
-            for chan_id, count in self.daily_msg[guild_id].most_common()
+            f'`{guild.get_channel(chan_id)}:` '
+            f'**{counts["MessagesAdded"]}** | '
+            f'**{counts["MessagesEdited"]}** | '
+            f'**{counts["MessagesDeleted"]}**'
+            for chan_id, counts in sorted(guild_data.items(), key=lambda i: -i[1]['MessagesAdded'])
             )
         embed = dc.Embed(
             color=author.color,
             timestamp=datetime.utcnow(),
-            description=f'**Message counts since midnight UTC or bot start:**\n{msg_counts}',
+            description=f'**Message counts (added, edited, deleted) since midnight UTC or bot start:**\n{msg_counts}',
             )
-        guild_data = self.daily_usr[guild_id]
+        user_counts = Counter(
+            row[2]
+            for row in self.user_datalogger.get_joins_on_date(datetime.utcnow().date())
+            )
         embed.set_author(name=f'Daily counts for {author}', icon_url=author.avatar_url)
-        embed.add_field(name='Users Gained:', value=guild_data['join'])
-        embed.add_field(name='Users Lost:', value=guild_data['leave']-guild_data['ban'])
-        embed.add_field(name='Users Banned:', value=guild_data['ban'])
+        embed.add_field(name='Users Gained:', value=user_logs['join'])
+        embed.add_field(name='Users Lost:', value=user_logs['leave']-user_logs['ban'])
+        embed.add_field(name='Users Banned:', value=user_logs['ban'])
         embed.add_field(name='**DISCLAIMER**:', value=msg, inline=False)
         return embed
 
@@ -47,45 +52,23 @@ class DailyCounter(commands.Cog):
         print(response_bank.process_dailies)
         self.post_dailies.start()
 
-    @commands.Cog.listener()
-    async def on_member_join(self, member):
-        guild = member.guild
-        if guild.id in guild_whitelist:
-            self.daily_usr[guild.id]['join'] += 1
-
-    @commands.Cog.listener()
-    async def on_member_remove(self, member):
-        guild = member.guild
-        if guild.id in guild_whitelist:
-            self.daily_usr[guild.id]['leave'] += 1
-
-    @commands.Cog.listener()
-    async def on_member_ban(self, guild, user):
-        if guild.id in guild_whitelist:
-            self.daily_usr[guild.id]['ban'] += 1
-
-    @commands.Cog.listener()
-    async def on_message(self, msg): # Message posted event
-        if msg.guild.id in guild_whitelist:
-            self.daily_msg[msg.guild.id][msg.channel.id] += 1
-
     @tasks.loop(hours=24)
     async def post_dailies(self):
+        guild_data = self.chan_metadata.get_current_record()
         for guild_id, admin_id in zip(guild_whitelist, (CONST_ADMINS[1], CONST_AUTHOR[0])):
             guild = bot.get_guild(guild_id)
             if guild is None or guild.get_member(bot.user.id) is None:
                 continue
             admin = guild.get_member(admin_id)
-            embed = self.create_embed(guild, admin,
+            embed = self.create_embed(guild_data[guild.id], guild, admin,
                 'Counts may not be accurate if the bot has been stopped at any point during the day.',
                 )
-            self.daily_msg[guild_id].clear()
-            self.daily_usr[guild_id].clear()
-            await self.guild_config.log(
+            await self.guild_config.send_to_log_channel(
                 guild, 'modlog',
                 admin.mention if admin_id == CONST_ADMINS[1] else '',
                 embed=embed,
                 )
+        self.chan_datalogger.update_records()
 
     @post_dailies.before_loop
     async def post_dailies_start_delay(self):
@@ -99,9 +82,10 @@ class DailyCounter(commands.Cog):
     @commands.command(name='daily')
     @commands.has_guild_permissions(manage_roles=True)
     async def force_daily_post(self, ctx):
-        await self.guild_config.log(
+        guild_data = self.chan_metadata.get_current_record()[ctx.guild.id]
+        await self.guild_config.send_to_log_channel(
             ctx.guild, 'modlog', ctx.author.mention,
-            embed=self.create_embed(ctx.guild, ctx.author,
+            embed=self.create_embed(guild_data, ctx.guild, ctx.author,
                 'Counts may not be accurate if the bot has been stopped at any point during the day.\n'
                 'Counts will reset upon midnight UTC, upon which an automated message will display.',
                 )
