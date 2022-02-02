@@ -106,7 +106,7 @@ class GuildConfiguration(commands.Cog):
                     for guild_id, guild_data in self._log_chan_ids.items()
                     ],
                 )
-                dbconn.commit()
+            dbconn.commit()
         super().cog_unload()
 
     def get_log_channel(self, guild, log):
@@ -286,8 +286,13 @@ class GuildConfiguration(commands.Cog):
                     description=desc,
                     )
                 if ctype.startswith('Avatar'):
-                    embed.set_author(name=ctype, icon_url=await grab_avatar(bfr))
-                    embed.set_thumbnail(url=await grab_avatar(aft))
+                    embed.set_author(
+                        name=ctype,
+                        icon_url=await self.global_metadata.grab_avatar(bfr),
+                        )
+                    embed.set_thumbnail(
+                        url=await self.global_metadata.grab_avatar(aft)
+                        )
                 else:
                     embed.set_author(name=ctype, icon_url=aft.avatar_url)
                 embed.add_field(name='**User ID:**', value=f'`{aft.id}`', inline=False)
@@ -456,6 +461,8 @@ class ChannelToggles(commands.Cog):
                     dbconn.commit()
 
     def cog_unload(self):
+        with sql_engine.connect() as dbconn:
+            dbconn.commit()
         super().cog_unload()
 
     def check_enabled(self, msg, field):
@@ -507,10 +514,10 @@ class ChannelToggles(commands.Cog):
                 dbconn.commit()
                 return False
             else:
-                dbconn.execute(
-                    table.insert(),
-                    [{'ChannelId': channel_id, 'GuildId': ctx.guild.id}],
-                    )
+                dbconn.execute(table.insert().values(
+                    ChannelId=channel_id,
+                    GuildId=ctx.guild.id,
+                    ))
                 dbconn.commit()
                 return True
 
@@ -569,7 +576,7 @@ class GlobalMetaData(commands.Cog):
     
     def __init__(self, bot):
         self.bot = bot
-        self.records = {}
+        self._records = {}
         self.data_load()
 
     def data_load(self):
@@ -590,39 +597,33 @@ class GlobalMetaData(commands.Cog):
                         member_data = pickle.load(config_file)
                 except FileNotFoundError:
                     dbconn.execute(self._global_counters.insert(AvatarCount=0, LatexCount=0))
-                    self.records['avatar_count'] = self.records['latex_count'] = 0
+                    self._records['avatar_count'] = self._records['latex_count'] = 0
                 else:
-                    dbconn.execute(
-                        self._global_counters.insert(),
-                        [{
-                            'AvatarCount': member_data['avatar_count'],
-                            'LatexCount': member_data['latex_count'],
-                            }],
-                        )
-                    self.records['avatar_count'] = member_data['avatar_count']
-                    self.records['latex_count'] = member_data['latex_count']
+                    dbconn.execute(self._global_counters.insert().values(
+                        AvatarCount=member_data['avatar_count'],
+                        LatexCount=member_data['latex_count'],
+                        ))
+                    self._records['avatar_count'] = member_data['avatar_count']
+                    self._records['latex_count'] = member_data['latex_count']
                 dbconn.commit()
         else:
             with sql_engine.connect() as dbconn:
                 counts = list(dbconn.execute(self._global_counters.select()))[0]
-                self.records['avatar_count'], self.records['latex_count'] = counts
+                self._records['avatar_count'], self._records['latex_count'] = counts
 
     def cog_unload(self):
         with sql_engine.connect() as dbconn:
             dbconn.execute(self._global_counters.delete())
-            dbconn.execute(
-                self._global_counters.insert(),
-                [{
-                    'AvatarCount': self.records['avatar_count'],
-                    'LatexCount': self.records['latex_count'],
-                    }],
-                )
+            dbconn.execute(self._global_counters.insert().values(
+                AvatarCount=self._records['avatar_count'],
+                LatexCount=self._records['latex_count'],
+                ))
             dbconn.commit()
         super().cog_unload()
 
     def get_record_id(self, record):
-        record_id = self.records[record]
-        self.records[record] = (record_id + 1) & 0xFFFFFFFF
+        record_id = self._records[record]
+        self._records[record] = (record_id + 1) & 0xFFFFFFFF
         return record_id
 
     async def grab_avatar(self, user):

@@ -26,8 +26,8 @@ class LatexRenderer(commands.Cog):
         self.bot = bot
         self.guild_config = bot.get_cog('GuildConfiguration')
         if self.guild_config is None:
-            print(response_bank.unexpected_state)
-        
+            raise RuntimeError(response_bank.unexpected_state)
+
         self.preamble = self.default_preamble
         self.postamble = self.default_postamble
 

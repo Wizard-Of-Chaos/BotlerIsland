@@ -8,6 +8,9 @@ from discord.ext import commands, tasks
 
 from cogs_textbanks import url_bank, query_bank, response_bank
 from bot_common import bot, sql_engine, sql_metadata, guild_whitelist, CONST_ADMINS, CONST_AUTHOR
+import cogs_guildconfig
+import cogs_userdatalogger
+import cogs_chandatalogger
 
 class DailyCounter(commands.Cog):
     
@@ -17,8 +20,7 @@ class DailyCounter(commands.Cog):
         self.user_datalogger = bot.get_cog('UserDataLogger')
         self.chan_datalogger = bot.get_cog('ChanDataLogger')
         if not (self.guild_config and self.user_datalogger and self.chan_datalogger):
-            print(response_bank.unexpected_state)
-            raise SystemExit
+            raise RuntimeError(response_bank.unexpected_state)
 
     def cog_unload(self):
         self.post_dailies.cancel()

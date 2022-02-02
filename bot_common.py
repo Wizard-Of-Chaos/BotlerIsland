@@ -40,6 +40,6 @@ def user_or_perms(user_id, **perms):
 
 
 def main():
-    with open('token.dat', 'r') as tokenfile, member_stalker, stats_tracker, stored_suggestions:
+    with open('token.dat', 'r') as tokenfile, stored_suggestions:
         raw = tokenfile.read().strip()
         bot.run(''.join(chr(int(''.join(c), 16)) for c in zip(*[iter(raw)]*2)))

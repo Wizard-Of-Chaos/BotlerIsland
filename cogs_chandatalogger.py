@@ -10,9 +10,10 @@ import sqlalchemy as sql
 
 from cogs_textbanks import url_bank, query_bank, response_bank
 from bot_common import (
-    bot, sql_engine, sql_metadata, guild_whitelist
+    bot, sql_engine, sql_metadata, guild_whitelist,
     CONST_ADMINS, CONST_AUTHOR,
     )
+import cogs_guildconfig
 
 
 class ChanDataLogger(commands.Cog):
@@ -33,7 +34,7 @@ class ChanDataLogger(commands.Cog):
         if self.guild_config is not None:
             self.guild_config.chan_datalogger = self
         else:
-            print(response_bank.unexpected_state)
+            raise RuntimeError(response_bank.unexpected_state)
         self.data_load()
         self._current_record = self._generate_record()
 
@@ -105,3 +106,6 @@ class ChanDataLogger(commands.Cog):
     @commands.Cog.listener()
     async def on_message_delete(self, msg):
         self._current_record[msg.guild.id][msg.channel.id]['MessagesDeleted'] += 1
+
+
+bot.add_cog(ChanDataLogger(bot))

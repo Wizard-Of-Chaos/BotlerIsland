@@ -24,7 +24,7 @@ class UserDataLogger(commands.Cog):
         if self.guild_config is not None:
             self.guild_config.user_datalogger = self
         else:
-            print(response_bank.unexpected_state)
+            raise RuntimeError(response_bank.unexpected_state)
         self.data_load()
 
     def data_load(self):
@@ -68,31 +68,32 @@ class UserDataLogger(commands.Cog):
             except FileNotFoundError:
                 return
             with sql_engine.connect() as dbconn:
-                for user_id, user_data in member_data.items():
-                    if not isinstance(user_data, dict): continue
-                    for guild_id, guild_data in user_data.items():
-                        dbconn.execute(self.user_joindata.insert()
-                            {
-                                'UserId': user_id,
-                                'GuildId': guild_id,
-                                'LastJoinedDateTime': user_data['first_join'],
-                                'CurrentRecord': True,
-                                },
-                            )
+                for guild_id, guild_data in member_data.items():
+                    if not isinstance(guild_data, dict):
+                        continue
+                    guild = bot.get_guild(guild_id)
+                    for user_id, user_data in guild_data.items():
+                        member = guild and guild.get_member(user_id)
+                        first_join = user_data['first_join'] and member and member.joined_at
+                        if first_join is not None:
+                            dbconn.execute(self.user_joindata.insert().values(
+                                UserId=user_id,
+                                GuildId=guild_id,
+                                RecordDateTime=first_join,
+                                RecordType='join',
+                                ))
                         if user_data['last_seen'] is not None:
-                            dbconn.execute(
-                                self.user_seendata.insert(),
-                                {
-                                    'UserId': user_id,
-                                    'GuildId': guild_id,
-                                    'LastSeenDateTime': user_data['last_seen'],
-                                    },
-                                )
+                            dbconn.execute(self.user_seendata.insert().values(
+                                UserId=user_id,
+                                GuildId=guild_id,
+                                LastSeenDateTime=user_data['last_seen'],
+                                ))
                         for role_id in user_data['last_roles']:
-                            dbconn.execute(
-                                self.user_roledata.insert(),
-                                {'RoleId': role_id, 'UserId': user_id, 'GuildId': guild_id},
-                                )
+                            dbconn.execute(self.user_roledata.insert().values(
+                                RoleId=role_id,
+                                UserId=user_id,
+                                GuildId=guild_id,
+                                ))
                         dbconn.commit()
 
         def get_joins_on_date(self, date):
@@ -154,7 +155,7 @@ class UserDataLogger(commands.Cog):
                         .values(LastSeenDateTime=msg.created_at)
                         )
                 else:
-                    dbconn.execute(self.user_seendata.insert(
+                    dbconn.execute(self.user_seendata.insert().values(
                         UserId=msg.author.id,
                         GuildId=msg.guild.id,
                         LastSeenDateTime=msg.created_at,
@@ -166,7 +167,7 @@ class UserDataLogger(commands.Cog):
             user_id = member.id
             guild_id = member.guild.id
             with sql_engine.conenct() as dbconn:
-                dbconn.execute(self.user_joindata.insert(
+                dbconn.execute(self.user_joindata.insert().values(
                     UserId=user_id,
                     GuildId=guild_id,
                     RecordDateTime=member.joined_at,
@@ -194,7 +195,7 @@ class UserDataLogger(commands.Cog):
             user_id = member.id
             guild_id = member.guild.id
             with sql_engine.conenct() as dbconn:
-                dbconn.execute(self.user_joindata.insert(
+                dbconn.execute(self.user_joindata.insert().values(
                     UserId=user_id,
                     GuildId=guild_id,
                     RecordDateTime=datetime.utcnow(),
@@ -211,7 +212,7 @@ class UserDataLogger(commands.Cog):
         @commands.Cog.listener()
         async def on_member_ban(self, guild, user):
             with sql_engine.conenct() as dbconn:
-                dbconn.execute(self.user_joindata.insert(
+                dbconn.execute(self.user_joindata.insert().values(
                     UserId=user.id,
                     GuildId=guild.id,
                     RecordDateTime=datetime.utcnow(),
