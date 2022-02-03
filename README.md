@@ -1,13 +1,15 @@
 ArquiusBot
 =========================================================================================================================
-A Discord utility bot intended for use only in the Homestuck &amp; Hiveswap Discord Server.
+A Discord utility bot intended for flexing.
 
 **Command Prefix:** `D--> ` (yes, the space is required)
 
-D--> It seems you have asked about the *Homestuck and Hiveswap Discord Utility Bot(TM)*.
+D--> It seems you have asked about *ArquiusBot*.
 This is a bot designed to cater to the server's moderation, utility, and statistic 
 tracking needs. If the functions herein described are not performing to the degree 
-that is claimed, please direct your attention to **Wizard of Chaos#2459** or **virtuNat#7998**.
+that is claimed, please complain elsewhere.
+
+This bot is a public beta version of the actual bot.
 
 -------------------------------------------------------------------------------------------------------------------------
 Command List:
