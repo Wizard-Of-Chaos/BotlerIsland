@@ -60,8 +60,7 @@ class LatexRenderer(commands.Cog):
                 return
             # Send the image to the latex channel and embed.
             latex_channel = bot.get_channel(773594582175973376)
-            msg_id = f'{self.guild_config.latex_count:x}'
-            self.guild_config.latex_count = (self.guild_config.latex_count + 1) & 0xFFFFFFFF
+            msg_id = f'{self.guild_config.global_metadata.get_record_id("latex_count"):x}'
             await latex_channel.send(
                 f'`@{ctx.author}`: UID {ctx.author.id}: MID {msg_id}',
                 file=dc.File(io.BytesIO(await image.read()), 'latex.png')

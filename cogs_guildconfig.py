@@ -110,7 +110,7 @@ class GuildConfiguration(commands.Cog):
         super().cog_unload()
 
     def get_log_channel(self, guild, log):
-        return self._log_chan_ids[guild][log]
+        return self._log_chan_ids[guild.id][log]
 
     async def send_to_log_channel(self, guild, log, *args, **kwargs):
         channel = self.bot.get_channel(self.get_log_channel(guild, log))
@@ -470,20 +470,20 @@ class ChannelToggles(commands.Cog):
             return True
         table = self._tables[field]
         with sql_engine.connect() as dbconn:
-            return bool(dbconn.execute(sql
+            return bool(list(dbconn.execute(sql
                 .select(table.c.ChannelId)
                 .where(table.c.ChannelId == msg.channel.id)
-                ))
+                )))
 
     def check_disabled(self, msg, field):
         if MOD_PERMS.value & msg.author.guild_permissions.value:
             return True
         table = self._tables[field]
         with sql_engine.connect() as dbconn:
-            return not bool(dbconn.execute(sql
+            return not bool(list(dbconn.execute(sql
                 .select(table.c.ChannelId)
                 .where(table.c.ChannelId == msg.channel.id)
-                ))
+                )))
 
     def get_channel_ids(self, guild, field):
         table = self._tables[field]

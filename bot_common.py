@@ -1,6 +1,8 @@
 # Initial setup for global variables. Import names from here for the main bot tasks.
+import sys
 import random
 from datetime import datetime
+import argparse
 
 import discord as dc
 from discord.ext import commands, tasks
@@ -8,6 +10,10 @@ from discord.ext import commands, tasks
 import sqlalchemy as sql
 
 from cogs_modtools import CogtextManager, Suggestions
+
+parser = argparse.ArgumentParser()
+parser.add_argument('tokenfile')
+args = parser.parse_args()
 
 random.seed(datetime.now())
 bot = commands.Bot(command_prefix='D--> ', intents=dc.Intents.all())
@@ -40,6 +46,5 @@ def user_or_perms(user_id, **perms):
 
 
 def main():
-    with open('token.dat', 'r') as tokenfile, stored_suggestions:
-        raw = tokenfile.read().strip()
-        bot.run(''.join(chr(int(''.join(c), 16)) for c in zip(*[iter(raw)]*2)))
+    with open(args.tokenfile, 'r') as tokenfile, stored_suggestions:
+        bot.run(tokenfile.read().strip())

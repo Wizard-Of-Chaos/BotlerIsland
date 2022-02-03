@@ -38,7 +38,7 @@ class DailyCounter(commands.Cog):
             timestamp=datetime.utcnow(),
             description=f'**Message counts (added, edited, deleted) since midnight UTC or bot start:**\n{msg_counts}',
             )
-        user_counts = Counter(
+        user_logs = Counter(
             row[2]
             for row in self.user_datalogger.get_joins_on_date(datetime.utcnow().date())
             )
@@ -56,7 +56,7 @@ class DailyCounter(commands.Cog):
 
     @tasks.loop(hours=24)
     async def post_dailies(self):
-        guild_data = self.chan_metadata.get_current_record()
+        guild_data = self.chan_datalogger.get_current_record()
         for guild_id, admin_id in zip(guild_whitelist, (CONST_ADMINS[1], CONST_AUTHOR[0])):
             guild = bot.get_guild(guild_id)
             if guild is None or guild.get_member(bot.user.id) is None:
@@ -84,7 +84,7 @@ class DailyCounter(commands.Cog):
     @commands.command(name='daily')
     @commands.has_guild_permissions(manage_roles=True)
     async def force_daily_post(self, ctx):
-        guild_data = self.chan_metadata.get_current_record()[ctx.guild.id]
+        guild_data = self.chan_datalogger.get_current_record()[ctx.guild.id]
         await self.guild_config.send_to_log_channel(
             ctx.guild, 'modlog', ctx.author.mention,
             embed=self.create_embed(guild_data, ctx.guild, ctx.author,

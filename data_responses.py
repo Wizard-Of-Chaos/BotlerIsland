@@ -200,7 +200,7 @@ def apply_quirk(response: str) -> str:
     response = re.sub(r'(ool|oul|ewl)', '001', response)
     response = re.sub(r'\b(nay|nigh)\b', 'neigh', response)
     response = re.sub(
-        r'\b(strength|strong\w+|crush\w+)\b',
+        r'\b(strength|strong\w*|crush\w*)\b',
         lambda m: m[0].upper(),
         response,
         )

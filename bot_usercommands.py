@@ -94,8 +94,8 @@ async def info(ctx, *, name=None):
     embed.set_author(name=f'Information for {member}')
     embed.set_thumbnail(url=member.avatar_url)
     if ctx.author != member and ctx.author != bot.user:
-        if user_datalogger is not None:
-            lastseen = user_datalogger.get_last_seen(member)
+        lastseen = user_datalogger and user_datalogger.get_last_seen(member)
+        if lastseen is not None:
             lastseenmsg = (
                 f'```{lastseen.strftime(dt_format)}\n'
                 f'{max(0, (now-lastseen).days)} day(s) ago```'

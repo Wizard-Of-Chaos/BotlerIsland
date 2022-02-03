@@ -96,129 +96,132 @@ class UserDataLogger(commands.Cog):
                                 ))
                         dbconn.commit()
 
-        def get_joins_on_date(self, date):
-            with sql_engine.connect() as dbconn:
-                return dbconn.execute(self.user_joindata
-                    .select()
-                    .where(sql.cast(self.user_joindata.c.RecordDateTime, sql.Date) == date)
+    def get_joins_on_date(self, date):
+        with sql_engine.connect() as dbconn:
+            return list(dbconn.execute(self.user_joindata
+                .select()
+                .where(sql.cast(self.user_joindata.c.RecordDateTime, sql.Date) == date)
+                ))
+
+    def get_first_join(self, member):
+        with sql_engine.connect() as dbconn:
+            cols = self.user_joindata.c
+            joins = list(dbconn.execute(self.user_joindata
+                .select(cols.RecordDateTime)
+                .where(
+                    cols.UserId == member.id
+                    and cols.GuildId == member.guild.id
+                    and cols.RecordType == 'join'
                     )
+                .order_by(cols.RecordType.asc())
+                ))
+            if joins:
+                return joins[0][0]
+            return member.joined_at
 
-        def get_first_join(self, member):
-            with sql_engine.connect() as dbconn:
-                cols = self.user_joindata.c
-                return dbconn.execute(self.user_joindata
-                    .select(cols.RecordDateTime)
-                    .where(
-                        cols.UserId == member.id
-                        and cols.GuildId == member.guild.id
-                        and cols.RecordType == 'join'
-                        )
-                    .order_by(cols.RecordType.asc())
-                    )[0][0]
+    def get_roles_taken(self, guild, user):
+        with sql_engine.connect() as dbconn:
+            cols = self.user_roledata.c
+            return list(dbconn.execute(self.user_roledata
+                .select(cols.RoleId)
+                .where(cols.GuildId == guild.id and cols.UserId == user.id)
+                ))
 
-        def get_roles_taken(self, guild, user):
-            with sql_engine.connect() as dbconn:
-                cols = self.user_roledata.c
-                return dbconn.execute(self.user_roledata
-                    .select(cols.RoleId)
-                    .where(cols.GuildId == guild.id and cols.UserId == user.id)
+    def get_last_seen(self, member):
+        with sql_engine.connect() as dbconn:
+            cols = self.user_seendata.c
+            record = list(dbconn.execute(self.user_seendata
+                .select(cols.LastSeenDateTime)
+                .where(cols.GuildId == member.guild.id and cols.UserId == member.id)
+                ))
+            if record:
+                return record[0][0]
+            return None
+
+    @commands.Cog.listener()
+    async def on_message(self, msg):
+        with sql_engine.connect() as dbconn:
+            cols = self.user_seendata.c
+            has_record = bool(dbconn.execute(self.user_seendata
+                .select()
+                .where(
+                    cols.UserId == msg.author.id
+                    and cols.GuildId == msg.guild.id
                     )
-
-        def get_last_seen(self, member):
-            with sql_engine.connect() as dbconn:
-                cols = self.user_joindata.c
-                record = dbconn.execute(self.user_joindata
-                    .select(cols.LastSeenDateTime)
-                    .where(cols.GuildId == member.guild.id and cols.UserId == member.id)
-                    )
-                if record:
-                    return record[0][0]
-                return None
-
-        @commands.Cog.listener()
-        async def on_message(self, msg):
-            with sql_engine.connect() as dbconn:
-                cols = self.user_seendata.c
-                has_record = dbconn.execute(self.user_seendata
-                    .select()
+                ))
+            if has_record:
+                dbconn.execute(self.user_seendata.update()
                     .where(
                         cols.UserId == msg.author.id
                         and cols.GuildId == msg.guild.id
                         )
+                    .values(LastSeenDateTime=msg.created_at)
                     )
-                if has_record:
-                    dbconn.execute(self.user_seendata.update()
-                        .where(
-                            cols.UserId == msg.author.id
-                            and cols.GuildId == msg.guild.id
-                            )
-                        .values(LastSeenDateTime=msg.created_at)
-                        )
-                else:
-                    dbconn.execute(self.user_seendata.insert().values(
-                        UserId=msg.author.id,
-                        GuildId=msg.guild.id,
-                        LastSeenDateTime=msg.created_at,
-                        ))
-                dbconn.commit()
-
-        @commands.Cog.listener()
-        async def on_member_join(self, member):
-            user_id = member.id
-            guild_id = member.guild.id
-            with sql_engine.conenct() as dbconn:
-                dbconn.execute(self.user_joindata.insert().values(
-                    UserId=user_id,
-                    GuildId=guild_id,
-                    RecordDateTime=member.joined_at,
-                    RecordType='join',
+            else:
+                dbconn.execute(self.user_seendata.insert().values(
+                    UserId=msg.author.id,
+                    GuildId=msg.guild.id,
+                    LastSeenDateTime=msg.created_at,
                     ))
-                cols = self.user_roledata.c
-                role_ids = dbconn.execute(self.user_roledata
-                    .select(cols.RoleId)
+            dbconn.commit()
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        user_id = member.id
+        guild_id = member.guild.id
+        with sql_engine.conenct() as dbconn:
+            dbconn.execute(self.user_joindata.insert().values(
+                UserId=user_id,
+                GuildId=guild_id,
+                RecordDateTime=member.joined_at,
+                RecordType='join',
+                ))
+            cols = self.user_roledata.c
+            role_ids = dbconn.execute(self.user_roledata
+                .select(cols.RoleId)
+                .where(cols.UserId == user_id and cols.GuildId == guild_id)
+                )
+            if role_ids: # Restore roles if role data had been saved
+                dbconn.execute(self.user_roledata
+                    .delete()
                     .where(cols.UserId == user_id and cols.GuildId == guild_id)
                     )
-                if role_ids: # Restore roles if role data had been saved
-                    dbconn.execute(self.user_roledata
-                        .delete()
-                        .where(cols.UserId == user_id and cols.GuildId == guild_id)
-                        )
-                    role_getter = member.guild.get_role
-                    await member.add_roles(
-                        *(role_getter(role_row[0]) for role_row in role_ids),
-                        reason='Restore roles lost upon leaving guild'
-                        )
-                dbconn.commit()
-
-        @commands.Cog.listener()
-        async def on_member_remove(self, member):
-            user_id = member.id
-            guild_id = member.guild.id
-            with sql_engine.conenct() as dbconn:
-                dbconn.execute(self.user_joindata.insert().values(
-                    UserId=user_id,
-                    GuildId=guild_id,
-                    RecordDateTime=datetime.utcnow(),
-                    RecordType='leave',
-                    ))
-                dbconn.execute(self.user_roledata.insert(), # Save role data
-                    [
-                        {'RoleId': role.id, 'UserId': user_id, 'GuildId': guild_id}
-                        for role in member.roles[1:]
-                        ],
+                role_getter = member.guild.get_role
+                await member.add_roles(
+                    *(role_getter(role_row[0]) for role_row in role_ids),
+                    reason='Restore roles lost upon leaving guild'
                     )
-                dbconn.commit()
+            dbconn.commit()
 
-        @commands.Cog.listener()
-        async def on_member_ban(self, guild, user):
-            with sql_engine.conenct() as dbconn:
-                dbconn.execute(self.user_joindata.insert().values(
-                    UserId=user.id,
-                    GuildId=guild.id,
-                    RecordDateTime=datetime.utcnow(),
-                    RecordType='ban',
-                    ))
-                dbconn.commit()
+    @commands.Cog.listener()
+    async def on_member_remove(self, member):
+        user_id = member.id
+        guild_id = member.guild.id
+        with sql_engine.conenct() as dbconn:
+            dbconn.execute(self.user_joindata.insert().values(
+                UserId=user_id,
+                GuildId=guild_id,
+                RecordDateTime=datetime.utcnow(),
+                RecordType='leave',
+                ))
+            dbconn.execute(self.user_roledata.insert(), # Save role data
+                [
+                    {'RoleId': role.id, 'UserId': user_id, 'GuildId': guild_id}
+                    for role in member.roles[1:]
+                    ],
+                )
+            dbconn.commit()
+
+    @commands.Cog.listener()
+    async def on_member_ban(self, guild, user):
+        with sql_engine.conenct() as dbconn:
+            dbconn.execute(self.user_joindata.insert().values(
+                UserId=user.id,
+                GuildId=guild.id,
+                RecordDateTime=datetime.utcnow(),
+                RecordType='ban',
+                ))
+            dbconn.commit()
 
 
 bot.add_cog(UserDataLogger(bot))

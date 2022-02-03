@@ -1,9 +1,8 @@
 # For most moderation commands.
 from datetime import datetime
-# from collections import Counter
+from collections import Counter
 
 import asyncio as aio
-
 import discord as dc
 from discord.ext import commands
 
@@ -91,7 +90,7 @@ async def modhelp_error(ctx, error):
     if isinstance(error, commands.BotMissingPermissions):
         return
     elif isinstance(error, commands.MissingPermissions):
-        await ctx.send('D--> Neigh, user.')
+        await ctx.send(response_bank.perms_error)
         return
     raise error
     
@@ -148,9 +147,9 @@ async def raidban(ctx, *args):
         )
     if (guild_config := bot.get_cog('GuildConfiguration')) is None:
         raise RuntimeError(response_bank.unexpected_state)
-    await guild_config.log(ctx.guild, 'modlog', desc, embed=embed)
+    await guild_config.send_to_log_channel(ctx.guild, 'modlog', desc, embed=embed)
     await ctx.message.delete()
-    if ctx.channel.id != guild_config.getlog(ctx.guild, 'modlog'):
+    if ctx.channel.id != guild_config.get_log_channel(ctx.guild, 'modlog'):
         await ctx.send(desc)
 
 @raidban.error
@@ -223,7 +222,7 @@ async def special_mod_command_purge(ctx, limit: int=10):
     guild_config = bot.get_cog('GuildConfiguration')
     if guild_config is None:
         raise RuntimeError(response_bank.unexpected_state)
-    if not guild_config.getlog(ctx.guild, 'msglog'): # Log immediately after.
+    if not guild_config.get_log_channel(ctx.guild, 'msglog'): # Log immediately after.
         return
     user_msgs = Counter(msg.author for msg in msgs)
     log_embed = dc.Embed(
@@ -237,7 +236,7 @@ async def special_mod_command_purge(ctx, limit: int=10):
         name=f'{ctx.channel} has been purged:',
         icon_url=url_bank.okuyasu_icon,
         )
-    await guild_config.log(ctx.guild, 'msglog', embed=log_embed)
+    await guild_config.send_to_log_channel(ctx.guild, 'msglog', embed=log_embed)
 
 @special_mod_command_purge.error
 async def special_mod_command_purge_error(ctx, error):

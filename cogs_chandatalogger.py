@@ -101,7 +101,7 @@ class ChanDataLogger(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message_edit(self, msg_old, msg_new):
-        self._current_record[msg.guild.id][msg.channel.id]['MessagesEdited'] += 1
+        self._current_record[msg_new.guild.id][msg_new.channel.id]['MessagesEdited'] += 1
 
     @commands.Cog.listener()
     async def on_message_delete(self, msg):

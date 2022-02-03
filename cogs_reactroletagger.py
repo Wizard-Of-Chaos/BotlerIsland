@@ -37,6 +37,7 @@ async def process_role_grant(bot, msg, react, role, members) -> None:
 
 
 class ReactRoleTagger(CogtextManager):
+    
     @staticmethod
     def _generate_msg_dict():
         return defaultdict(dict)

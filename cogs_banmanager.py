@@ -36,8 +36,8 @@ class BanManager(CogtextManager):
         self.manage_mutelist.start()
 
     def cog_unload(self):
-        super().cog_unload()
         self.manage_mutelist.cancel()
+        super().cog_unload()
 
     def push(self, id_tuple, unban_dt):
         for entry in self.data:
