@@ -496,10 +496,10 @@ class ChannelToggles(commands.Cog):
     def has_channel_id(self, guild, channel, field):
         table = self._tables[field]
         with sql_engine.connect() as dbconn:
-            return bool(dbconn.execute(sql
+            return bool(list(dbconn.execute(sql
                 .select(table.c.ChannelId)
                 .where(table.c.GuildId == guild.id and table.c.ChannelId == channel.id)
-                ))
+                )))
     
     def toggle_channel_flag(self, ctx, field):
         with sql_engine.connect() as dbconn:
