@@ -2,6 +2,7 @@
 from datetime import datetime
 from collections import defaultdict
 from copy import deepcopy
+from typing import DefaultDict
 
 import discord as dc
 from discord.ext import commands, tasks
@@ -15,20 +16,12 @@ from bot_common import (
     )
 import cogs_guildconfig
 
+Context = commands.Context
+
 
 class ChanDataLogger(commands.Cog):
-
-    @staticmethod
-    def _generate_record():
-        return defaultdict(lambda: defaultdict(lambda: {
-            'RecordDate': datetime.utcnow().date(),
-            'ChannelMutesByBot': 0,
-            'MessagesAdded': 0,
-            'MessagesEdited': 0,
-            'MessagesDeleted': 0,
-            }))
     
-    def __init__(self, bot):
+    def __init__(self, bot) -> None:
         self.bot = bot
         self.guild_config = bot.get_cog('GuildConfiguration')
         if self.guild_config is not None:
@@ -38,7 +31,17 @@ class ChanDataLogger(commands.Cog):
         self.data_load()
         self._current_record = self._generate_record()
 
-    def data_load(self):
+    @staticmethod
+    def _generate_record() -> DefaultDict[int, DefaultDict[int, dict[str, datetime | int]]]:
+        return defaultdict(lambda: defaultdict(lambda: {
+            'RecordDate': datetime.utcnow().date(),
+            'ChannelMutesByBot': 0,
+            'MessagesAdded': 0,
+            'MessagesEdited': 0,
+            'MessagesDeleted': 0,
+            }))
+
+    def data_load(self) -> None:
         missing_tables = False
         try:
             self.chan_metadata = sql_metadata.tables['ChanMetaData']
@@ -69,17 +72,17 @@ class ChanDataLogger(commands.Cog):
         if missing_tables:
             sql_metadata.create_all(sql_engine)
 
-    def log_channel_mute(self, ctx):
+    def log_channel_mute(self, ctx: Context) -> None:
         self._current_record[ctx.guild.id][ctx.channel.id]['ChannelMutesByBot'] += 1
 
-    def get_current_record(self):
+    def get_current_record(self) -> DefaultDict[int, DefaultDict[int, dict[str, datetime | int]]]:
         # While race conditions are unlikely, I'm not taking my fucking chances
         return deepcopy(self._current_record)
 
-    def reset_current_record(self):
+    def reset_current_record(self) -> None:
         self._current_record = self._generate_record()
 
-    def update_records(self):
+    def update_records(self) -> None:
         with sql_engine.connect() as dbconn:
             dbconn.execute(
                 self.chan_metadata.insert(),
@@ -92,19 +95,19 @@ class ChanDataLogger(commands.Cog):
             dbconn.commit()
         self._current_record = self._generate_record()
 
-    def cog_unload(self):
+    def cog_unload(self) -> None:
         self.update_records()
 
     @commands.Cog.listener()
-    async def on_message(self, msg):
+    async def on_message(self, msg: dc.Message) -> None:
         self._current_record[msg.guild.id][msg.channel.id]['MessagesAdded'] += 1
 
     @commands.Cog.listener()
-    async def on_message_edit(self, msg_old, msg_new):
+    async def on_message_edit(self, msg_old: dc.Message, msg_new: dc.Message) -> None:
         self._current_record[msg_new.guild.id][msg_new.channel.id]['MessagesEdited'] += 1
 
     @commands.Cog.listener()
-    async def on_message_delete(self, msg):
+    async def on_message_delete(self, msg: dc.Message) -> None:
         self._current_record[msg.guild.id][msg.channel.id]['MessagesDeleted'] += 1
 
 

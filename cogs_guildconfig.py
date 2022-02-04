@@ -3,6 +3,7 @@ import os
 import pickle
 from datetime import datetime
 from collections import defaultdict
+from typing import Any, Optional
 
 import asyncio as aio
 import discord as dc
@@ -23,6 +24,8 @@ IMAGE_EXTS = ('png', 'gif', 'jpg', 'jpeg', 'jpe', 'jfif')
 AVY_CHID = 664541525350547496
 ATT_CHID = 696209752434278400
 
+Context = commands.Context
+
 async def grab_attachments(msg):
     att_channel = bot.get_channel(ATT_CHID)
     for attachment in msg.attachments:
@@ -35,13 +38,14 @@ async def grab_attachments(msg):
 
 class GuildConfiguration(commands.Cog):
 
-    COLUMN_MAP = {
+    COLUMN_MAP: dict[str, str] = {
         'usrlog': 'UsrLogChanId',
         'msglog': 'MsgLogChanId',
         'modlog': 'ModLogChanId',
         }
 
-    def __init__(self, bot):
+    def __init__(self, bot) -> None:
+        """Initializes cog."""
         self.bot = bot
         self._log_chan_ids = {}
 
@@ -52,7 +56,8 @@ class GuildConfiguration(commands.Cog):
         self.global_metadata = bot.get_cog('GlobalMetaData')
         self.user_datalogger = None
 
-    def data_load(self):
+    def data_load(self) -> None:
+        """Loads cog data from database."""
         # Load guild config table
         try:
             self._guild_config = sql_metadata.tables['GuildConfig']
@@ -92,7 +97,8 @@ class GuildConfiguration(commands.Cog):
             for guild_id, *chan_ids in dbconn.execute(self._guild_config.select()):
                 self._log_chan_ids[guild_id] = dict(zip(self.COLUMN_MAP, chan_ids))
 
-    def cog_unload(self):
+    def cog_unload(self) -> None:
+        """Cleanup function run when the cog is removed or unloaded."""
         with sql_engine.connect() as dbconn:
             dbconn.execute(self._guild_config.delete())
             dbconn.execute(
@@ -109,15 +115,18 @@ class GuildConfiguration(commands.Cog):
             dbconn.commit()
         super().cog_unload()
 
-    def get_log_channel(self, guild, log):
+    def get_log_channel(self, guild: int, log: str) -> int:
+        """Returns requested log channel ID for a given guild."""
         return self._log_chan_ids[guild.id][log]
 
-    async def send_to_log_channel(self, guild, log, *args, **kwargs):
+    async def send_to_log_channel(self, guild: int, log: str, *args: Any, **kwargs: Any) -> None:
+        """Shorthand for get_log_channel().send()"""
         channel = self.bot.get_channel(self.get_log_channel(guild, log))
         await channel.send(*args, **kwargs)
 
     @commands.Cog.listener()
-    async def on_member_join(self, member): # Log joined members
+    async def on_member_join(self, member: dc.Member) -> None:
+        """Logs member joins."""
         guild = member.guild
         if not self.get_log_channel(guild, 'usrlog'):
             return
@@ -141,7 +150,8 @@ class GuildConfiguration(commands.Cog):
         await self.send_to_log_channel(guild, 'usrlog', embed=embed)
 
     @commands.Cog.listener()
-    async def on_member_update(self, bfr, aft): # Log role and nickname changes
+    async def on_member_update(self, bfr: dc.Member, aft: dc.Member) -> None:
+        """Logs member data updates. (Information that is specific per guild)"""
         guild = bfr.guild
         if not self.get_log_channel(guild, 'msglog'):
             return
@@ -176,19 +186,24 @@ class GuildConfiguration(commands.Cog):
             await self.send_to_log_channel(guild, 'msglog', embed=embed)
 
     @commands.Cog.listener()
-    async def on_member_remove(self, member): # Log left/kicked/banned members
+    async def on_member_remove(self, member: dc.Member) -> None:
+        """Logs members that leave the guild in any way."""
         guild = member.guild
         if not self.get_log_channel(guild, 'usrlog'):
             return
         now = datetime.utcnow()
-        if self.user_datalogger is not None:
-            lastseen = self.user_datalogger.get_last_seen(member)
+        lastseen = self.user_datalogger and self.user_datalogger.get_last_seen(member)
+        if lastseen is not None:
             lastseenmsg = (
                 f'This user was last seen on `{lastseen.strftime("%d/%m/%Y %H:%M:%S")}` '
                 f'({max(0, (now-lastseen).days)} days ago)'
                 )
         else:
             lastseenmsg = 'This user has not spoken to my knowledge.'
+        if self.user_datalogger is None:
+            roles = member.roles
+        else:
+            roles = map(guild.get_role, self.user_datalogger.get_roles_taken(guild, member))
         embed = dc.Embed(
             color=dc.Color.red(),
             timestamp=now,
@@ -199,17 +214,15 @@ class GuildConfiguration(commands.Cog):
         embed.set_thumbnail(url=member.avatar_url)
         embed.add_field(
             name='**Roles Snagged:**',
-            value=(', '.join(
-                    f'`{guild.get_role(role).name}`'
-                    for role in member.roles
-                    )
-                or None),
-            inline=False)
+            value=(', '.join(f'`{role}`' for role in roles) or None),
+            inline=False
+            )
         embed.add_field(name='**User ID:**', value=f'`{member.id}`')
         await self.send_to_log_channel(guild, 'usrlog', embed=embed)
 
     @commands.Cog.listener()
-    async def on_member_ban(self, guild, user): # Log member full bans
+    async def on_member_ban(self, guild: dc.Guild, user: dc.User) -> None:
+        """Logs applied guild bans."""
         if not self.get_log_channel(guild, 'modlog'):
             return
         async for entry in guild.audit_logs(limit=256, action=dc.AuditLogAction.ban):
@@ -221,6 +234,10 @@ class GuildConfiguration(commands.Cog):
                 f'The last ban of {user} `{user.id}` could not be found in the audit log.',
                 )
             return
+        if self.user_datalogger is None:
+            roles = ()
+        else:
+            roles = self.user_datalogger.get_roles_taken(guild, user)
         author = entry.user
         embed = dc.Embed(
             color=author.color,
@@ -236,17 +253,15 @@ class GuildConfiguration(commands.Cog):
             )
         embed.add_field(
             name='**Roles Snagged:**',
-            value=(', '.join(
-                    f'`{guild.get_role(role).name}`'
-                    for role in member_stalker.get('last_roles', user)
-                    )
-                or None),
-            inline=False)
+            value=(', '.join(f'`{guild.get_role(role)}`' for role in roles) or None),
+            inline=False
+            )
         embed.add_field(name='**User ID:**', value=f'`{user.id}`')
         await self.send_to_log_channel(guild, 'modlog', embed=embed)
 
     @commands.Cog.listener()
-    async def on_member_unban(self, guild, user): # Log member full ban appeals
+    async def on_member_unban(self, guild: dc.Guild, user: dc.User) -> None:
+        """Logs revoked guild bans."""
         if not self.get_log_channel(guild, 'modlog'):
             return
         embed = dc.Embed(
@@ -260,7 +275,8 @@ class GuildConfiguration(commands.Cog):
         await self.send_to_log_channel(guild, 'modlog', embed=embed)
 
     @commands.Cog.listener()
-    async def on_user_update(self, bfr, aft): # Log avatar, name, discrim changes
+    async def on_user_update(self, bfr: dc.User, aft: dc.User) -> None:
+        """Logs user data updates. (Information that is the same across all guilds)"""
         for guild in bot.guilds:
             if not (self.get_log_channel(guild, 'msglog') and guild.get_member(bfr.id)):
                 continue
@@ -299,7 +315,8 @@ class GuildConfiguration(commands.Cog):
                 await self.send_to_log_channel(guild, 'msglog', embed=embed)
                         
     @commands.Cog.listener()
-    async def on_voice_state_update(self, member, bfr, aft): # Log when a member joins and leaves VC
+    async def on_voice_state_update(self, member: dc.Member, bfr: dc.VoiceState, aft: dc.VoiceState) -> None:
+        """Logs changes in member voice states."""
         guild = member.guild
         if not self.get_log_channel(guild, 'msglog'):
             return
@@ -314,7 +331,8 @@ class GuildConfiguration(commands.Cog):
             await self.send_to_log_channel(guild, 'msglog', embed=embed)
 
     @commands.Cog.listener()
-    async def on_message(self, msg): # Message posted event
+    async def on_message(self, msg: dc.Message) -> None:
+        """Logs messages added."""
         if msg.guild is None:
             return
         ctx = await bot.get_context(msg)
@@ -324,13 +342,14 @@ class GuildConfiguration(commands.Cog):
                 await bot.process_commands(msg)
         elif dont_ignore and msg.content.strip().lower() in query_bank.affirmation:
             await msg.channel.send(response_bank.affirmation_response)
-        elif (msg.channel.id in self.channel_toggles.get_channel_ids(msg.guild, 'autoreact')
+        elif (self.channel_toggles.has_channel_id(msg.channel, 'autoreact')
             and any(any(map(att.url.lower().endswith, IMAGE_EXTS)) for att in msg.attachments)
             ):
             await msg.add_reaction('❤️')
        
     @commands.Cog.listener()
-    async def on_message_edit(self, bfr, aft): # Log edited messages
+    async def on_message_edit(self, bfr: dc.Message, aft: dc.Message) -> None:
+        """Logs messages edited."""
         if bfr.author == bot.user or bfr.content == aft.content:
             return
         guild = bfr.guild
@@ -367,7 +386,8 @@ class GuildConfiguration(commands.Cog):
             await self.send_to_log_channel(guild, 'msglog', embed=embed)
 
     @commands.Cog.listener()
-    async def on_message_delete(self, msg): # Log deleted messages
+    async def on_message_delete(self, msg: dc.Message) -> None:
+        """Logs messages deleted."""
         if msg.guild is None:
             return
         guild = msg.channel.guild
@@ -395,7 +415,8 @@ class GuildConfiguration(commands.Cog):
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
     @commands.has_guild_permissions(manage_channels=True)
-    async def config(self, ctx, log: str):
+    async def config(self, ctx: Context, log: str) -> None:
+        """Sets the given context channel as the log channel for the given log type."""
         if log not in self.COLUMN_MAP:
             await ctx.send(response_bank.config_args_error.format(log=log))
             return
@@ -403,7 +424,8 @@ class GuildConfiguration(commands.Cog):
         await ctx.send(response_bank.config_completion.format(log=log))
 
     @config.error
-    async def config_error(self, ctx, error):
+    async def config_error(self, ctx: Context, error: Exception) -> None:
+        """Error handler for the config command."""
         if isinstance(error, commands.MissingPermissions):
             await ctx.send(response_bank.perms_error)
             return
@@ -414,19 +436,21 @@ class GuildConfiguration(commands.Cog):
 
 class ChannelToggles(commands.Cog):
 
-    TABLE_MAP = {
+    TABLE_MAP: dict[str, str] = {
         'autoreact': 'AutoReactConfig',
         'ignoreplebs': 'IgnoreConfig',
         'enablelatex': 'LatexConfig',
         }
 
-    def __init__(self, bot):
+    def __init__(self, bot) -> None:
+        """Initializes cog."""
         self.bot = bot
         self._tables = {}
         self._toggles = {}
         self.data_load()
 
-    def data_load(self):
+    def data_load(self) -> None:
+        """Loads cog data from database."""
         # Load old style data
         try:
             with open(os.path.join('data', 'config.pkl'), 'rb') as config_file:
@@ -434,8 +458,7 @@ class ChannelToggles(commands.Cog):
         except FileNotFoundError:
             config_data = None
         # Load channel flags tables
-        for field in ('autoreact', 'ignoreplebs', 'enablelatex'):
-            table_name = self.TABLE_MAP[field]
+        for field, table_name in self.TABLE_MAP.items():
             try:
                 self._tables[field] = sql_metadata.tables[table_name]
             except KeyError:
@@ -454,84 +477,80 @@ class ChannelToggles(commands.Cog):
                         dbconn.execute(
                             self._tables[field].insert(),
                             [
-                                {'ChannelId': chan_id, 'GuildId': guild_id}
-                                for chan_id in guild_data[field]
+                                {'ChannelId': channel_id, 'GuildId': guild_id}
+                                for channel_id in guild_data[field]
                                 ],
                             )
                     dbconn.commit()
-
-    def cog_unload(self):
         with sql_engine.connect() as dbconn:
+            for field in self.TABLE_MAP:
+                self._toggles[field] = defaultdict(set)
+                for channel_id, guild_id in dbconn.execute(self._tables[field].select()):
+                    self._toggles[field][guild_id].add(channel_id)
+            dbconn.commit()
+
+    def cog_unload(self) -> None:
+        """Cleanup function run when the cog is removed or unloaded."""
+        with sql_engine.connect() as dbconn:
+            for field in self.TABLE_MAP:
+                dbconn.execute(self._tables[field].delete())
+                dbconn.execute(
+                    self._tables[field].insert(),
+                    [
+                        {'ChannelId': channel_id, 'GuildId': guild_id}
+                        for guild_id, channels in self._toggles[field]
+                        for channel_id in channels
+                        ]
+                    )
             dbconn.commit()
         super().cog_unload()
 
-    def check_enabled(self, msg, field):
+    def check_enabled(self, msg: dc.Message, field: str) -> bool:
+        """Returns True if the channel is considered toggled on, or if the author is a moderator."""
         if MOD_PERMS.value & msg.author.guild_permissions.value:
             return True
-        table = self._tables[field]
-        with sql_engine.connect() as dbconn:
-            return bool(list(dbconn.execute(sql
-                .select(table.c.ChannelId)
-                .where(table.c.ChannelId == msg.channel.id)
-                )))
+        return msg.channel.id in self._toggles[field][msg.guild.id]
 
-    def check_disabled(self, msg, field):
+    def check_disabled(self, msg: dc.Message, field: str) -> bool:
+        """Returns True if the channel is considered toggled off, or if the author is a moderator."""
         if MOD_PERMS.value & msg.author.guild_permissions.value:
             return True
-        table = self._tables[field]
-        with sql_engine.connect() as dbconn:
-            return not bool(list(dbconn.execute(sql
-                .select(table.c.ChannelId)
-                .where(table.c.ChannelId == msg.channel.id)
-                )))
+        return msg.channel.id not in self._toggles[field][msg.guild.id]
 
-    def get_channel_ids(self, guild, field):
-        table = self._tables[field]
-        with sql_engine.connect() as dbconn:
-            return [row[0] for row in dbconn.execute(sql
-                .select(table.c.ChannelId)
-                .where(table.c.GuildId == guild.id)
-                )]
+    def has_channel_id(self, channel: dc.abc.GuildChannel, field: str) -> bool:
+        """Returns True if the toggled set contains the given channel."""
+        if not hasattr(channel, 'guild') or channel.guild is None:
+            return False
+        return channel.id in self._toggles[field][channel.guild.id]
 
-    def has_channel_id(self, guild, channel, field):
-        table = self._tables[field]
-        with sql_engine.connect() as dbconn:
-            return bool(list(dbconn.execute(sql
-                .select(table.c.ChannelId)
-                .where(table.c.GuildId == guild.id and table.c.ChannelId == channel.id)
-                )))
+    def get_channel_ids(self, guild: dc.Guild, field: str) -> frozenset[int, ...]:
+        """Returns the entire toggled set."""
+        return frozenset(self._toggles[field][guild.id])
     
-    def toggle_channel_flag(self, ctx, field):
-        with sql_engine.connect() as dbconn:
-            table = self._tables[field]
-            channel_ids = [row[0] for row in dbconn.execute(
-                sql.select(table.c.ChannelId)
-                .where(table.c.GuildId == ctx.guild.id)
-                )]
-            channel_id = ctx.channel.id
-            if channel_id in channel_ids:
-                dbconn.execute(table.delete().where(table.c.ChannelId == channel_id))
-                dbconn.commit()
-                return False
-            else:
-                dbconn.execute(table.insert().values(
-                    ChannelId=channel_id,
-                    GuildId=ctx.guild.id,
-                    ))
-                dbconn.commit()
-                return True
+    def toggle_channel_flag(self, ctx: Context, field: str) -> bool:
+        """Toggles the channel in the given context."""
+        channel_id = ctx.channel.id
+        channels = self._toggles[field][ctx.guild.id]
+        if channel_id in channels:
+            channels.add(channel_id)
+            return True
+        else:
+            channels.remove(channel_id)
+            return False
 
     @commands.command()
     @commands.bot_has_permissions(add_reactions=True, read_message_history=True)
     @commands.has_guild_permissions(manage_messages=True)
-    async def autoreact(self, ctx):
+    async def autoreact(self, ctx: Context) -> None:
+        """Toggles the automatic image reaction feature in the given context channel."""
         if self.toggle_channel_flag(ctx, 'autoreact'):
             await ctx.send(response_bank.allow_reacts)
         else:
             await ctx.send(response_bank.deny_reacts)
 
     @autoreact.error
-    async def autoreact_error(self, ctx, error):
+    async def autoreact_error(self, ctx: Context, error: Exception) -> None:
+        """Error handler for autoreact command."""
         if isinstance(error, commands.BotMissingPermissions):
             return
         elif isinstance(error, commands.MissingPermissions):
@@ -542,14 +561,15 @@ class ChannelToggles(commands.Cog):
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
     @commands.has_guild_permissions(manage_roles=True)
-    async def ignoreplebs(self, ctx):
+    async def ignoreplebs(self, ctx: Context) -> None:
+        """Toggles whether non-moderators can use commands in the given context channel."""
         if self.toggle_channel_flag(ctx, 'ignoreplebs'):
             await ctx.send(response_bank.allow_users)
         else:
             await ctx.send(response_bank.deny_users)
 
     @ignoreplebs.error
-    async def ignoreplebs_error(self, ctx, error):
+    async def ignoreplebs_error(self, ctx: Context, error: Exception) -> None:
         if isinstance(error, commands.MissingPermissions):
             await ctx.send(response_bank.perms_error)
             return
@@ -558,14 +578,15 @@ class ChannelToggles(commands.Cog):
     @commands.command()
     @commands.bot_has_permissions(send_messages=True)
     @commands.has_guild_permissions(manage_roles=True)
-    async def togglelatex(self, ctx):
+    async def togglelatex(self, ctx: Context) -> None:
+        """Toggles whether the latex command is usable in the given context channel."""
         if self.toggle_channel_flag(ctx, 'enablelatex'):
             await ctx.send(response_bank.allow_latex)
         else:
             await ctx.send(response_bank.deny_latex)
             
     @togglelatex.error
-    async def togglelatex_error(self, ctx, error):
+    async def togglelatex_error(self, ctx: Context, error: Exception) -> None:
         if isinstance(error, commands.MissingPermissions):
             await ctx.send(response_bank.perms_error)
             return
@@ -573,13 +594,17 @@ class ChannelToggles(commands.Cog):
 
 
 class GlobalMetaData(commands.Cog):
+
+    HISTORY_LIMIT: int = 16
     
-    def __init__(self, bot):
+    def __init__(self, bot) -> None:
+        """Initializes cog."""
         self.bot = bot
         self._records = {}
         self.data_load()
 
-    def data_load(self):
+    def data_load(self) -> None:
+        """Loads cog data from database."""
         # Load global clounters table
         try:
             self._global_counters = sql_metadata.tables['GlobalCounters']
@@ -611,7 +636,8 @@ class GlobalMetaData(commands.Cog):
                 counts = list(dbconn.execute(self._global_counters.select()))[0]
                 self._records['avatar_count'], self._records['latex_count'] = counts
 
-    def cog_unload(self):
+    def cog_unload(self) -> None:
+        """Cleanup function run when the cog is removed or unloaded."""
         with sql_engine.connect() as dbconn:
             dbconn.execute(self._global_counters.delete())
             dbconn.execute(self._global_counters.insert().values(
@@ -621,12 +647,17 @@ class GlobalMetaData(commands.Cog):
             dbconn.commit()
         super().cog_unload()
 
-    def get_record_id(self, record):
+    def get_record_id(self, record: str) -> int:
+        """Returns a post-increment of a given record counter."""
         record_id = self._records[record]
         self._records[record] = (record_id + 1) & 0xFFFFFFFF
         return record_id
 
-    async def grab_avatar(self, user):
+    async def grab_avatar(self, user: dc.User) -> Optional[str]:
+        """
+        Attempts to pull the given user's avatar into a holding channel, then return the url.
+        Returns a default url if the operation fails.
+        """
         avy_channel = bot.get_channel(AVY_CHID)
         with open('avatar.png', mode='wb') as avatarfile:
             try:
@@ -639,9 +670,10 @@ class GlobalMetaData(commands.Cog):
                 f'`@{user}`: UID {user.id}: MID {msg_id}',
                 file=dc.File(avatarfile)
                 )
-        async for msg in avy_channel.history(limit=16):
+        async for msg in avy_channel.history(limit=self.HISTORY_LIMIT):
             if msg.content.split()[-1] == msg_id:
                 return msg.attachments[0].url
+        raise RuntimeError(response_bank.unexpected_state)
 
 
 bot.add_cog(GuildConfiguration(bot))

@@ -1,3 +1,4 @@
+# The DailyCounter Cog, posting daily statistics.
 from datetime import datetime, timedelta
 from collections import Counter
 

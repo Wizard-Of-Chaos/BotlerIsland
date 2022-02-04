@@ -132,6 +132,9 @@ async def info(ctx, *, name=None):
 async def info_error(ctx, error):
     if isinstance(error, commands.BotMissingPermissions):
         return
+    if isinstance(error, commands.MemberNotFound):
+        await ctx.send('D--> It seems that user can\'t be found. Please check your spelling.')
+        return
     raise error
 
 @bot.command(aliases=['fle%', 'pose'])

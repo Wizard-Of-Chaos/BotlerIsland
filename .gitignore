@@ -1,6 +1,7 @@
 # Ignore all pickle files, copies should work sterile.
 data
 *.db
+*.db-journal
 *.log
 __pycache__
 avatar.png
