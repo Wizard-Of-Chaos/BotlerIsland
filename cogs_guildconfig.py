@@ -206,6 +206,9 @@ class GuildConfiguration(commands.Cog):
         if ("RTFKT" in member.name):
             embed.add_field(name=banfield, value="banned for nft")
             await member.ban()
+        elif ("ModMa\U0001D5C2l" in member.name):
+            embed.add_field(name=banfield, value="modmail impostor banned")
+            await member.ban()
         else:
             embed.add_field(name=banfield, value="passed checks")
         await self.log(guild, 'usrlog', embed=embed)
