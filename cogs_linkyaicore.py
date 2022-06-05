@@ -113,4 +113,4 @@ class LinkyBotAI(commands.Cog):
             return
         raise error
 
-bot.add_cog(LinkyBotAI(bot))
+#bot.add_cog(LinkyBotAI(bot))

@@ -68,4 +68,4 @@ class LogManager(commands.Cog):
                 await self.log_channel.send(f'ArquiusBot Log {now} @ <{await resp.text()}>')
 
 
-bot.add_cog(LogManager(bot))
+#bot.add_cog(LogManager(bot))

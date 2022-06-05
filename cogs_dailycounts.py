@@ -115,4 +115,4 @@ class DailyCounter(commands.Cog):
         raise error
 
 
-bot.add_cog(DailyCounter(bot))
+#bot.add_cog(DailyCounter(bot))

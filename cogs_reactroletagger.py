@@ -291,4 +291,4 @@ class ReactRoleTagger(CogtextManager):
         raise error
 
 
-bot.add_cog(ReactRoleTagger(bot))
+#bot.add_cog(ReactRoleTagger(bot))

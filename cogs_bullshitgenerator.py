@@ -204,4 +204,4 @@ class BullshitGenerator(commands.Cog):
         raise error
 
 
-bot.add_cog(BullshitGenerator(bot))
+#bot.add_cog(BullshitGenerator(bot))

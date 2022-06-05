@@ -68,4 +68,4 @@ class TenseiBotAI(commands.Cog):
             return
         raise error
 
-bot.add_cog(TenseiBotAI(bot))
+#bot.add_cog(TenseiBotAI(bot))

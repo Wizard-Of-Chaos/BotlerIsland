@@ -251,4 +251,4 @@ class BanManager(CogtextManager):
         raise error
 
 
-bot.add_cog(BanManager(bot))
+#bot.add_cog(BanManager(bot))

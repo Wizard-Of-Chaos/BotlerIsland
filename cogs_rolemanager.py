@@ -154,4 +154,4 @@ class RoleManager(CogtextManager):
         raise error
 
 
-bot.add_cog(RoleManager(bot))
+#bot.add_cog(RoleManager(bot))

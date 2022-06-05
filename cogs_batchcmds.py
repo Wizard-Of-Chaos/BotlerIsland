@@ -72,4 +72,4 @@ class BatchCommands(commands.Cog):
         raise error
 
 
-bot.add_cog(BatchCommands(bot))
+#bot.add_cog(BatchCommands(bot))

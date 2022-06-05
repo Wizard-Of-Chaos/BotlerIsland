@@ -527,4 +527,4 @@ class GuildConfiguration(commands.Cog):
         raise error
 
 
-bot.add_cog(GuildConfiguration(bot))
+#bot.add_cog(GuildConfiguration(bot))

@@ -9,7 +9,7 @@ import sqlalchemy as sql
 
 from cogs_modtools import (
     guild_whitelist, CogtextManager, 
-    MemberStalker, Suggestions,
+    MemberStalker, Suggestions
     )
 from cogs_statstracker import StatsTracker
 
@@ -40,9 +40,24 @@ def user_or_perms(user_id, **perms):
         except TypeError:
             return ctx.author.id == user_id or await perm_check(ctx)
     return commands.check(extended_check)
+    
+async def setup():
+    await bot.add_cog(BanManager(bot))
+    await bot.add_cog(DailyCounter(bot))
+    await bot.add_cog(GuildConfiguration(bot))
+    await bot.add_cog(LatexRenderer(bot))
+    await bot.add_cog(LogManager(bot))
+    await bot.add_cog(BatchCommands(bot))
+    await bot.add_cog(BullshitGenerator(bot))
+    await bot.add_cog(LinkyBotAI(bot))
+    await bot.add_cog(ReactRoleTagger(bot))
+    await bot.add_cog(RoleManager(bot))
+    await bot.add_cog(TenseiBotAI(bot))
+    
+async def main():
+    async with bot:
+        await setup()
+        with open('token.dat', 'r') as tokenfile, member_stalker, stats_tracker, stored_suggestions:
+            raw = tokenfile.read().strip()
+            await bot.start(''.join(chr(int(''.join(c), 16)) for c in zip(*[iter(raw)]*2)))
 
-
-def main():
-    with open('token.dat', 'r') as tokenfile, member_stalker, stats_tracker, stored_suggestions:
-        raw = tokenfile.read().strip()
-        bot.run(''.join(chr(int(''.join(c), 16)) for c in zip(*[iter(raw)]*2)))

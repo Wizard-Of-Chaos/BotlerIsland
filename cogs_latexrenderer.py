@@ -82,4 +82,4 @@ class LatexRenderer(commands.Cog):
         raise error
 
 
-bot.add_cog(LatexRenderer(bot))
+#bot.add_cog(LatexRenderer(bot))
