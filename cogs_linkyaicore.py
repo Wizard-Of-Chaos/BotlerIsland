@@ -113,6 +113,7 @@ class LinkyBotAI(commands.Cog):
             return
         raise error
 
+
 async def setup():
     await bot.add_cog(LinkyBotAI(bot))
 

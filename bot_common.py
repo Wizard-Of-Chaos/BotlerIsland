@@ -44,7 +44,7 @@ def user_or_perms(user_id, **perms):
         except TypeError:
             return ctx.author.id == user_id or await perm_check(ctx)
     return commands.check(extended_check)
-
+    
 async def main():
     async with bot:
         for cog_adder in bot_coglist:
