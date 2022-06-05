@@ -13,7 +13,7 @@ import sqlalchemy as sql
 
 from cogs_textbanks import url_bank, query_bank, response_bank
 from bot_common import (
-    bot, guild_whitelist, sql_engine, sql_metadata
+    bot, bot_coglist, guild_whitelist, sql_engine, sql_metadata
     )
 
 MOD_PERMS = dc.Permissions(
@@ -50,8 +50,6 @@ class GuildConfiguration(commands.Cog):
         self._log_chan_ids = {}
 
         self.data_load()
-        bot.add_cog(ChannelToggles(bot))
-        bot.add_cog(GlobalMetaData(bot))
         self.channel_toggles = bot.get_cog('ChannelToggles')
         self.global_metadata = bot.get_cog('GlobalMetaData')
         self.user_datalogger = None
@@ -676,4 +674,9 @@ class GlobalMetaData(commands.Cog):
         raise RuntimeError(response_bank.unexpected_state)
 
 
-bot.add_cog(GuildConfiguration(bot))
+async def setup():
+    await bot.add_cog(ChannelToggles(bot))
+    await bot.add_cog(GlobalMetaData(bot))
+    await bot.add_cog(GuildConfiguration(bot))
+
+bot_coglist.append(setup())

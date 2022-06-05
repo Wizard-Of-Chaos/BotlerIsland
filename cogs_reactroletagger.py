@@ -9,7 +9,7 @@ import discord as dc
 from discord.ext import commands
 
 from cogs_textbanks import url_bank, query_bank, response_bank
-from bot_common import bot, CogtextManager
+from bot_common import bot, bot_coglist, CogtextManager
 import cogs_rolemanager
 
 EmojiUnion = Union[dc.Emoji, dc.PartialEmoji, str]
@@ -293,4 +293,7 @@ class ReactRoleTagger(CogtextManager):
         raise error
 
 
-bot.add_cog(ReactRoleTagger(bot))
+async def setup():
+    await bot.add_cog(ReactRoleTagger(bot))
+
+bot_coglist.append(setup())

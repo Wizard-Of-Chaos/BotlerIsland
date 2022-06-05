@@ -11,7 +11,7 @@ import sqlalchemy as sql
 
 from cogs_textbanks import url_bank, query_bank, response_bank
 from bot_common import (
-    bot, sql_engine, sql_metadata, guild_whitelist,
+    bot, bot_coglist, sql_engine, sql_metadata, guild_whitelist,
     CONST_ADMINS, CONST_AUTHOR,
     )
 import cogs_guildconfig
@@ -111,4 +111,7 @@ class ChanDataLogger(commands.Cog):
         self._current_record[msg.guild.id][msg.channel.id]['MessagesDeleted'] += 1
 
 
-bot.add_cog(ChanDataLogger(bot))
+async def setup():
+    await bot.add_cog(ChanDataLogger(bot))
+
+bot_coglist.append(setup())

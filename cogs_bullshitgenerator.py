@@ -6,7 +6,7 @@ import discord as dc
 from discord.ext import commands
 
 from cogs_textbanks import query_bank, response_bank, url_bank
-from bot_common import bot
+from bot_common import bot, bot_coglist
 
 _addpath = lambda f: os.path.join('text', f)
 
@@ -204,4 +204,7 @@ class BullshitGenerator(commands.Cog):
         raise error
 
 
-bot.add_cog(BullshitGenerator(bot))
+async def setup():
+    await bot.add_cog(BullshitGenerator(bot))
+
+bot_coglist.append(setup())

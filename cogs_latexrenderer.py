@@ -12,7 +12,7 @@ import discord as dc
 from discord.ext import commands, tasks
 
 from cogs_textbanks import url_bank, query_bank, response_bank
-from bot_common import bot, CogtextManager
+from bot_common import bot, bot_coglist
 import cogs_guildconfig
 
 Context = commands.Context
@@ -93,4 +93,7 @@ class LatexRenderer(commands.Cog):
         raise error
 
 
-bot.add_cog(LatexRenderer(bot))
+async def setup():
+    await bot.add_cog(LatexRenderer(bot))
+
+bot_coglist.append(setup())

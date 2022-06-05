@@ -7,7 +7,7 @@ import discord as dc
 from discord.ext import commands
 
 from cogs_textbanks import url_bank, query_bank, response_bank
-from bot_common import bot, CogtextManager
+from bot_common import bot, bot_coglist, CogtextManager
 
 class RoleManager(CogtextManager):
     @staticmethod
@@ -154,4 +154,7 @@ class RoleManager(CogtextManager):
         raise error
 
 
-bot.add_cog(RoleManager(bot))
+async def setup():
+    await bot.add_cog(RoleManager(bot))
+
+bot_coglist.append(setup())

@@ -1,4 +1,6 @@
 # The actual script you run directly.
+import asyncio
+
 from bot_common import main
 import bot_events
 import bot_modcommands
@@ -18,4 +20,4 @@ import cogs_linkyaicore
 import cogs_bullshitgenerator
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())

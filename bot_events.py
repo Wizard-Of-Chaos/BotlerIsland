@@ -7,7 +7,7 @@ from bot_common import bot, guild_whitelist, CONST_ADMINS, CONST_AUTHOR
 
 @bot.event
 async def on_ready(): # Bot starts
-    print(response_bank.bot_startup.format(version='1.5.2'))
+    print(response_bank.bot_startup.format(version='1.5.3'))
     for guild in bot.guilds:
         if guild.id not in guild_whitelist:
             await guild.leave()

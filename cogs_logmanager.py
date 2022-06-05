@@ -8,7 +8,7 @@ from discord.ext import commands, tasks
 import aiohttp
 
 from cogs_textbanks import url_bank, query_bank, response_bank
-from bot_common import bot
+from bot_common import bot, bot_coglist
 
 log_chid = 830752125998596126
 
@@ -68,4 +68,7 @@ class LogManager(commands.Cog):
                 await self.log_channel.send(f'ArquiusBot Log {now} @ <{await resp.text()}>')
 
 
-bot.add_cog(LogManager(bot))
+async def setup():
+    await bot.add_cog(LogManager(bot))
+
+bot_coglist.append(setup())

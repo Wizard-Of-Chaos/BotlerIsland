@@ -9,7 +9,7 @@ import discord as dc
 from discord.ext import commands, tasks
 
 from cogs_textbanks import url_bank, query_bank, response_bank
-from bot_common import bot, CogtextManager
+from bot_common import bot, bot_coglist, CogtextManager
 import cogs_guildconfig
 import cogs_chandatalogger
 
@@ -255,4 +255,7 @@ class BanManager(CogtextManager):
         raise error
 
 
-bot.add_cog(BanManager(bot))
+async def setup():
+    await bot.add_cog(BanManager(bot))
+
+bot_coglist.append(setup())

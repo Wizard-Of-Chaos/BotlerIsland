@@ -18,6 +18,7 @@ args = parser.parse_args()
 random.seed(datetime.now())
 bot = commands.Bot(command_prefix='D--> ', intents=dc.Intents.all())
 bot.remove_command('help')
+bot_coglist = []
 
 help_data = []
 
@@ -44,7 +45,13 @@ def user_or_perms(user_id, **perms):
             return ctx.author.id == user_id or await perm_check(ctx)
     return commands.check(extended_check)
 
-
-def main():
-    with open(args.tokenfile, 'r') as tokenfile, stored_suggestions:
-        bot.run(tokenfile.read().strip())
+async def main():
+    async with bot:
+        for cog_adder in bot_coglist:
+            await cog_adder
+        with open(args.tokenfile, 'r') as tokenfile, stored_suggestions:
+            raw = tokenfile.read().strip()
+            try:
+                await bot.start(''.join(chr(int(''.join(c), 16)) for c in zip(*[iter(raw)]*2)))
+            except KeyboardInterrupt:
+                return

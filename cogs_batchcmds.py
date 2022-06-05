@@ -5,7 +5,7 @@ import discord as dc
 from discord.ext import commands
 
 from cogs_textbanks import url_bank, query_bank, response_bank
-from bot_common import bot, CONST_AUTHOR, user_or_perms
+from bot_common import bot, bot_coglist, CONST_AUTHOR, user_or_perms
 
 _CMD_DIR = Path('cmd')
 
@@ -72,4 +72,7 @@ class BatchCommands(commands.Cog):
         raise error
 
 
-bot.add_cog(BatchCommands(bot))
+async def setup():
+    await bot.add_cog(BatchCommands(bot))
+
+bot_coglist.append(setup())
